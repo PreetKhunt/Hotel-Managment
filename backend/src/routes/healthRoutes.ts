@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { pgPool } from '../config/database';
+import { logger } from '../utils/logger';
 import { supabase } from '../config/supabase';
 import { razorpay } from '../config/razorpay';
 import { HTTP_STATUS } from '../constants/httpStatuses';
@@ -33,8 +34,18 @@ router.get('/', async (_req: Request, res: Response) => {
     await client.query('SELECT 1');
     client.release();
     healthStatus.services.database = 'UP';
-  } catch (error) {
+  } catch (error: any) {
+    logger.error('PostgreSQL Health Check Failed', {
+      errorMessage: error.message,
+      sqlState: error.code,
+      stackTrace: error.stack,
+      host: (pgPool as any).options?.host || 'unknown',
+      port: (pgPool as any).options?.port || 'unknown',
+      ssl: (pgPool as any).options?.ssl ? true : false,
+      databaseUrlLength: process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 0
+    });
     healthStatus.services.database = 'DOWN';
+    healthStatus.services.database_error = error.message; // optional insight for API response
     hasError = true;
   }
 

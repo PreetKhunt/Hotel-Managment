@@ -16,6 +16,9 @@ import { globalLimiter } from './middleware/rateLimiter';
 
 const app: Express = express();
 
+// Trust reverse proxy for Railway/Vercel (required for rate limiting)
+app.set('trust proxy', 1);
+
 // Swagger Documentation Route
 app.use('/api-docs', swaggerUi.serve as any, swaggerUi.setup(swaggerSpec) as any);
 
