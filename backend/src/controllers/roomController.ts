@@ -41,9 +41,14 @@ export const getRooms = async (_req: Request, res: Response): Promise<void> => {
 export const getRoomById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { data, error } = await supabase.from('rooms').select('*').eq('id', id).single();
+    const { data, error } = await supabase.from('rooms').select('*').eq('id', id).maybeSingle();
 
     if (error) throw error;
+    
+    if (!data) {
+      res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Room not found' });
+      return;
+    }
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
