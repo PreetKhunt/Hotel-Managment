@@ -10,13 +10,19 @@ export class AuthController {
     res.cookie(authConfig.session.cookieName, token, {
       httpOnly: true,
       secure: authConfig.session.secureCookie,
-      sameSite: 'lax',
+      sameSite: authConfig.session.secureCookie ? 'none' : 'lax',
+      path: '/',
       maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
     });
   }
 
   private clearSessionCookie(res: Response) {
-    res.clearCookie(authConfig.session.cookieName);
+    res.clearCookie(authConfig.session.cookieName, {
+      httpOnly: true,
+      secure: authConfig.session.secureCookie,
+      sameSite: authConfig.session.secureCookie ? 'none' : 'lax',
+      path: '/',
+    });
   }
 
   login = async (req: Request, res: Response, next: NextFunction) => {

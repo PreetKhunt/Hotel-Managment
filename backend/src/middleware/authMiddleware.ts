@@ -36,25 +36,25 @@ export const createAuthMiddleware = (
       }
 
       if (!token) {
-        throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
+        throw new AppError('Authentication token missing', 401, ErrorCode.UNAUTHORIZED);
       }
 
       // Verify JWT with Supabase
       const { data: { user: authUser }, error } = await supabase.auth.getUser(token);
 
       if (error || !authUser) {
-        throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
+        throw new AppError('Invalid or expired authentication token', 401, ErrorCode.UNAUTHORIZED);
       }
 
       // Fetch user details from public schema
       const dbUser = await userRepo.findById(authUser.id);
       
       if (!dbUser) {
-        throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
+        throw new AppError('User profile not found', 401, ErrorCode.UNAUTHORIZED);
       }
 
       if (dbUser.status === UserStatus.SUSPENDED || dbUser.status === UserStatus.DELETED || dbUser.status === UserStatus.INACTIVE) {
-        throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
+        throw new AppError('User account is inactive or suspended', 403, ErrorCode.FORBIDDEN);
       }
 
       let roleName: string | null = null;
@@ -90,14 +90,14 @@ export const requirePermission = (permission: string) => {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
-        throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
+        throw new AppError('Authentication required for this action', 401, ErrorCode.UNAUTHORIZED);
       }
 
       if (req.user.permissions.includes('full_access') || req.user.permissions.includes(permission)) {
         return next();
       }
 
-      throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
+      throw new AppError('Insufficient permissions', 403, ErrorCode.FORBIDDEN);
     } catch (error) {
       next(error);
     }
