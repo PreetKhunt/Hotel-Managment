@@ -1,31 +1,26 @@
-<div align="center">
-  <h1>Hotel Management System</h1>
-  <p>A premium full-stack hotel management platform built with Next.js, Express.js, Supabase, PostgreSQL, Razorpay and TypeScript.</p>
-</div>
+# Hotel Management System
 
----
+A premium full-stack Hotel Management System built with Next.js, Express.js, TypeScript, Supabase, PostgreSQL, Razorpay and Docker.
 
 ## Features
 
-- Luxury Hotel Landing Page
-- Room Management
+- Luxury Landing Page
 - Dynamic Room Inventory
-- Secure Authentication
-- Google Sign-In (Supabase Auth)
-- Booking Engine
-- Razorpay Payment Integration
+- Room Booking
+- Availability Calendar
+- Authentication
+- Google Sign-In
 - Booking History
+- Razorpay Integration
 - Invoice Generation
-- Restaurant Reservations
-- Spa & Wellness Booking
-- Fitness Centre Booking
+- Restaurant Reservation
+- Spa Booking
+- Fitness Centre
 - Admin Dashboard
-- Role-Based Access Control
-- Hotel Configuration
-- Responsive UI
+- RBAC
+- Hotel Settings
 - Docker Support
-
----
+- Responsive Design
 
 ## Tech Stack
 
@@ -38,8 +33,8 @@
 - Framer Motion
 
 **Backend**
-- Express.js
 - Node.js
+- Express.js
 - TypeScript
 
 **Database**
@@ -56,8 +51,6 @@
 **Deployment**
 - Docker
 - Docker Compose
-
----
 
 ## Folder Structure
 
@@ -85,12 +78,11 @@ Hotel-Management/
 └── README.md             # Project Documentation
 ```
 
----
-
 ## Installation
 
+Clone the repository and install dependencies for both the frontend and backend:
+
 ```bash
-# Clone the repository
 git clone https://github.com/PreetKhunt/Hotel-Managment.git
 cd Hotel-Managment
 
@@ -106,11 +98,9 @@ cd ../backend
 npm install
 ```
 
----
-
 ## Environment Variables
 
-Create `.env` files in both frontend and backend directories based on these requirements:
+Create `.env` files in both `frontend` and `backend` directories.
 
 **Frontend (`frontend/.env.local`):**
 ```env
@@ -133,29 +123,25 @@ RAZORPAY_KEY_SECRET=
 FRONTEND_URL=
 ```
 
----
-
 ## Running Locally
 
-To run the application in a local development environment:
+To run the application in a local development environment, start the servers from the root directory or start them individually:
 
-**1. Start the Backend Server**
-```bash
-cd backend
-npm run dev
-```
-
-**2. Start the Frontend Development Server**
+**Frontend:**
 ```bash
 cd frontend
 npm run dev
 ```
 
-The application will be accessible at:
-- Frontend: `http://localhost:3001` (or your configured Next.js port)
-- Backend API: `http://localhost:5000`
+**Backend:**
+```bash
+cd backend
+npm run dev
+```
 
----
+The application will be accessible at:
+- Frontend: `http://localhost:3001`
+- Backend API: `http://localhost:5000`
 
 ## Docker Deployment
 
@@ -164,59 +150,50 @@ To deploy the full application using Docker Compose, run the following from the 
 ```bash
 docker-compose up --build -d
 ```
-
-This will spin up both the frontend and backend containers in detached mode.
-
----
+This command builds the images and spins up both the frontend and backend containers in detached mode.
 
 ## API Documentation
 
 The backend API is documented via Swagger. Once the backend server is running, you can access the interactive API documentation at:
-
-```
-http://localhost:5000/api-docs
-```
-
----
+`http://localhost:5000/api-docs`
 
 ## Screenshots
 
-### Home Page
-*(Placeholder for Home Page screenshot)*
+### Home
+*(Placeholder for Home screenshot)*
 
 ### Rooms
-*(Placeholder for Rooms overview screenshot)*
+*(Placeholder for Rooms screenshot)*
 
-### Booking Engine
-*(Placeholder for Booking checkout screenshot)*
+### Booking
+*(Placeholder for Booking screenshot)*
 
-### Guest Dashboard
-*(Placeholder for Guest Dashboard screenshot)*
+### Dashboard
+*(Placeholder for Dashboard screenshot)*
 
-### Admin Panel
-*(Placeholder for Admin interface screenshot)*
-
----
+### Admin
+*(Placeholder for Admin screenshot)*
 
 ## Future Improvements
 
 - Multi Hotel SaaS
-- AI Recommendation
+- AI Recommendations
 - Analytics
 - Email Notifications
-
----
 
 ## License
 
 MIT
 
----
-
 ## Author
 
 **Preet Khunt**
 
-GitHub: [https://github.com/PreetKhunt](https://github.com/PreetKhunt)
+GitHub:
+https://github.com/PreetKhunt
 
-Email: 2403051051049@paruluniversity.ac.in
+Email:
+2403051051049@paruluniversity.ac.in
+
+Additional Email:
+khuntpreet12@gmail.com
