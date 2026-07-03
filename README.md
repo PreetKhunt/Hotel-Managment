@@ -1,113 +1,222 @@
-# Hotel Management System (Hospitality Hub)
+<div align="center">
+  <h1>Hotel Management System</h1>
+  <p>A premium full-stack hotel management platform built with Next.js, Express.js, Supabase, PostgreSQL, Razorpay and TypeScript.</p>
+</div>
 
-A premium, full-stack commercial hotel booking and management system. Designed for luxury properties, this software handles real-time room availability, dynamic pricing, guest authentication, payment processing (Razorpay), and a comprehensive back-office dashboard for hotel staff.
+---
 
 ## Features
 
-- **Guest Portal**: Beautiful, responsive, and animated frontend for guests to browse rooms, view services, and read verified reviews.
-- **Booking Engine**: Advanced booking flow with real-time availability checks, double-booking prevention via Supabase transactions, and auto-expiring pending holds.
-- **Secure Payments**: Integrated Razorpay checkout with webhook verification and graceful failure handling.
-- **Admin Dashboard**: Comprehensive back-office suite to manage bookings, track revenue analytics, and monitor hotel operations.
-- **Authentication**: JWT-based secure authentication for guests and administrative staff.
-- **Modern UI**: Polished interface with Framer Motion animations, luxurious styling, and a fully functional rich-text editor (Tiptap) for dynamic content.
+- Luxury Hotel Landing Page
+- Room Management
+- Dynamic Room Inventory
+- Secure Authentication
+- Google Sign-In (Supabase Auth)
+- Booking Engine
+- Razorpay Payment Integration
+- Booking History
+- Invoice Generation
+- Restaurant Reservations
+- Spa & Wellness Booking
+- Fitness Centre Booking
+- Admin Dashboard
+- Role-Based Access Control
+- Hotel Configuration
+- Responsive UI
+- Docker Support
+
+---
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Framer Motion, React Query, Axios.
-- **Backend**: Node.js, Express, TypeScript, Supabase (PostgreSQL), Razorpay SDK.
-- **Database**: PostgreSQL (via Supabase) with Row Level Security and robust SQL migrations.
+**Frontend**
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- React Query
+- Framer Motion
 
-## Screenshots
+**Backend**
+- Express.js
+- Node.js
+- TypeScript
 
-*(Add screenshots of the Home Page, Room Booking Flow, and Admin Dashboard here)*
+**Database**
+- PostgreSQL
+- Supabase
 
-## Installation & Running Locally
+**Authentication**
+- Supabase Auth
+- Google OAuth
 
-### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
-- A Supabase Project (PostgreSQL)
-- Razorpay API Keys
+**Payments**
+- Razorpay
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/your-username/Hotel-Management.git
-cd Hotel-Management
-```
+**Deployment**
+- Docker
+- Docker Compose
 
-### 2. Install dependencies
-```bash
-# Install root, frontend, and backend dependencies concurrently
-npm install
-```
-
-### 3. Environment Variables
-
-**Backend (`backend/.env`):**
-```env
-PORT=5000
-DATABASE_URL="your-supabase-postgres-connection-string"
-JWT_SECRET="your-secure-jwt-secret"
-RAZORPAY_KEY_ID="your-razorpay-key"
-RAZORPAY_KEY_SECRET="your-razorpay-secret"
-FRONTEND_URL="http://localhost:3001"
-```
-
-**Frontend (`frontend/.env.local`):**
-```env
-NEXT_PUBLIC_API_URL="http://localhost:5000/api/v1"
-NEXT_PUBLIC_RAZORPAY_KEY_ID="your-razorpay-key"
-```
-
-### 4. Database Setup
-Run the SQL migration scripts located in `backend/supabase/migrations/` in chronological order against your Supabase database to construct the schema and seed the initial luxury room data and reviews.
-
-### 5. Start the Development Servers
-```bash
-npm run dev
-```
-- Frontend runs on `http://localhost:3001`
-- Backend runs on `http://localhost:5000`
-
-## Docker Setup
-
-To run the application via Docker Compose:
-
-```bash
-docker-compose up --build -d
-```
-*Note: Ensure your `.env` variables are correctly passed to the containers in your production environment.*
+---
 
 ## Folder Structure
 
 ```
 Hotel-Management/
-├── frontend/             # Next.js 16 application
-│   ├── app/              # App router pages
-│   ├── components/       # Reusable React components
-│   ├── hooks/            # Custom React Query hooks
-│   └── lib/              # Utilities and API clients
-├── backend/              # Node.js/Express application
-│   ├── src/              # Source code (Controllers, Routes, Services)
-│   └── supabase/         # SQL Migrations & Database schema
-├── docker-compose.yml    # Docker orchestration
-├── .gitignore            # Git ignore rules
-└── package.json          # Root workspace configuration
+├── frontend/             # Next.js 16 Application
+│   ├── app/              # Next.js App Router Pages
+│   ├── components/       # Reusable React UI Components
+│   ├── hooks/            # Custom React Query Hooks
+│   ├── lib/              # API Clients & Utilities
+│   ├── providers/        # Context Providers
+│   ├── public/           # Static Assets
+│   └── types/            # TypeScript Interfaces
+├── backend/              # Express.js Application
+│   ├── src/              # Backend Source Code
+│   │   ├── controllers/  # Route Controllers
+│   │   ├── middleware/   # Express Middleware
+│   │   ├── routes/       # API Routes
+│   │   ├── services/     # Business Logic layer
+│   │   └── utils/        # Helper Functions
+│   └── supabase/         # Database Schema & Migrations
+├── docker-compose.yml    # Docker Setup
+├── .gitignore            # Git Ignored Files
+├── LICENSE               # MIT License
+└── README.md             # Project Documentation
 ```
+
+---
+
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/PreetKhunt/Hotel-Managment.git
+cd Hotel-Managment
+
+# Install root dependencies
+npm install
+
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Install backend dependencies
+cd ../backend
+npm install
+```
+
+---
+
+## Environment Variables
+
+Create `.env` files in both frontend and backend directories based on these requirements:
+
+**Frontend (`frontend/.env.local`):**
+```env
+NEXT_PUBLIC_API_URL=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_RAZORPAY_KEY_ID=
+```
+
+**Backend (`backend/.env`):**
+```env
+PORT=
+NODE_ENV=
+DATABASE_URL=
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+JWT_SECRET=
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+FRONTEND_URL=
+```
+
+---
+
+## Running Locally
+
+To run the application in a local development environment:
+
+**1. Start the Backend Server**
+```bash
+cd backend
+npm run dev
+```
+
+**2. Start the Frontend Development Server**
+```bash
+cd frontend
+npm run dev
+```
+
+The application will be accessible at:
+- Frontend: `http://localhost:3001` (or your configured Next.js port)
+- Backend API: `http://localhost:5000`
+
+---
+
+## Docker Deployment
+
+To deploy the full application using Docker Compose, run the following from the root directory:
+
+```bash
+docker-compose up --build -d
+```
+
+This will spin up both the frontend and backend containers in detached mode.
+
+---
 
 ## API Documentation
 
-The backend exposes a RESTful API under `/api/v1`. Key endpoints include:
-- `POST /auth/register` - Guest registration
-- `POST /auth/login` - User login
-- `GET /rooms` - Fetch available rooms (supports filtering)
-- `POST /bookings` - Create a pending hold booking
-- `POST /bookings/verify-payment` - Confirm a booking post-payment
+The backend API is documented via Swagger. Once the backend server is running, you can access the interactive API documentation at:
+
+```
+http://localhost:5000/api-docs
+```
+
+---
+
+## Screenshots
+
+### Home Page
+*(Placeholder for Home Page screenshot)*
+
+### Rooms
+*(Placeholder for Rooms overview screenshot)*
+
+### Booking Engine
+*(Placeholder for Booking checkout screenshot)*
+
+### Guest Dashboard
+*(Placeholder for Guest Dashboard screenshot)*
+
+### Admin Panel
+*(Placeholder for Admin interface screenshot)*
+
+---
+
+## Future Improvements
+
+- Multi Hotel SaaS
+- AI Recommendation
+- Analytics
+- Email Notifications
+
+---
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT
+
+---
 
 ## Author
 
-Developed for Hospitality Hub.
+**Preet Khunt**
+
+GitHub: [https://github.com/PreetKhunt](https://github.com/PreetKhunt)
+
+Email: 2403051051049@paruluniversity.ac.in
