@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/AuthService';
 import { authConfig } from '../config/auth';
 import { AppError, ErrorCode } from '../utils/AppError';
-
+import { env } from '../config/env';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -107,7 +107,7 @@ export class AuthController {
 
   googleOAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const redirectUrl = req.query.redirectUrl as string || 'http://localhost:3000/auth/callback';
+      const redirectUrl = req.query.redirectUrl as string || `${env.CORS_ORIGIN}/auth/callback`;
       
       const reqInfo = {
         ip: req.ip || req.connection.remoteAddress || 'unknown',

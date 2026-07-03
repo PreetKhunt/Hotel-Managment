@@ -1,6 +1,4 @@
 import swaggerJsdoc from 'swagger-jsdoc';
-import { env } from './env';
-
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.1.0',
@@ -15,8 +13,8 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: `http://localhost:${env.PORT}/api/v1`,
-        description: 'Development Server',
+        url: `/api/v1`,
+        description: 'API Server',
       },
     ],
   },
