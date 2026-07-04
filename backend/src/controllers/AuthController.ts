@@ -210,29 +210,29 @@ export class AuthController {
 
       const { session } = sessionData;
       console.log('[OAuth Callback] 5. exchangeCodeForSession finished successfully.');
-      
-      if (session) {
-        console.log('[OAuth Callback] 6. Valid session returned. Creating cookie...');
-        try {
-          this.setSessionCookie(res, session.access_token);
-          console.log(`[OAuth] JWT created`);
-          console.log(`[OAuth] Session created`);
-          console.log(`[OAuth] Redirecting to frontend`);
-          const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
-          res.redirect(finalRedirectUrl);
-        } catch (cookieErr: any) {
-          console.error('[OAuth Callback] ERROR creating session cookie:', cookieErr.message);
-          console.error(cookieErr.stack);
-          throw cookieErr;
+            if (session) {
+          console.log('[OAuth Callback] 6. Valid session returned. Creating cookie...');
+          try {
+            this.setSessionCookie(res, session.access_token);
+            console.log(`[OAuth] JWT created`);
+            console.log(`[OAuth] Session created`);
+            console.log(`[OAuth] Redirecting to frontend`);
+            const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
+            res.redirect(finalRedirectUrl);
+            return; // Prevent duplicate redirect execution
+          } catch (cookieErr: any) {
+            console.error('[OAuth Callback] ERROR creating session cookie:', cookieErr.message);
+            console.error(cookieErr.stack);
+            throw cookieErr;
+          }
+        } else {
+          console.warn('[OAuth Callback] WARNING: No session returned from code exchange.');
         }
-      } else {
-        console.warn('[OAuth Callback] WARNING: No session returned from code exchange.');
-      }
-
-      const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
-      console.log(`[OAuth Callback] 8. Redirecting to frontend: ${finalRedirectUrl}`);
-      console.log('================ OAUTH CALLBACK END ================\n');
-      res.redirect(finalRedirectUrl);
+  
+        const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
+        console.log(`[OAuth Callback] 8. Redirecting to frontend (No Session): ${finalRedirectUrl}`);
+        console.log('================ OAUTH CALLBACK END ================\n');
+        res.redirect(finalRedirectUrl);
     } catch (error: any) {
       console.error('\n================ OAUTH CALLBACK FATAL ERROR ================');
       console.error('Error Message:', error.message || error);
