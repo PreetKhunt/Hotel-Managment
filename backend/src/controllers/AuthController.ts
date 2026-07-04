@@ -125,10 +125,23 @@ export class AuthController {
   googleOAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const nextParam = req.query.next as string || '/';
-      const redirectUrl = `${env.GOOGLE_CALLBACK_URL}?next=${encodeURIComponent(nextParam)}`;
+      
+      // Fix: The redirectUrl MUST EXACTLY match the Supabase whitelist.
+      // Do NOT append query parameters like ?next=... here, otherwise Supabase silently rejects it
+      // and redirects to the Site URL (Netlify) instead of Railway!
+      const redirectUrl = env.GOOGLE_CALLBACK_URL;
+      
+      // Store 'next' in a secure cookie to read it during the callback
+      res.cookie('oauth_next', nextParam, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        path: '/',
+        maxAge: 10 * 60 * 1000, // 10 minutes
+      });
       
       console.log(`[OAuth] Generating Google OAuth URL...`);
-      console.log(`[OAuth] redirectTo value configured as: ${redirectUrl}`);
+      console.log(`[OAuth] redirectTo value configured EXACTLY as: ${redirectUrl}`);
 
       const reqInfo = {
         ip: req.ip || req.connection.remoteAddress || 'unknown',
@@ -150,7 +163,15 @@ export class AuthController {
     console.log('[OAuth Callback] 1. Callback entered. URL:', req.originalUrl);
     try {
       const code = req.query.code as string;
-      const nextUrl = req.query.next as string || '/';
+      
+      // Read nextUrl from the secure cookie we set before redirecting
+      const nextUrl = req.cookies.oauth_next || '/';
+      res.clearCookie('oauth_next', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        path: '/',
+      });
       
       console.log(`[OAuth Callback] 2. Authorization code received: ${!!code ? 'YES (length: ' + code.length + ')' : 'NO'}`);
       console.log(`[OAuth Callback] 3. Target next URL: ${nextUrl}`);
