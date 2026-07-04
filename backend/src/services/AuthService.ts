@@ -268,8 +268,10 @@ export class AuthService {
       try {
         user = await this.userRepo.findById(data.user.id);
       } catch (findErr: any) {
-        console.error('[AuthService] ERROR finding user in public.users:', findErr.message);
-        console.error(findErr.stack);
+        console.error('[AuthService] ERROR finding user in public.users:');
+        console.error(`Message: ${findErr.message}`);
+        console.error(`Postgres Code: ${findErr.code || 'N/A'}`);
+        console.error(`Stack: ${findErr.stack}`);
         throw findErr;
       }
       
@@ -279,8 +281,8 @@ export class AuthService {
         const firstName = nameParts[0] || 'User';
         const lastName = nameParts.slice(1).join(' ') || '';
         
-        console.log(`[AuthService] 4.5. Dynamically fetching Guest role ID...`);
-        const { data: roleData, error: roleError } = await this.createTempAuthClient().from('roles').select('id').eq('name', 'Guest').single();
+        console.log(`[AuthService] 4.5. Dynamically fetching Guest role ID using service-role client...`);
+        const { data: roleData, error: roleError } = await this.supabase.from('roles').select('id').eq('name', 'Guest').single();
         if (roleError) {
            console.warn('[AuthService] WARNING: Failed to fetch Guest role ID:', roleError);
         }
@@ -297,8 +299,10 @@ export class AuthService {
             lastName,
           } as User);
         } catch (createErr: any) {
-          console.error('[AuthService] ERROR inserting user into public.users:', createErr.message);
-          console.error(createErr.stack);
+          console.error('[AuthService] ERROR inserting user into public.users:');
+          console.error(`Message: ${createErr.message}`);
+          console.error(`Postgres Code: ${createErr.code || 'N/A'}`);
+          console.error(`Stack: ${createErr.stack}`);
           throw createErr;
         }
         console.log(`[AuthService] 4.7. Successfully created user ${data.user.id} in public.users.`);
@@ -308,8 +312,10 @@ export class AuthService {
         try {
           await this.userRepo.update(data.user.id, { lastLoginAt: new Date() });
         } catch (updateErr: any) {
-          console.error('[AuthService] ERROR updating user lastLoginAt:', updateErr.message);
-          console.error(updateErr.stack);
+          console.error('[AuthService] ERROR updating user lastLoginAt:');
+          console.error(`Message: ${updateErr.message}`);
+          console.error(`Postgres Code: ${updateErr.code || 'N/A'}`);
+          console.error(`Stack: ${updateErr.stack}`);
           throw updateErr;
         }
       }

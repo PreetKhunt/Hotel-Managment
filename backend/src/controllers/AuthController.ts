@@ -114,7 +114,7 @@ export class AuthController {
   googleOAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const nextParam = req.query.next as string || '/';
-      const redirectUrl = `${env.CORS_ORIGIN}/api/v1/auth/callback?next=${encodeURIComponent(nextParam)}`;
+      const redirectUrl = `${env.GOOGLE_CALLBACK_URL}?next=${encodeURIComponent(nextParam)}`;
       
       const reqInfo = {
         ip: req.ip || req.connection.remoteAddress || 'unknown',
@@ -179,9 +179,10 @@ export class AuthController {
         console.warn('[OAuth Callback] WARNING: No session returned from code exchange.');
       }
 
-      console.log(`[OAuth Callback] 8. Redirecting to frontend: ${nextUrl}`);
+      const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
+      console.log(`[OAuth Callback] 8. Redirecting to frontend: ${finalRedirectUrl}`);
       console.log('================ OAUTH CALLBACK END ================\n');
-      res.redirect(nextUrl);
+      res.redirect(finalRedirectUrl);
     } catch (error: any) {
       console.error('\n================ OAUTH CALLBACK FATAL ERROR ================');
       console.error('Error Message:', error.message || error);
