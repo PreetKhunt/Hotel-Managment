@@ -119,16 +119,11 @@ export class AuthService {
     }
   }
 
-  async logout(token: string, reqInfo: { userId: string, ip: string, userAgent: string, requestId: string }) {
-    // Use admin.deleteUser's session invalidation or just clear the cookie server-side.
-    // The service_role client doesn't have signOut, so we invalidate via admin API.
+  async logout(reqInfo: { userId: string, ip: string, userAgent: string, requestId: string }, req: any, res: any) {
     try {
-      // Attempt to sign out the user by invalidating their session via the admin API
-      await this.supabase.auth.admin.signOut(token);
+      await this.createSSRClient(req, res).auth.signOut();
     } catch (signOutError) {
-      // If admin signOut fails (e.g. method not available), just log it.
-      // The cookie will be cleared on the response side regardless.
-      console.warn('Admin signOut not available, clearing cookie only:', signOutError);
+      console.warn('SSR signOut failed:', signOutError);
     }
     
     await this.auditLogger.logAction({

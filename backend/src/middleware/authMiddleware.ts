@@ -3,7 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { IUserRepository } from '../domain/repositories/IUserRepository';
 import { IRoleRepository } from '../domain/repositories/IRoleRepository';
 import { AppError, ErrorCode } from '../utils/AppError';
-import { authConfig } from '../config/auth';
+
 import { UserStatus } from '../domain/entities/User';
 
 // We extend the Express Request interface to include our user payload
@@ -32,29 +32,28 @@ export const createAuthMiddleware = (
       // Extract token from header or cookie
       console.log(`[Auth Debug] Incoming req.headers.cookie:`, req.headers.cookie);
       console.log(`[Auth Debug] Parsed req.cookies:`, JSON.stringify(req.cookies));
-      let token = req.cookies[authConfig.session.cookieName];
-      if (!token && req.headers.authorization?.startsWith('Bearer ')) {
-        token = req.headers.authorization.split(' ')[1];
-      }
+      let token = req.headers.authorization?.startsWith('Bearer ') 
+        ? req.headers.authorization.split(' ')[1] 
+        : undefined;
 
-      if (!token) {
-        console.debug(`[AuthMiddleware] Token missing. Cookies received:`, req.cookies);
-        console.debug(`[AuthMiddleware] Origin: ${req.headers.origin}, Referer: ${req.headers.referer}`);
-        throw new AppError('Authentication token missing', 401, ErrorCode.UNAUTHORIZED);
-      }
-
-      // Verify JWT with Supabase
-      // IMPORTANT: We use a temporary client here instead of the global `supabase` client.
-      // Calling `getUser(token)` sets the in-memory session. Doing this on the global 
-      // service role client pollutes it with the user's token for all subsequent requests,
-      // which causes RLS to apply to public endpoints like GET /rooms (returning 0 rows).
-      const { createClient } = require('@supabase/supabase-js');
+      // Use @supabase/ssr to automatically parse sb-*-auth-token cookies
+      const { createServerClient } = require('@supabase/ssr');
       const { env } = require('../config/env');
-      const authClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
-        auth: { persistSession: false, autoRefreshToken: false }
+      
+      const authClient = createServerClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+        cookies: {
+          getAll() {
+            return Object.keys(req.cookies).map((name) => ({ name, value: req.cookies[name] }));
+          },
+          setAll() {} // Read-only for middleware
+        }
       });
       
-      const { data: { user: authUser }, error } = await authClient.auth.getUser(token);
+      // If there's an explicit Authorization header, we can verify that token.
+      // Otherwise, getUser() will automatically use the parsed session from the cookies.
+      const { data: { user: authUser }, error } = token 
+        ? await authClient.auth.getUser(token)
+        : await authClient.auth.getUser();
 
       if (error || !authUser) {
         console.error(`[AuthMiddleware] JWT Verification Failed:`, error?.message || 'No user found');

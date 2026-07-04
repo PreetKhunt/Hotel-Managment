@@ -6,25 +6,7 @@ import { env } from '../config/env';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  private setSessionCookie(res: Response, token: string) {
-    console.log('[Auth] setSessionCookie executing...');
-    console.log(`[Auth] NODE_ENV is: ${process.env.NODE_ENV}`);
-    console.log(`[Auth] Access token exists: ${!!token} (length: ${token?.length || 0})`);
-    
-    const cookieOptions = {
-      httpOnly: true,
-      secure: true, // Always true for cross-origin Netlify <-> Railway
-      sameSite: 'none' as const, // Always 'none' to allow cross-origin requests
-      path: '/',
-      maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
-      // Intentionally NOT setting Domain attribute so it acts as a host-only cookie
-    };
-    
-    console.log(`[Auth] Cookie name: ${authConfig.session.cookieName}`);
-    console.log(`[Auth] Cookie options:`, JSON.stringify(cookieOptions));
-    
-    res.cookie(authConfig.session.cookieName, token, cookieOptions);
-    
+  private setSessionCookie(res: Response) {
     // Set frontend hint cookie (NOT httpOnly) so SPA knows not to poll if this is missing
     res.cookie('is_logged_in', '1', {
       httpOnly: false,
@@ -33,16 +15,9 @@ export class AuthController {
       path: '/',
       maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
     });
-    console.log('[Auth] Set-Cookie header attached to response');
   }
 
   private clearSessionCookie(res: Response) {
-    res.clearCookie(authConfig.session.cookieName, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none' as const,
-      path: '/',
-    });
     res.clearCookie('is_logged_in', {
       httpOnly: false,
       secure: true,
@@ -67,7 +42,7 @@ export class AuthController {
       const { user, session } = await this.authService.login(email, password, reqInfo);
       
       if (session) {
-        this.setSessionCookie(res, session.access_token);
+        this.setSessionCookie(res);
       }
 
       res.status(200).json({
@@ -97,7 +72,7 @@ export class AuthController {
       const { user, session } = await this.authService.register(email, password, firstName, lastName, reqInfo);
 
       if (session) {
-        this.setSessionCookie(res, session.access_token);
+        this.setSessionCookie(res);
       }
 
       res.status(201).json({
@@ -122,15 +97,12 @@ export class AuthController {
       console.log("[FORENSIC] Frontend Debug ID (X-Debug-Logout-ID):", req.headers['x-debug-logout-id'] || 'MISSING');
       console.log("[FORENSIC] Cookies (raw):", req.headers.cookie);
       console.log("[FORENSIC] Cookies (parsed):", req.cookies);
-      console.log("[FORENSIC] hh_session exists:", !!req.cookies[authConfig.session.cookieName]);
       console.log("[FORENSIC] Authorization Header:", req.headers.authorization ? 'Present' : 'Missing');
       console.log("[FORENSIC] Request Body:", JSON.stringify(req.body));
       console.log("[FORENSIC] IP Address:", req.ip || req.connection.remoteAddress || 'unknown');
       console.log("[FORENSIC] Stack trace of execution at controller:", (new Error()).stack);
       console.log("=========================================================\n");
 
-      const token = req.cookies[authConfig.session.cookieName] || req.headers.authorization?.split(' ')[1];
-      
       const reqInfo = {
         userId: (req as any).user?.id || null,
         ip: req.ip || req.connection.remoteAddress || 'unknown',
@@ -138,12 +110,8 @@ export class AuthController {
         requestId: (req as any).id || 'unknown',
       };
 
-      if (token) {
-         console.log("[FORENSIC] Calling authService.logout...");
-         await this.authService.logout(token, reqInfo);
-      } else {
-         console.log("[FORENSIC] No token found, skipping authService.logout.");
-      }
+      console.log("[FORENSIC] Calling authService.logout...");
+      await this.authService.logout(reqInfo, req, res);
       
       console.log("[FORENSIC] Calling clearSessionCookie...");
       this.clearSessionCookie(res);
@@ -249,7 +217,7 @@ export class AuthController {
             if (session) {
           console.log('[OAuth Callback] 6. Valid session returned. Creating cookie...');
           try {
-            this.setSessionCookie(res, session.access_token);
+            this.setSessionCookie(res);
             console.log(`[OAuth] JWT created`);
             console.log(`[OAuth] Session created`);
             console.log(`[OAuth] Redirecting to frontend`);
