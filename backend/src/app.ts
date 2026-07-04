@@ -31,13 +31,27 @@ app.use(tracingMiddleware);
 // Enable CORS
 app.use(
   cors({
-    origin: [
-      env.CORS_ORIGIN,
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://hotel-managments.netlify.app',
-      'https://hotel-managment-production-8824.up.railway.app'
-    ],
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        env.CORS_ORIGIN,
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://hotel-managments.netlify.app',
+        'https://hotel-managment-production-8824.up.railway.app'
+      ];
+      
+      // Allow if no origin (e.g. server-to-server) or if it's in the exact list
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Allow Netlify Deploy Previews dynamically
+      if (origin.endsWith('--hotel-managments.netlify.app')) {
+        return callback(null, true);
+      }
+      
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],

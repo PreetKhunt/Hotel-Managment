@@ -45,7 +45,12 @@ function LoginForm() {
     const baseUrl = process.env.NODE_ENV === 'production' 
       ? 'https://hotel-managment-production-8824.up.railway.app/api/v1' 
       : (process.env.NEXT_PUBLIC_API_URL || '/api/v1');
-    window.location.href = `${baseUrl}/auth/google?next=${encodeURIComponent(next)}`;
+    
+    // Ensure 'next' is an absolute URL to return to the correct Deploy Preview or localhost port
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const absoluteNext = next.startsWith('http') ? next : `${origin}${next}`;
+    
+    window.location.href = `${baseUrl}/auth/google?next=${encodeURIComponent(absoluteNext)}`;
   };
 
   return (

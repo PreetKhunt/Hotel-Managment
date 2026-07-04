@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
@@ -12,9 +12,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
-  
-  // Single-flight mechanism
-  const fetchAttempted = useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -23,7 +20,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: user = null, isLoading: queryLoading, refetch } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
-      fetchAttempted.current = true;
       try {
         console.log('[Auth Debug] document.cookie:', typeof document !== 'undefined' ? document.cookie : 'SSR');
         console.log('[Auth Debug] Attempting GET /api/v1/users/me');
@@ -41,9 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     gcTime: 30 * 60 * 1000,   // 30 minutes
     // We only enable the query once hydration is done.
     // React Query inherently deduplicates requests for the same queryKey.
-    enabled: mounted && !fetchAttempted.current,
+    enabled: mounted,
   });
 
+  // Also ensure we don't flash 'unauthenticated' during hydration
   const isLoading = !mounted || queryLoading;
 
   const login = (userData: User) => {
@@ -82,5 +79,3 @@ export const useAuth = () => {
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context;
-};
