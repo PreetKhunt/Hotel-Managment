@@ -36,6 +36,8 @@ export const createAuthMiddleware = (
       }
 
       if (!token) {
+        console.error(`[AuthMiddleware] Token missing. Cookies received:`, req.cookies);
+        console.error(`[AuthMiddleware] Origin: ${req.headers.origin}, Referer: ${req.headers.referer}`);
         throw new AppError('Authentication token missing', 401, ErrorCode.UNAUTHORIZED);
       }
 

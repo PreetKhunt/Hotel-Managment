@@ -7,20 +7,31 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   private setSessionCookie(res: Response, token: string) {
-    res.cookie(authConfig.session.cookieName, token, {
+    console.log('[Auth] setSessionCookie executing...');
+    console.log(`[Auth] NODE_ENV is: ${process.env.NODE_ENV}`);
+    console.log(`[Auth] Access token exists: ${!!token} (length: ${token?.length || 0})`);
+    
+    const cookieOptions = {
       httpOnly: true,
-      secure: authConfig.session.secureCookie,
-      sameSite: authConfig.session.secureCookie ? 'none' : 'lax',
+      secure: true, // Always true for cross-origin Netlify <-> Railway
+      sameSite: 'none' as const, // Always 'none' to allow cross-origin requests
       path: '/',
       maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
-    });
+      // Intentionally NOT setting Domain attribute so it acts as a host-only cookie
+    };
+    
+    console.log(`[Auth] Cookie name: ${authConfig.session.cookieName}`);
+    console.log(`[Auth] Cookie options:`, JSON.stringify(cookieOptions));
+    
+    res.cookie(authConfig.session.cookieName, token, cookieOptions);
+    console.log('[Auth] Set-Cookie header attached to response');
   }
 
   private clearSessionCookie(res: Response) {
     res.clearCookie(authConfig.session.cookieName, {
       httpOnly: true,
-      secure: authConfig.session.secureCookie,
-      sameSite: authConfig.session.secureCookie ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none' as const,
       path: '/',
     });
   }

@@ -31,10 +31,16 @@ app.use(tracingMiddleware);
 // Enable CORS
 app.use(
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: [
+      env.CORS_ORIGIN,
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://hotel-managments.netlify.app',
+      'https://hotel-managment-production-8824.up.railway.app'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   })
 );
 
