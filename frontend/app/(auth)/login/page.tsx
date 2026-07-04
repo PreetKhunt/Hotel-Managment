@@ -14,7 +14,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") || "/";
-  const { refreshUser } = useAuth();
+  const { login } = useAuth();
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
@@ -28,8 +28,8 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      await api.post("/auth/login", formData);
-      await refreshUser(); // Update context
+      const response = await api.post("/auth/login", formData);
+      login(response.data.data.user); // Update context instantly
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
       toast.success("Welcome back to Hospitality Hub");
       router.push(next);

@@ -14,7 +14,7 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") || "/";
-  const { refreshUser } = useAuth();
+  const { login } = useAuth();
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
@@ -30,8 +30,8 @@ function RegisterForm() {
     setLoading(true);
 
     try {
-      await api.post("/auth/register", formData);
-      await refreshUser();
+      const response = await api.post("/auth/register", formData);
+      login(response.data.data.user);
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
       toast.success("Account created successfully");
       router.push(next);

@@ -16,12 +16,18 @@ export const errorHandler = (
   const errorCode = err instanceof AppError ? err.errorCode : undefined;
   const message = err.message || 'Internal Server Error';
 
-  // Log error using Winston
-  logger.error(
-    `[${req.method}] ${req.path} - Status: ${statusCode} - Message: ${message}${
-      env.NODE_ENV === 'development' ? ` - Stack: ${err.stack}` : ''
-    }`
-  );
+  if (statusCode === 401 && message === 'Authentication token missing') {
+    logger.debug(`[${req.method}] ${req.path} - Unauthenticated request`);
+  } else if (statusCode >= 400 && statusCode < 500) {
+    logger.warn(`[${req.method}] ${req.path} - Status: ${statusCode} - Message: ${message}`);
+  } else {
+    // Log server errors using Winston
+    logger.error(
+      `[${req.method}] ${req.path} - Status: ${statusCode} - Message: ${message}${
+        env.NODE_ENV === 'development' ? ` - Stack: ${err.stack}` : ''
+      }`
+    );
+  }
 
   sendError(res, message, statusCode, env.NODE_ENV === 'development' ? err.stack : null, errorCode);
 };
