@@ -39,7 +39,8 @@ function LoginForm() {
 
   const handleGoogleLogin = () => {
     // Standard OAuth flow: Redirect to backend which will redirect to Supabase/Google
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/auth/google?next=${encodeURIComponent(next)}`;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    window.location.href = `${baseUrl}/auth/google?next=${encodeURIComponent(next)}`;
   };
 
   return (
