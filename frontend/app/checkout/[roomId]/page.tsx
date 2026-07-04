@@ -246,7 +246,7 @@ export default function CheckoutPage() {
                 <div>
                   <h3 className="font-bold text-lg mb-1" style={{ color: GOLD }}>{room.name}</h3>
                   <div className="text-sm" style={{ color: SECONDARY }}>{room.type} Room • {room.bedType}</div>
-                  <div className="mt-2 text-sm font-semibold">${room.pricePerNight} / night</div>
+                  <div className="mt-2 text-sm font-semibold">${room.pricePerNight.toLocaleString()} / night</div>
                 </div>
               </div>
               
@@ -283,7 +283,7 @@ export default function CheckoutPage() {
               
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between">
-                  <span style={{ color: SECONDARY }}>${room.pricePerNight} x {nights} nights</span>
+                  <span style={{ color: SECONDARY }}>${room.pricePerNight.toLocaleString()} x {nights} nights</span>
                   <span>${subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between border-b pb-4" style={{ borderColor: "rgba(255,255,255,0.1)" }}>

@@ -226,7 +226,7 @@ export default function RoomsPage() {
                 >
                   <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem' }}>Per night</span>
                   <span style={{ color: '#C9A84C', fontWeight: 700, fontSize: '1rem' }}>
-                    ${room.pricePerNight}
+                    ${room.pricePerNight.toLocaleString()}
                   </span>
                 </div>
 
