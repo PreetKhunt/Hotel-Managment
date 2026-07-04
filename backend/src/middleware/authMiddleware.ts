@@ -30,6 +30,8 @@ export const createAuthMiddleware = (
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       // Extract token from header or cookie
+      console.log(`[Auth Debug] Incoming req.headers.cookie:`, req.headers.cookie);
+      console.log(`[Auth Debug] Parsed req.cookies:`, JSON.stringify(req.cookies));
       let token = req.cookies[authConfig.session.cookieName];
       if (!token && req.headers.authorization?.startsWith('Bearer ')) {
         token = req.headers.authorization.split(' ')[1];

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
@@ -12,18 +12,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
+  
+  // Single-flight mechanism
+  const fetchAttempted = useRef(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const hasHintCookie = mounted && typeof document !== 'undefined' && document.cookie.includes('is_logged_in=1');
-
   const { data: user = null, isLoading: queryLoading, refetch } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
-      const res = await api.get('/users/me');
-      return res.data.data as User;
+      fetchAttempted.current = true;
+      try {
+        console.log('[Auth Debug] document.cookie:', typeof document !== 'undefined' ? document.cookie : 'SSR');
+        console.log('[Auth Debug] Attempting GET /api/v1/users/me');
+        const res = await api.get('/users/me');
+        return res.data.data as User;
+      } catch (error) {
+        return null;
+      }
     },
     retry: false,
     refetchOnWindowFocus: false,
@@ -31,10 +39,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refetchOnMount: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000,   // 30 minutes
-    enabled: hasHintCookie,
+    // We only enable the query once hydration is done.
+    // React Query inherently deduplicates requests for the same queryKey.
+    enabled: mounted && !fetchAttempted.current,
   });
 
-  const isLoading = !mounted || (hasHintCookie && queryLoading);
+  const isLoading = !mounted || queryLoading;
 
   const login = (userData: User) => {
     queryClient.setQueryData(['user'], userData);
@@ -49,7 +59,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       queryClient.setQueryData(['user'], null);
       queryClient.removeQueries({ queryKey: ['bookings'] });
       queryClient.removeQueries({ queryKey: ['user'] });
-      // Manually clear the hint cookie since sometimes the backend response might be ignored if there's a network error
       if (typeof document !== 'undefined') {
         document.cookie = 'is_logged_in=; Max-Age=0; path=/;';
       }
