@@ -59,7 +59,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     // Only happens on explicit user action
     try {
-      await api.post('/auth/logout');
+      await api.post('/auth/logout', {}, {
+        headers: {
+          'X-Debug-Logout-ID': 'Frontend-Manual-Click'
+        }
+      });
     } catch (error) {
       console.error('[Logout] Failed:', error);
     } finally {
