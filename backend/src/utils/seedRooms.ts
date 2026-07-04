@@ -1,15 +1,10 @@
-import { Pool } from 'pg';
+import { supabase } from '../config/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import * as dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 import { env } from '../config/env';
-
-const pool = new Pool({
-  connectionString: env.DATABASE_URL,
-  ssl: env.DATABASE_URL.includes('supabase') ? { rejectUnauthorized: false } : undefined
-});
 
 const imageSets = {
   standard: [
@@ -275,45 +270,40 @@ async function seed() {
     
     // Clear existing rooms
     console.log('Clearing existing rooms (and cascading bookings)...');
-    await pool.query('DELETE FROM rooms');
+    await supabase.from('rooms').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     
     console.log('Inserting 24 new luxury rooms...');
     
     for (const room of rooms) {
-      await pool.query(`
-        INSERT INTO rooms (
-          id, name, type, price_per_night, capacity, status, 
-          description, long_description, size, bed_type, floor, 
-          rating, review_count, featured, amenities, images
-        ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-        )
-      `, [
-        uuidv4(),
-        room.name,
-        room.type,
-        room.price,
-        room.capacity,
-        'available',
-        room.description,
-        room.long_description,
-        room.size,
-        room.bed_type,
-        room.floor,
-        room.rating,
-        room.review_count,
-        room.featured,
-        room.amenities,
-        room.images
-      ]);
-      console.log(`Inserted: ${room.name}`);
+      const { error } = await supabase.from('rooms').insert([{
+        id: uuidv4(),
+        name: room.name,
+        type: room.type,
+        price_per_night: room.price,
+        capacity: room.capacity,
+        status: 'available',
+        description: room.description,
+        long_description: room.long_description,
+        size: room.size,
+        bed_type: room.bed_type,
+        floor: room.floor,
+        rating: room.rating,
+        review_count: room.review_count,
+        featured: room.featured,
+        amenities: room.amenities,
+        images: room.images
+      }]);
+      
+      if (error) {
+        console.error(`Failed to insert ${room.name}:`, error.message);
+      } else {
+        console.log(`Inserted: ${room.name}`);
+      }
     }
 
     console.log('Successfully seeded 24 rooms!');
   } catch (error) {
     console.error('Error seeding database:', error);
-  } finally {
-    await pool.end();
   }
 }
 
