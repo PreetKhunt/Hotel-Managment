@@ -59,7 +59,7 @@ export const createAuthMiddleware = (
       try {
          // Verify the JWT locally using the JWT secret to completely avoid network/refresh issues
          // This is the most bulletproof way to authenticate a stateless API request.
-         const decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET || process.env.SUPABASE_JWT_SECRET || '');
+         const decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET);
          authUser = { id: decoded.sub };
          console.log(`[AuthMiddleware] JWT verified locally. User ID: ${authUser.id}`);
       } catch (jwtError: any) {

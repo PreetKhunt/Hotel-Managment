@@ -16,24 +16,9 @@ export class AuthController {
         maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
       });
     }
-
-    // Set frontend hint cookie (NOT httpOnly) so SPA knows not to poll if this is missing
-    res.cookie('is_logged_in', '1', {
-      httpOnly: false,
-      secure: true,
-      sameSite: 'none' as const,
-      path: '/',
-      maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
-    });
   }
 
   private clearSessionCookie(res: Response) {
-    res.clearCookie('is_logged_in', {
-      httpOnly: false,
-      secure: true,
-      sameSite: 'none' as const,
-      path: '/',
-    });
     res.clearCookie('hh_session', {
       httpOnly: true,
       secure: true,

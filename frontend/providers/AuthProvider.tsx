@@ -1,8 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { User, AuthContextType } from '@/types/auth';
 
@@ -11,84 +11,76 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [mounted, setMounted] = useState(false);
+  
+  // Strict initial states: loading=true, user=null, authenticated=false
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Ensure exactly ONE network request
+  const hasFetched = useRef(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (hasFetched.current) return;
+    hasFetched.current = true;
 
-  const { data: user = null, isLoading: queryLoading, refetch } = useQuery({
-    queryKey: ['user'],
-    queryFn: async () => {
+    let mounted = true;
+
+    const initializeAuth = async () => {
       try {
-        console.log('[Auth Debug] document.cookie:', typeof document !== 'undefined' ? document.cookie : 'SSR');
-        console.log('[Auth Debug] Attempting GET /api/v1/users/me');
         const res = await api.get('/users/me');
-        console.log('[Auth Debug] GET /api/v1/users/me response data:', res.data);
-        return res.data.data as User;
+        if (mounted && res.status === 200) {
+          setUser(res.data.data as User);
+          queryClient.setQueryData(['user'], res.data.data as User);
+        }
       } catch (error: any) {
-        console.error('[Auth Debug] GET /api/v1/users/me FAILED with error:', error.response?.status, error.message);
-        return null;
+        if (mounted) {
+          setUser(null);
+          queryClient.setQueryData(['user'], null);
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-    },
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000,   // 30 minutes
-    // We only enable the query once hydration is done.
-    // React Query inherently deduplicates requests for the same queryKey.
-    enabled: mounted,
-  });
+    };
 
-  // Also ensure we don't flash 'unauthenticated' during hydration
-  const isLoading = !mounted || queryLoading;
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, [queryClient]);
 
   const login = (userData: User) => {
+    setUser(userData);
     queryClient.setQueryData(['user'], userData);
   };
 
   const logout = async () => {
-    const logoutId = crypto.randomUUID();
-    console.trace(`[FORENSIC] LOGOUT INVOKED (ID: ${logoutId})`);
-    
-    if (typeof window !== 'undefined') {
-      console.log(`[FORENSIC] Pathname: ${window.location.pathname}`);
-      console.log(`[FORENSIC] Performance.now(): ${performance.now()}`);
-      
-      // Attempt to get navigation type
-      try {
-        const navEntries = performance.getEntriesByType("navigation");
-        if (navEntries.length > 0) {
-          console.log(`[FORENSIC] Navigation Type: ${(navEntries[0] as PerformanceNavigationTiming).type}`);
-        }
-      } catch (e) {}
-    }
-    
-    console.log(`[FORENSIC] Current User:`, user);
-    
+    // Only happens on explicit user action
     try {
-      await api.post('/auth/logout', {}, {
-        headers: {
-          'X-Debug-Logout-ID': logoutId
-        }
-      });
+      await api.post('/auth/logout');
     } catch (error) {
-      console.error('[FORENSIC] Logout request error:', error);
+      console.error('[Logout] Failed:', error);
     } finally {
+      setUser(null);
       queryClient.setQueryData(['user'], null);
-      queryClient.removeQueries({ queryKey: ['bookings'] });
-      queryClient.removeQueries({ queryKey: ['user'] });
-      if (typeof document !== 'undefined') {
-        document.cookie = 'is_logged_in=; Max-Age=0; path=/;';
-      }
+      queryClient.removeQueries(); // Clears everything
       router.push('/');
     }
   };
 
   const refreshUser = async () => {
-    await refetch();
+    try {
+      const res = await api.get('/users/me');
+      if (res.status === 200) {
+        setUser(res.data.data as User);
+        queryClient.setQueryData(['user'], res.data.data as User);
+      }
+    } catch (error) {
+      setUser(null);
+      queryClient.setQueryData(['user'], null);
+    }
   };
 
   return (
@@ -103,3 +95,5 @@ export const useAuth = () => {
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  return context;
+};
