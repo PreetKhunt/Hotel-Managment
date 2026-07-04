@@ -34,6 +34,12 @@ export class AuthController {
       sameSite: 'none' as const,
       path: '/',
     });
+    res.clearCookie('hh_session', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none' as const,
+      path: '/',
+    });
   }
 
   login = async (req: Request, res: Response, next: NextFunction) => {
