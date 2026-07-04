@@ -5,12 +5,21 @@ import { authConfig } from '../config/auth';
 import { UserStatus } from '../domain/entities/User';
 import { AppError, ErrorCode } from '../utils/AppError';
 
+import { env } from '../config/env';
+
 export class AuthService {
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly userRepo: IUserRepository,
     private readonly auditLogger: AuthAuditLogService
   ) {}
+
+  private createTempAuthClient() {
+    const { createClient } = require('@supabase/supabase-js');
+    return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
+  }
 
   async validateUserStatus(userId: string): Promise<void> {
     const user = await this.userRepo.findById(userId);
@@ -38,7 +47,7 @@ export class AuthService {
       throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
     }
 
-    const { data, error } = await this.supabase.auth.signInWithPassword({
+    const { data, error } = await this.createTempAuthClient().auth.signInWithPassword({
       email,
       password,
     });
@@ -75,7 +84,8 @@ export class AuthService {
       };
     } catch (validationError) {
       // If validation fails, sign out the user from supabase immediately
-      await this.supabase.auth.signOut();
+      // Actually we don't need to sign out if we used a temp client, but it's safe to do so.
+      await this.createTempAuthClient().auth.signOut();
       
       await this.auditLogger.logAction({
         userId: data.user.id,
@@ -158,7 +168,7 @@ export class AuthService {
     }
 
     // Now sign in immediately to get a session (access_token + refresh_token)
-    const { data: signInData, error: signInError } = await this.supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await this.createTempAuthClient().auth.signInWithPassword({
       email,
       password,
     });
@@ -192,7 +202,7 @@ export class AuthService {
       throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
     }
 
-    const { data, error } = await this.supabase.auth.signInWithOAuth({
+    const { data, error } = await this.createTempAuthClient().auth.signInWithOAuth({
       provider,
       options: {
         redirectTo: redirectUrl,
@@ -213,7 +223,7 @@ export class AuthService {
   }
 
   async exchangeCodeForSession(code: string, reqInfo: { ip: string, userAgent: string, requestId: string }) {
-    const { data, error } = await this.supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await this.createTempAuthClient().auth.exchangeCodeForSession(code);
 
     if (error || !data.user) {
       await this.auditLogger.logAction({
@@ -240,7 +250,8 @@ export class AuthService {
 
       return { user: data.user, session: data.session };
     } catch (validationError) {
-      await this.supabase.auth.signOut();
+      // Don't need to sign out from global client
+      await this.createTempAuthClient().auth.signOut();
       
       await this.auditLogger.logAction({
         userId: data.user.id,

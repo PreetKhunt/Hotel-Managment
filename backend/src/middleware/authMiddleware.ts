@@ -23,7 +23,7 @@ declare global {
 }
 
 export const createAuthMiddleware = (
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   userRepo: IUserRepository,
   roleRepo: IRoleRepository
 ) => {
@@ -40,7 +40,17 @@ export const createAuthMiddleware = (
       }
 
       // Verify JWT with Supabase
-      const { data: { user: authUser }, error } = await supabase.auth.getUser(token);
+      // IMPORTANT: We use a temporary client here instead of the global `supabase` client.
+      // Calling `getUser(token)` sets the in-memory session. Doing this on the global 
+      // service role client pollutes it with the user's token for all subsequent requests,
+      // which causes RLS to apply to public endpoints like GET /rooms (returning 0 rows).
+      const { createClient } = require('@supabase/supabase-js');
+      const { env } = require('../config/env');
+      const authClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false }
+      });
+      
+      const { data: { user: authUser }, error } = await authClient.auth.getUser(token);
 
       if (error || !authUser) {
         throw new AppError('Invalid or expired authentication token', 401, ErrorCode.UNAUTHORIZED);
