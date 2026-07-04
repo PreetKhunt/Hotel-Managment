@@ -1,10 +1,5 @@
 import { supabase } from '../config/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import * as dotenv from 'dotenv';
-import path from 'path';
-
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-import { env } from '../config/env';
 
 const imageSets = {
   standard: [
