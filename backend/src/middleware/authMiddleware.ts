@@ -48,36 +48,23 @@ export const createAuthMiddleware = (
         throw new AppError('Authentication token missing', 401, ErrorCode.UNAUTHORIZED);
       }
 
-      // Verify JWT with Supabase Admin client directly using the token string.
-      // Passing the token string explicitly forces Supabase to just verify the JWT
-      // and fetch the user WITHOUT trying to refresh the session locally.
-      const jwt = require('jsonwebtoken');
       const { env } = require('../config/env');
       
       let authUser;
       
-      try {
-         // Verify the JWT locally using the JWT secret to completely avoid network/refresh issues
-         // This is the most bulletproof way to authenticate a stateless API request.
-         const decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET);
-         authUser = { id: decoded.sub };
-         console.log(`[AuthMiddleware] JWT verified locally. User ID: ${authUser.id}`);
-      } catch (jwtError: any) {
-         console.error(`[AuthMiddleware] Local JWT verification failed:`, jwtError.message);
-         // Fallback to Supabase API using a temporary ANON client.
-         // We cannot use the global `_supabase` client here because it was instantiated 
-         // with the service_role key, which GoTrue rejects for the /user endpoint.
-         const { createClient } = require('@supabase/supabase-js');
-         const fallbackClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
-            auth: { persistSession: false, autoRefreshToken: false }
-         });
-         
-         const { data, error } = await fallbackClient.auth.getUser(token);
-         if (error || !data.user) {
-            throw new AppError('Invalid or expired authentication token', 401, ErrorCode.UNAUTHORIZED);
-         }
-         authUser = data.user;
+      // Use Supabase API using a temporary ANON client to verify the token.
+      // We cannot use the global `_supabase` client here because it was instantiated 
+      // with the service_role key, which GoTrue rejects for the /user endpoint.
+      const { createClient } = require('@supabase/supabase-js');
+      const fallbackClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+         auth: { persistSession: false, autoRefreshToken: false }
+      });
+      
+      const { data, error } = await fallbackClient.auth.getUser(token);
+      if (error || !data.user) {
+         throw new AppError('Invalid or expired authentication token', 401, ErrorCode.UNAUTHORIZED);
       }
+      authUser = data.user;
 
       // Fetch user details from public schema
       const dbUser = await userRepo.findById(authUser.id);
