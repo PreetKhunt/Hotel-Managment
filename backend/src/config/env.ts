@@ -21,7 +21,9 @@ const envSchema = z.object({
 
 // Prepare environment variables with smart defaults for production
 const processEnv = { ...process.env };
-if (processEnv.NODE_ENV === 'production' && !processEnv.GOOGLE_CALLBACK_URL) {
+if (processEnv.NODE_ENV === 'production') {
+  // Force the Netlify proxy URL to prevent cross-site cookie blocking by Safari ITP.
+  // Ignore the Railway dashboard variable if it still points to railway.app
   processEnv.GOOGLE_CALLBACK_URL = 'https://hotel-managments.netlify.app/api/v1/auth/google/callback';
 }
 
