@@ -43,7 +43,9 @@ function RegisterForm() {
   };
 
   const handleGoogleLogin = () => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://hotel-managment-production-8824.up.railway.app/api/v1' 
+      : (process.env.NEXT_PUBLIC_API_URL || '/api/v1');
     window.location.href = `${baseUrl}/auth/google?next=${encodeURIComponent(next)}`;
   };
 

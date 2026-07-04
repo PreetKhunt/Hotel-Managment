@@ -10,6 +10,8 @@ startPaymentExpirer();
 const server = app.listen(env.PORT, () => {
   logger.info(`🚀 [Server]: Server is running in [${env.NODE_ENV}] mode on port: ${env.PORT}`);
   logger.info(`🔗 [Supabase]: Connected to project at ${env.SUPABASE_URL}`);
+  logger.info(`⚙️ [Config]: GOOGLE_CALLBACK_URL = ${env.GOOGLE_CALLBACK_URL}`);
+  logger.info(`⚙️ [Config]: CORS_ORIGIN = ${env.CORS_ORIGIN}`);
 });
 
 // Graceful Shutdown & Process Crash Handling
