@@ -50,14 +50,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    console.error("========== LOGOUT CALLED ==========");
-    console.trace();
-    console.log("Current URL:", typeof window !== 'undefined' ? window.location.href : 'SSR');
-    console.log("Current User:", user);
+    const logoutId = crypto.randomUUID();
+    console.trace(`[FORENSIC] LOGOUT INVOKED (ID: ${logoutId})`);
+    
+    if (typeof window !== 'undefined') {
+      console.log(`[FORENSIC] Pathname: ${window.location.pathname}`);
+      console.log(`[FORENSIC] Performance.now(): ${performance.now()}`);
+      
+      // Attempt to get navigation type
+      try {
+        const navEntries = performance.getEntriesByType("navigation");
+        if (navEntries.length > 0) {
+          console.log(`[FORENSIC] Navigation Type: ${(navEntries[0] as PerformanceNavigationTiming).type}`);
+        }
+      } catch (e) {}
+    }
+    
+    console.log(`[FORENSIC] Current User:`, user);
+    
     try {
-      await api.post('/auth/logout');
+      await api.post('/auth/logout', {}, {
+        headers: {
+          'X-Debug-Logout-ID': logoutId
+        }
+      });
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('[FORENSIC] Logout request error:', error);
     } finally {
       queryClient.setQueryData(['user'], null);
       queryClient.removeQueries({ queryKey: ['bookings'] });

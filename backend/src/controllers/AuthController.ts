@@ -113,13 +113,21 @@ export class AuthController {
 
   logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.error("\n========== BACKEND LOGOUT TRIGGERED ==========");
-      console.log("Request Headers:", JSON.stringify(req.headers, null, 2));
-      console.log("Origin:", req.headers.origin);
-      console.log("Referer:", req.headers.referer);
-      console.log("User-Agent:", req.headers['user-agent']);
-      console.log("Stack identifier:", (new Error()).stack);
-      console.log("Correlation ID (requestId):", (req as any).id || 'unknown');
+      console.error("\n========== [FORENSIC] BACKEND LOGOUT TRIGGERED ==========");
+      console.log("[FORENSIC] Timestamp:", new Date().toISOString());
+      console.log("[FORENSIC] Request ID (Correlation):", (req as any).id || 'unknown');
+      console.log("[FORENSIC] Origin:", req.headers.origin);
+      console.log("[FORENSIC] Referer:", req.headers.referer);
+      console.log("[FORENSIC] User-Agent:", req.headers['user-agent']);
+      console.log("[FORENSIC] Frontend Debug ID (X-Debug-Logout-ID):", req.headers['x-debug-logout-id'] || 'MISSING');
+      console.log("[FORENSIC] Cookies (raw):", req.headers.cookie);
+      console.log("[FORENSIC] Cookies (parsed):", req.cookies);
+      console.log("[FORENSIC] hh_session exists:", !!req.cookies[authConfig.session.cookieName]);
+      console.log("[FORENSIC] Authorization Header:", req.headers.authorization ? 'Present' : 'Missing');
+      console.log("[FORENSIC] Request Body:", JSON.stringify(req.body));
+      console.log("[FORENSIC] IP Address:", req.ip || req.connection.remoteAddress || 'unknown');
+      console.log("[FORENSIC] Stack trace of execution at controller:", (new Error()).stack);
+      console.log("=========================================================\n");
 
       const token = req.cookies[authConfig.session.cookieName] || req.headers.authorization?.split(' ')[1];
       
@@ -131,9 +139,13 @@ export class AuthController {
       };
 
       if (token) {
+         console.log("[FORENSIC] Calling authService.logout...");
          await this.authService.logout(token, reqInfo);
+      } else {
+         console.log("[FORENSIC] No token found, skipping authService.logout.");
       }
       
+      console.log("[FORENSIC] Calling clearSessionCookie...");
       this.clearSessionCookie(res);
 
       res.status(200).json({
@@ -141,6 +153,7 @@ export class AuthController {
         message: 'Logged out successfully',
       });
     } catch (error) {
+      console.error("[FORENSIC] Error during logout:", error);
       next(error);
     }
   };
