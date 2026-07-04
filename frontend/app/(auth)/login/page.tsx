@@ -42,7 +42,7 @@ function LoginForm() {
 
   const handleGoogleLogin = () => {
     // Standard OAuth flow: Redirect to backend which will redirect to Supabase/Google
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    const baseUrl = typeof window !== 'undefined' ? '/api/v1' : (process.env.NEXT_PUBLIC_API_URL || '/api/v1');
     
     // Ensure 'next' is an absolute URL to return to the correct Deploy Preview or localhost port
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
