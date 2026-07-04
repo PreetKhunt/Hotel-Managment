@@ -14,21 +14,29 @@ export class AuthService {
     private readonly auditLogger: AuthAuditLogService
   ) {}
 
-  private createTempAuthClient(req?: any, res?: any) {
-    const { createClient } = require('@supabase/supabase-js');
+  private createSSRClient(req?: any, res?: any) {
+    const { createServerClient } = require('@supabase/ssr');
     
-    // If req/res provided, use them for PKCE code verifier cookie storage
-    const storage = req && res ? {
-      getItem: (key: string) => req.cookies[key],
-      setItem: (key: string, value: string) => res.cookie(key, value, { httpOnly: true, secure: true, sameSite: 'none' }),
-      removeItem: (key: string) => res.clearCookie(key, { httpOnly: true, secure: true, sameSite: 'none' })
-    } : undefined;
-
-    return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
-      auth: { 
-        persistSession: false, 
-        autoRefreshToken: false,
-        ...(storage ? { storage, flowType: 'pkce' } : {})
+    // If req/res provided, use them for PKCE code verifier cookie storage via @supabase/ssr
+    return createServerClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      cookies: req && res ? {
+        getAll() {
+          return Object.keys(req.cookies).map((name) => ({ name, value: req.cookies[name] }));
+        },
+        setAll(cookiesToSet: any[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            // Transform SSR cookie options to Express cookie options
+            res.cookie(name, value, {
+              ...options,
+              sameSite: 'none',
+              secure: true,
+              httpOnly: true,
+            });
+          });
+        }
+      } : {
+        getAll() { return []; },
+        setAll() {}
       }
     });
   }
@@ -59,7 +67,7 @@ export class AuthService {
       throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
     }
 
-    const { data, error } = await this.createTempAuthClient().auth.signInWithPassword({
+    const { data, error } = await this.createSSRClient().auth.signInWithPassword({
       email,
       password,
     });
@@ -97,7 +105,7 @@ export class AuthService {
     } catch (validationError) {
       // If validation fails, sign out the user from supabase immediately
       // Actually we don't need to sign out if we used a temp client, but it's safe to do so.
-      await this.createTempAuthClient().auth.signOut();
+      await this.createSSRClient().auth.signOut();
       
       await this.auditLogger.logAction({
         userId: data.user.id,
@@ -180,7 +188,7 @@ export class AuthService {
     }
 
     // Now sign in immediately to get a session (access_token + refresh_token)
-    const { data: signInData, error: signInError } = await this.createTempAuthClient().auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await this.createSSRClient().auth.signInWithPassword({
       email,
       password,
     });
@@ -214,7 +222,7 @@ export class AuthService {
       throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
     }
 
-    const { data, error } = await this.createTempAuthClient(req, res).auth.signInWithOAuth({
+    const { data, error } = await this.createSSRClient(req, res).auth.signInWithOAuth({
       provider,
       options: {
         redirectTo: redirectUrl,
@@ -235,15 +243,15 @@ export class AuthService {
   }
 
   async exchangeCodeForSession(code: string, reqInfo: { ip: string, userAgent: string, requestId: string }, req: any, res: any) {
-    console.log('[AuthService] 4.1. Attempting to exchange code with Supabase');
+    console.log('[OAuth] Exchanging authorization code');
     let data, error;
     try {
-      const client = this.createTempAuthClient(req, res);
+      const client = this.createSSRClient(req, res);
       const result = await client.auth.exchangeCodeForSession(code);
       data = result.data;
       error = result.error;
     } catch (err: any) {
-      console.error('[AuthService] ERROR: Exception thrown during createTempAuthClient() or exchangeCodeForSession():');
+      console.error('[AuthService] ERROR: Exception thrown during createSSRClient() or exchangeCodeForSession():');
       console.error(err.stack || err);
       throw err;
     }
@@ -336,7 +344,7 @@ export class AuthService {
       if (dbError.stack) console.error('[AuthService] Stack trace:', dbError.stack);
       
       try {
-        await this.createTempAuthClient().auth.signOut();
+        await this.createSSRClient().auth.signOut();
       } catch (signOutErr) {
         console.error('[AuthService] Failed to sign out during error handling:', signOutErr);
       }

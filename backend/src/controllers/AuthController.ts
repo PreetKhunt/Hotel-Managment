@@ -152,6 +152,8 @@ export class AuthController {
       const url = await this.authService.getOAuthUrl('google', redirectUrl, reqInfo, req, res);
       
       console.log(`[OAuth] Generated OAuth URL: ${url}`);
+      console.log(`[OAuth] PKCE cookie should now be set on the response (handled by @supabase/ssr setAll)`);
+      console.log(`[OAuth] Cookie sent to browser`);
       res.redirect(url);
     } catch (error) {
       next(error);
@@ -160,10 +162,18 @@ export class AuthController {
 
   googleCallback = async (req: Request, res: Response, next: NextFunction) => {
     console.log('\n================ OAUTH CALLBACK START ================');
-    console.log('[OAuth Callback] 1. Callback entered. URL:', req.originalUrl);
+    console.log('[OAuth Callback] 1. Callback received. URL:', req.originalUrl);
     try {
       const code = req.query.code as string;
       
+      console.log(`[OAuth Callback] Cookies received:`, JSON.stringify(req.cookies, null, 2));
+      const pkceCookieName = Object.keys(req.cookies).find(k => k.includes('sb-') && k.includes('-auth-token-code-verifier'));
+      if (pkceCookieName) {
+         console.log(`[OAuth Callback] PKCE cookie found: ${pkceCookieName}`);
+      } else {
+         console.log(`[OAuth Callback] WARNING: No PKCE cookie found in req.cookies!`);
+      }
+
       // Read nextUrl from the secure cookie we set before redirecting
       const nextUrl = req.cookies.oauth_next || '/';
       res.clearCookie('oauth_next', {
@@ -205,7 +215,11 @@ export class AuthController {
         console.log('[OAuth Callback] 6. Valid session returned. Creating cookie...');
         try {
           this.setSessionCookie(res, session.access_token);
-          console.log('[OAuth Callback] 7. Cookie created successfully.');
+          console.log(`[OAuth] JWT created`);
+          console.log(`[OAuth] Session created`);
+          console.log(`[OAuth] Redirecting to frontend`);
+          const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
+          res.redirect(finalRedirectUrl);
         } catch (cookieErr: any) {
           console.error('[OAuth Callback] ERROR creating session cookie:', cookieErr.message);
           console.error(cookieErr.stack);
