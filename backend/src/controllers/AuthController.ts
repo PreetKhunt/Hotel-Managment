@@ -90,7 +90,7 @@ export class AuthController {
       const token = req.cookies[authConfig.session.cookieName] || req.headers.authorization?.split(' ')[1];
       
       const reqInfo = {
-        userId: (req as any).user?.id || 'unknown',
+        userId: (req as any).user?.id || null,
         ip: req.ip || req.connection.remoteAddress || 'unknown',
         userAgent: req.headers['user-agent'] || 'unknown',
         requestId: (req as any).id || 'unknown',

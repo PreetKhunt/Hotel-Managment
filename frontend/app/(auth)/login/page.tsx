@@ -8,12 +8,14 @@ import { Crown, Mail, Lock, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { useAuth } from "@/providers/AuthProvider";
+import { useQueryClient } from "@tanstack/react-query";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") || "/";
   const { refreshUser } = useAuth();
+  const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
     email: "",
@@ -28,6 +30,7 @@ function LoginForm() {
     try {
       await api.post("/auth/login", formData);
       await refreshUser(); // Update context
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
       toast.success("Welcome back to Hospitality Hub");
       router.push(next);
     } catch (error: any) {

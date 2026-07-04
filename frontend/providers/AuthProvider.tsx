@@ -1,6 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { User, AuthContextType } from '@/types/auth';
 
@@ -9,6 +11,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
   const fetchUser = async () => {
     try {
@@ -36,8 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Logout error:', error);
     } finally {
       setUser(null);
-      // Optional: redirect to home or login page
-      window.location.href = '/';
+      queryClient.removeQueries({ queryKey: ['bookings'] });
+      queryClient.removeQueries({ queryKey: ['user'] });
+      router.push('/');
     }
   };
 

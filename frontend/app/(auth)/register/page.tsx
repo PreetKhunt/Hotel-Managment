@@ -8,12 +8,14 @@ import { Crown, Mail, Lock, User as UserIcon, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { useAuth } from "@/providers/AuthProvider";
+import { useQueryClient } from "@tanstack/react-query";
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") || "/";
   const { refreshUser } = useAuth();
+  const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
     email: "",
@@ -30,6 +32,7 @@ function RegisterForm() {
     try {
       await api.post("/auth/register", formData);
       await refreshUser();
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
       toast.success("Account created successfully");
       router.push(next);
     } catch (error: any) {
