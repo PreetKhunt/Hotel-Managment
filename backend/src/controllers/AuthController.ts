@@ -131,15 +131,17 @@ export class AuthController {
   };
 
   googleCallback = async (req: Request, res: Response, next: NextFunction) => {
-    console.log('[OAuth Callback] Received request:', req.originalUrl);
+    console.log('\n================ OAUTH CALLBACK START ================');
+    console.log('[OAuth Callback] 1. Callback entered. URL:', req.originalUrl);
     try {
       const code = req.query.code as string;
       const nextUrl = req.query.next as string || '/';
       
-      console.log(`[OAuth Callback] Code present: ${!!code}, Next URL: ${nextUrl}`);
+      console.log(`[OAuth Callback] 2. Authorization code received: ${!!code ? 'YES (length: ' + code.length + ')' : 'NO'}`);
+      console.log(`[OAuth Callback] 3. Target next URL: ${nextUrl}`);
 
       if (!code) {
-        console.error('[OAuth Callback] Missing authorization code');
+        console.error('[OAuth Callback] ERROR: Missing authorization code');
         throw new AppError('Missing authorization code', 400, ErrorCode.VALIDATION_ERROR);
       }
 
@@ -149,25 +151,45 @@ export class AuthController {
         requestId: (req as any).id || 'unknown',
       };
 
-      console.log('[OAuth Callback] Attempting to exchange code for session...');
-      const { session } = await this.authService.exchangeCodeForSession(code, reqInfo, req, res);
-      console.log('[OAuth Callback] Code exchange successful. Session retrieved.');
+      console.log('[OAuth Callback] 4. Starting exchangeCodeForSession...');
       
-      if (session) {
-        console.log('[OAuth Callback] Setting session cookie...');
-        this.setSessionCookie(res, session.access_token);
-        console.log('[OAuth Callback] Session cookie set successfully.');
-      } else {
-        console.warn('[OAuth Callback] No session returned from code exchange.');
+      let sessionData;
+      try {
+        sessionData = await this.authService.exchangeCodeForSession(code, reqInfo, req, res);
+      } catch (exchangeError: any) {
+        console.error('[OAuth Callback] ERROR during exchangeCodeForSession:');
+        console.error(exchangeError.stack || exchangeError);
+        throw exchangeError; // Rethrow to outer catch
       }
 
-      console.log(`[OAuth Callback] Redirecting to frontend: ${nextUrl}`);
+      const { session } = sessionData;
+      console.log('[OAuth Callback] 5. exchangeCodeForSession finished successfully.');
+      
+      if (session) {
+        console.log('[OAuth Callback] 6. Valid session returned. Creating cookie...');
+        try {
+          this.setSessionCookie(res, session.access_token);
+          console.log('[OAuth Callback] 7. Cookie created successfully.');
+        } catch (cookieErr: any) {
+          console.error('[OAuth Callback] ERROR creating session cookie:', cookieErr.message);
+          console.error(cookieErr.stack);
+          throw cookieErr;
+        }
+      } else {
+        console.warn('[OAuth Callback] WARNING: No session returned from code exchange.');
+      }
+
+      console.log(`[OAuth Callback] 8. Redirecting to frontend: ${nextUrl}`);
+      console.log('================ OAUTH CALLBACK END ================\n');
       res.redirect(nextUrl);
     } catch (error: any) {
-      console.error('[OAuth Callback] CRITICAL ERROR:', error.message || error);
-      if (error.stack) {
-        console.error('[OAuth Callback] Stack trace:', error.stack);
-      }
+      console.error('\n================ OAUTH CALLBACK FATAL ERROR ================');
+      console.error('Error Message:', error.message || error);
+      console.error('Stack Trace:');
+      console.error(error.stack);
+      console.error('============================================================\n');
+      
+      // Ensure the error reaches the Express global error handler
       next(error);
     }
   };

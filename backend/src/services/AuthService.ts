@@ -235,11 +235,21 @@ export class AuthService {
   }
 
   async exchangeCodeForSession(code: string, reqInfo: { ip: string, userAgent: string, requestId: string }, req: any, res: any) {
-    console.log('[AuthService] Attempting to exchange code with Supabase');
-    const { data, error } = await this.createTempAuthClient(req, res).auth.exchangeCodeForSession(code);
+    console.log('[AuthService] 4.1. Attempting to exchange code with Supabase');
+    let data, error;
+    try {
+      const client = this.createTempAuthClient(req, res);
+      const result = await client.auth.exchangeCodeForSession(code);
+      data = result.data;
+      error = result.error;
+    } catch (err: any) {
+      console.error('[AuthService] ERROR: Exception thrown during createTempAuthClient() or exchangeCodeForSession():');
+      console.error(err.stack || err);
+      throw err;
+    }
 
-    if (error || !data.user) {
-      console.error('[AuthService] Supabase code exchange error:', error);
+    if (error || !data?.user) {
+      console.error('[AuthService] ERROR: Supabase code exchange error:', error);
       await this.auditLogger.logAction({
         userId: null,
         action: 'OAuth Callback Failure',
@@ -251,36 +261,60 @@ export class AuthService {
     }
 
     try {
-      console.log(`[AuthService] Code exchanged successfully. User ID: ${data.user.id}. Verifying public.users record...`);
+      console.log(`[AuthService] 4.2. Code exchanged successfully. Supabase User ID: ${data.user.id}`);
+      console.log(`[AuthService] 4.3. Verifying public.users record...`);
       
-      let user = await this.userRepo.findById(data.user.id);
+      let user;
+      try {
+        user = await this.userRepo.findById(data.user.id);
+      } catch (findErr: any) {
+        console.error('[AuthService] ERROR finding user in public.users:', findErr.message);
+        console.error(findErr.stack);
+        throw findErr;
+      }
       
       if (!user) {
-        console.log(`[AuthService] User ${data.user.id} not found in public.users. Creating automatically from OAuth data...`);
+        console.log(`[AuthService] 4.4. User ${data.user.id} not found in public.users. Creating automatically from OAuth data...`);
         const nameParts = (data.user.user_metadata?.full_name || '').split(' ');
         const firstName = nameParts[0] || 'User';
         const lastName = nameParts.slice(1).join(' ') || '';
         
-        // Dynamically fetch the Guest role ID
-        const { data: roleData } = await this.createTempAuthClient().from('roles').select('id').eq('name', 'Guest').single();
+        console.log(`[AuthService] 4.5. Dynamically fetching Guest role ID...`);
+        const { data: roleData, error: roleError } = await this.createTempAuthClient().from('roles').select('id').eq('name', 'Guest').single();
+        if (roleError) {
+           console.warn('[AuthService] WARNING: Failed to fetch Guest role ID:', roleError);
+        }
         const roleId = roleData?.id || null;
 
-        user = await this.userRepo.create({
-          id: data.user.id,
-          email: data.user.email || '',
-          roleId, 
-          status: UserStatus.ACTIVE,
-          firstName,
-          lastName,
-        } as User);
-        
-        console.log(`[AuthService] Successfully created user ${data.user.id} in public.users.`);
+        console.log(`[AuthService] 4.6. Inserting user into public.users...`);
+        try {
+          user = await this.userRepo.create({
+            id: data.user.id,
+            email: data.user.email || '',
+            roleId, 
+            status: UserStatus.ACTIVE,
+            firstName,
+            lastName,
+          } as User);
+        } catch (createErr: any) {
+          console.error('[AuthService] ERROR inserting user into public.users:', createErr.message);
+          console.error(createErr.stack);
+          throw createErr;
+        }
+        console.log(`[AuthService] 4.7. Successfully created user ${data.user.id} in public.users.`);
       } else {
-        console.log(`[AuthService] User ${data.user.id} found in public.users. Updating lastLoginAt...`);
+        console.log(`[AuthService] 4.4. User ${data.user.id} found in public.users. Updating lastLoginAt...`);
         await this.validateUserStatus(data.user.id);
-        await this.userRepo.update(data.user.id, { lastLoginAt: new Date() });
+        try {
+          await this.userRepo.update(data.user.id, { lastLoginAt: new Date() });
+        } catch (updateErr: any) {
+          console.error('[AuthService] ERROR updating user lastLoginAt:', updateErr.message);
+          console.error(updateErr.stack);
+          throw updateErr;
+        }
       }
 
+      console.log(`[AuthService] 4.8. Logging OAuth Success action...`);
       await this.auditLogger.logAction({
         userId: data.user.id,
         action: 'OAuth Callback Success',
@@ -289,13 +323,17 @@ export class AuthService {
         requestId: reqInfo.requestId,
       });
 
+      console.log(`[AuthService] 4.9. Returning user and session data.`);
       return { user: data.user, session: data.session };
     } catch (dbError: any) {
-      console.error('[AuthService] Database error during OAuth user sync:', dbError.message || dbError);
+      console.error('[AuthService] CRITICAL ERROR during OAuth user sync:', dbError.message || dbError);
       if (dbError.stack) console.error('[AuthService] Stack trace:', dbError.stack);
       
-      // Don't need to sign out from global client
-      await this.createTempAuthClient().auth.signOut();
+      try {
+        await this.createTempAuthClient().auth.signOut();
+      } catch (signOutErr) {
+        console.error('[AuthService] Failed to sign out during error handling:', signOutErr);
+      }
       
       await this.auditLogger.logAction({
         userId: data.user.id,
