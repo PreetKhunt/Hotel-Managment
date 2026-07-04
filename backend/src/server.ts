@@ -8,7 +8,8 @@ startPaymentExpirer();
 
 // Start Express Server
 const server = app.listen(env.PORT, () => {
-  logger.info(`⚡ [Server]: Server is running in [${env.NODE_ENV}] mode on port: ${env.PORT}`);
+  logger.info(`🚀 [Server]: Server is running in [${env.NODE_ENV}] mode on port: ${env.PORT}`);
+  logger.info(`🔗 [Supabase]: Connected to project at ${env.SUPABASE_URL}`);
 });
 
 // Graceful Shutdown & Process Crash Handling

@@ -235,9 +235,11 @@ export class AuthService {
   }
 
   async exchangeCodeForSession(code: string, reqInfo: { ip: string, userAgent: string, requestId: string }, req: any, res: any) {
+    console.log('[AuthService] Attempting to exchange code with Supabase');
     const { data, error } = await this.createTempAuthClient(req, res).auth.exchangeCodeForSession(code);
 
     if (error || !data.user) {
+      console.error('[AuthService] Supabase code exchange error:', error);
       await this.auditLogger.logAction({
         userId: null,
         action: 'OAuth Callback Failure',
@@ -245,12 +247,39 @@ export class AuthService {
         userAgent: reqInfo.userAgent,
         requestId: reqInfo.requestId,
       });
-      throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
+      throw new AppError(error?.message || 'Failed to exchange authorization code', 400, ErrorCode.VALIDATION_ERROR);
     }
 
     try {
-      await this.validateUserStatus(data.user.id);
-      await this.userRepo.update(data.user.id, { lastLoginAt: new Date() });
+      console.log(`[AuthService] Code exchanged successfully. User ID: ${data.user.id}. Verifying public.users record...`);
+      
+      let user = await this.userRepo.findById(data.user.id);
+      
+      if (!user) {
+        console.log(`[AuthService] User ${data.user.id} not found in public.users. Creating automatically from OAuth data...`);
+        const nameParts = (data.user.user_metadata?.full_name || '').split(' ');
+        const firstName = nameParts[0] || 'User';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
+        // Dynamically fetch the Guest role ID
+        const { data: roleData } = await this.createTempAuthClient().from('roles').select('id').eq('name', 'Guest').single();
+        const roleId = roleData?.id || null;
+
+        user = await this.userRepo.create({
+          id: data.user.id,
+          email: data.user.email || '',
+          roleId, 
+          status: UserStatus.ACTIVE,
+          firstName,
+          lastName,
+        } as User);
+        
+        console.log(`[AuthService] Successfully created user ${data.user.id} in public.users.`);
+      } else {
+        console.log(`[AuthService] User ${data.user.id} found in public.users. Updating lastLoginAt...`);
+        await this.validateUserStatus(data.user.id);
+        await this.userRepo.update(data.user.id, { lastLoginAt: new Date() });
+      }
 
       await this.auditLogger.logAction({
         userId: data.user.id,
@@ -261,19 +290,23 @@ export class AuthService {
       });
 
       return { user: data.user, session: data.session };
-    } catch (validationError) {
+    } catch (dbError: any) {
+      console.error('[AuthService] Database error during OAuth user sync:', dbError.message || dbError);
+      if (dbError.stack) console.error('[AuthService] Stack trace:', dbError.stack);
+      
       // Don't need to sign out from global client
       await this.createTempAuthClient().auth.signOut();
       
       await this.auditLogger.logAction({
         userId: data.user.id,
-        action: 'OAuth Callback Failure (Validation)',
+        action: 'OAuth Callback Failure (Sync/Validation)',
         ipAddress: reqInfo.ip,
         userAgent: reqInfo.userAgent,
         requestId: reqInfo.requestId,
       });
 
-      throw validationError;
+      if (dbError instanceof AppError) throw dbError;
+      throw new AppError(`Internal error during OAuth sync: ${dbError.message}`, 500, ErrorCode.INTERNAL_SERVER_ERROR);
     }
   }
 }

@@ -131,12 +131,16 @@ export class AuthController {
   };
 
   googleCallback = async (req: Request, res: Response, next: NextFunction) => {
+    console.log('[OAuth Callback] Received request:', req.originalUrl);
     try {
       const code = req.query.code as string;
       const nextUrl = req.query.next as string || '/';
+      
+      console.log(`[OAuth Callback] Code present: ${!!code}, Next URL: ${nextUrl}`);
 
       if (!code) {
-        throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
+        console.error('[OAuth Callback] Missing authorization code');
+        throw new AppError('Missing authorization code', 400, ErrorCode.VALIDATION_ERROR);
       }
 
       const reqInfo = {
@@ -145,17 +149,25 @@ export class AuthController {
         requestId: (req as any).id || 'unknown',
       };
 
+      console.log('[OAuth Callback] Attempting to exchange code for session...');
       const { session } = await this.authService.exchangeCodeForSession(code, reqInfo, req, res);
+      console.log('[OAuth Callback] Code exchange successful. Session retrieved.');
       
       if (session) {
+        console.log('[OAuth Callback] Setting session cookie...');
         this.setSessionCookie(res, session.access_token);
+        console.log('[OAuth Callback] Session cookie set successfully.');
+      } else {
+        console.warn('[OAuth Callback] No session returned from code exchange.');
       }
 
-      // Normally we would redirect to the frontend with success, 
-      // but since it's an API, we can either redirect or just return JSON based on what the client expects.
-      // Usually, the frontend completes the PKCE flow directly. If it hits our backend callback, we redirect.
+      console.log(`[OAuth Callback] Redirecting to frontend: ${nextUrl}`);
       res.redirect(nextUrl);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[OAuth Callback] CRITICAL ERROR:', error.message || error);
+      if (error.stack) {
+        console.error('[OAuth Callback] Stack trace:', error.stack);
+      }
       next(error);
     }
   };
