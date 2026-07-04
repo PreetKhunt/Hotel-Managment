@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 };
 
 import { Providers } from "./providers";
+import BackToHomeButton from "@/components/shared/BackToHomeButton";
 
 export default function RootLayout({
   children,
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className="min-h-full antialiased" style={{ background: '#0A0F1E', color: '#F8FAFC' }}>
         <Providers>
           {children}
+          <BackToHomeButton />
         </Providers>
       </body>
     </html>

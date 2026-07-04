@@ -4,9 +4,11 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+import { env } from '../config/env';
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: env.DATABASE_URL,
+  ssl: env.DATABASE_URL.includes('supabase') ? { rejectUnauthorized: false } : undefined
 });
 
 const imageSets = {
