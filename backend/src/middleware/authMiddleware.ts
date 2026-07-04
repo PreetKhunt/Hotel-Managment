@@ -32,32 +32,82 @@ export const createAuthMiddleware = (
       // Extract token from header or cookie
       console.log(`[Auth Debug] Incoming req.headers.cookie:`, req.headers.cookie);
       console.log(`[Auth Debug] Parsed req.cookies:`, JSON.stringify(req.cookies));
+      // 1. Try to get token from Authorization header
       let token = req.headers.authorization?.startsWith('Bearer ') 
         ? req.headers.authorization.split(' ')[1] 
         : undefined;
 
-      // Use @supabase/ssr to automatically parse sb-*-auth-token cookies
-      const { createServerClient } = require('@supabase/ssr');
+      // 2. If no header, extract the access_token manually from Supabase cookies
+      // We do this manually to bypass @supabase/ssr's automatic session refresh logic
+      // which throws "refresh_token_not_found" if the OAuth provider didn't return one.
+      if (!token) {
+        const { env } = require('../config/env');
+        
+        // Find the project ref from the Supabase URL
+        // e.g. https://xyz.supabase.co -> xyz
+        const supabaseUrl = new URL(env.SUPABASE_URL);
+        const projectRef = supabaseUrl.hostname.split('.')[0];
+        
+        const cookiePrefix = `sb-${projectRef}-auth-token.`;
+        
+        // Collect all chunk keys
+        const chunkKeys = Object.keys(req.cookies)
+          .filter(key => key.startsWith(cookiePrefix))
+          .sort((a, b) => {
+            const idxA = parseInt(a.split('.').pop() || '0');
+            const idxB = parseInt(b.split('.').pop() || '0');
+            return idxA - idxB;
+          });
+          
+        if (chunkKeys.length > 0) {
+          try {
+            // Concatenate chunks
+            const rawValue = chunkKeys.map(key => req.cookies[key]).join('');
+            
+            // The value is usually prefixed with 'base64-'
+            let jsonStr = rawValue;
+            if (rawValue.startsWith('base64-')) {
+              jsonStr = Buffer.from(rawValue.replace('base64-', ''), 'base64').toString('utf-8');
+            }
+            
+            const sessionData = JSON.parse(jsonStr);
+            if (sessionData && sessionData.access_token) {
+              token = sessionData.access_token;
+              console.log(`[AuthMiddleware] Successfully extracted access_token from cookies.`);
+            }
+          } catch (parseError) {
+            console.error(`[AuthMiddleware] Failed to parse Supabase cookie chunks:`, parseError);
+          }
+        }
+      }
+
+      if (!token) {
+        console.debug(`[AuthMiddleware] Token missing. Origin: ${req.headers.origin}`);
+        throw new AppError('Authentication token missing', 401, ErrorCode.UNAUTHORIZED);
+      }
+
+      // Verify JWT with Supabase Admin client directly using the token string.
+      // Passing the token string explicitly forces Supabase to just verify the JWT
+      // and fetch the user WITHOUT trying to refresh the session locally.
+      const jwt = require('jsonwebtoken');
       const { env } = require('../config/env');
       
-      const authClient = createServerClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
-        cookies: {
-          getAll() {
-            return Object.keys(req.cookies).map((name) => ({ name, value: req.cookies[name] }));
-          },
-          setAll() {} // Read-only for middleware
-        }
-      });
+      let authUser;
       
-      // If there's an explicit Authorization header, we can verify that token.
-      // Otherwise, getUser() will automatically use the parsed session from the cookies.
-      const { data: { user: authUser }, error } = token 
-        ? await authClient.auth.getUser(token)
-        : await authClient.auth.getUser();
-
-      if (error || !authUser) {
-        console.error(`[AuthMiddleware] JWT Verification Failed:`, error?.message || 'No user found');
-        throw new AppError('Invalid or expired authentication token', 401, ErrorCode.UNAUTHORIZED);
+      try {
+         // Verify the JWT locally using the JWT secret to completely avoid network/refresh issues
+         // This is the most bulletproof way to authenticate a stateless API request.
+         const decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET || process.env.SUPABASE_JWT_SECRET || '');
+         authUser = { id: decoded.sub };
+         console.log(`[AuthMiddleware] JWT verified locally. User ID: ${authUser.id}`);
+      } catch (jwtError: any) {
+         console.error(`[AuthMiddleware] Local JWT verification failed:`, jwtError.message);
+         // Fallback to Supabase API
+         const { data, error } = await _supabase.auth.getUser(token);
+         if (error || !data.user) {
+            throw new AppError('Invalid or expired authentication token', 401, ErrorCode.UNAUTHORIZED);
+         }
+         authUser = data.user;
       }
 
       // Fetch user details from public schema
