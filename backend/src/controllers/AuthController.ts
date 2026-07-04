@@ -127,6 +127,9 @@ export class AuthController {
       const nextParam = req.query.next as string || '/';
       const redirectUrl = `${env.GOOGLE_CALLBACK_URL}?next=${encodeURIComponent(nextParam)}`;
       
+      console.log(`[OAuth] Generating Google OAuth URL...`);
+      console.log(`[OAuth] redirectTo value configured as: ${redirectUrl}`);
+
       const reqInfo = {
         ip: req.ip || req.connection.remoteAddress || 'unknown',
         userAgent: req.headers['user-agent'] || 'unknown',
@@ -135,6 +138,7 @@ export class AuthController {
 
       const url = await this.authService.getOAuthUrl('google', redirectUrl, reqInfo, req, res);
       
+      console.log(`[OAuth] Generated OAuth URL: ${url}`);
       res.redirect(url);
     } catch (error) {
       next(error);
