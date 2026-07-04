@@ -1,36 +1,43 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { User, AuthContextType } from '@/types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const queryClient = useQueryClient();
-
-  const fetchUser = async () => {
-    try {
-      const res = await api.get('/users/me');
-      setUser(res.data.data);
-    } catch (error) {
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    fetchUser();
+    setMounted(true);
   }, []);
 
+  const hasHintCookie = mounted && typeof document !== 'undefined' && document.cookie.includes('is_logged_in=1');
+
+  const { data: user = null, isLoading: queryLoading, refetch } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const res = await api.get('/users/me');
+      return res.data.data as User;
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000,   // 30 minutes
+    enabled: hasHintCookie,
+  });
+
+  const isLoading = !mounted || (hasHintCookie && queryLoading);
+
   const login = (userData: User) => {
-    setUser(userData);
+    queryClient.setQueryData(['user'], userData);
   };
 
   const logout = async () => {
@@ -39,15 +46,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      setUser(null);
+      queryClient.setQueryData(['user'], null);
       queryClient.removeQueries({ queryKey: ['bookings'] });
       queryClient.removeQueries({ queryKey: ['user'] });
+      // Manually clear the hint cookie since sometimes the backend response might be ignored if there's a network error
+      if (typeof document !== 'undefined') {
+        document.cookie = 'is_logged_in=; Max-Age=0; path=/;';
+      }
       router.push('/');
     }
   };
 
+  const refreshUser = async () => {
+    await refetch();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser: fetchUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

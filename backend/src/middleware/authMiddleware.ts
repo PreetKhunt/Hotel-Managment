@@ -36,8 +36,8 @@ export const createAuthMiddleware = (
       }
 
       if (!token) {
-        console.error(`[AuthMiddleware] Token missing. Cookies received:`, req.cookies);
-        console.error(`[AuthMiddleware] Origin: ${req.headers.origin}, Referer: ${req.headers.referer}`);
+        console.debug(`[AuthMiddleware] Token missing. Cookies received:`, req.cookies);
+        console.debug(`[AuthMiddleware] Origin: ${req.headers.origin}, Referer: ${req.headers.referer}`);
         throw new AppError('Authentication token missing', 401, ErrorCode.UNAUTHORIZED);
       }
 
@@ -55,6 +55,7 @@ export const createAuthMiddleware = (
       const { data: { user: authUser }, error } = await authClient.auth.getUser(token);
 
       if (error || !authUser) {
+        console.error(`[AuthMiddleware] JWT Verification Failed:`, error?.message || 'No user found');
         throw new AppError('Invalid or expired authentication token', 401, ErrorCode.UNAUTHORIZED);
       }
 

@@ -24,12 +24,27 @@ export class AuthController {
     console.log(`[Auth] Cookie options:`, JSON.stringify(cookieOptions));
     
     res.cookie(authConfig.session.cookieName, token, cookieOptions);
+    
+    // Set frontend hint cookie (NOT httpOnly) so SPA knows not to poll if this is missing
+    res.cookie('is_logged_in', '1', {
+      httpOnly: false,
+      secure: true,
+      sameSite: 'none' as const,
+      path: '/',
+      maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
+    });
     console.log('[Auth] Set-Cookie header attached to response');
   }
 
   private clearSessionCookie(res: Response) {
     res.clearCookie(authConfig.session.cookieName, {
       httpOnly: true,
+      secure: true,
+      sameSite: 'none' as const,
+      path: '/',
+    });
+    res.clearCookie('is_logged_in', {
+      httpOnly: false,
       secure: true,
       sameSite: 'none' as const,
       path: '/',
