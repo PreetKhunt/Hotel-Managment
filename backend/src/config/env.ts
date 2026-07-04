@@ -24,8 +24,10 @@ const envSchema = z.object({
 
 // Prepare environment variables with smart defaults for production
 const processEnv = { ...process.env };
-if (processEnv.NODE_ENV === 'production' && !processEnv.GOOGLE_CALLBACK_URL) {
-  processEnv.GOOGLE_CALLBACK_URL = 'https://hotel-managments.netlify.app/api/v1/auth/google/callback';
+if (processEnv.NODE_ENV === 'production') {
+  if (!processEnv.GOOGLE_CALLBACK_URL || processEnv.GOOGLE_CALLBACK_URL.includes('localhost') || processEnv.GOOGLE_CALLBACK_URL.includes('127.0.0.1')) {
+    processEnv.GOOGLE_CALLBACK_URL = 'https://hotel-managments.netlify.app/api/v1/auth/google/callback';
+  }
 }
 
 const parsed = envSchema.safeParse(processEnv);
