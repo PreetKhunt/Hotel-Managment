@@ -6,7 +6,17 @@ import { env } from '../config/env';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  private setSessionCookie(res: Response) {
+  private setSessionCookie(res: Response, sessionToken?: string) {
+    if (sessionToken) {
+      res.cookie('hh_session', sessionToken, {
+        httpOnly: true,
+        secure: true, // true for production
+        sameSite: 'none' as const,
+        path: '/',
+        maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
+      });
+    }
+
     // Set frontend hint cookie (NOT httpOnly) so SPA knows not to poll if this is missing
     res.cookie('is_logged_in', '1', {
       httpOnly: false,
@@ -217,7 +227,7 @@ export class AuthController {
             if (session) {
           console.log('[OAuth Callback] 6. Valid session returned. Creating cookie...');
           try {
-            this.setSessionCookie(res);
+            this.setSessionCookie(res, session.access_token);
             console.log(`[OAuth] JWT created`);
             console.log(`[OAuth] Session created`);
             console.log(`[OAuth] Redirecting to frontend`);

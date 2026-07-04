@@ -19,22 +19,27 @@ export class AuthService {
     
     // If req/res provided, use them for PKCE code verifier cookie storage via @supabase/ssr
     return createServerClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
-      cookies: req && res ? {
-        getAll() {
-          return Object.keys(req.cookies).map((name) => ({ name, value: req.cookies[name] }));
-        },
-        setAll(cookiesToSet: any[]) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            // Transform SSR cookie options to Express cookie options
-            res.cookie(name, value, {
-              ...options,
-              sameSite: 'none',
-              secure: true,
-              httpOnly: true,
+        cookies: req && res ? {
+          getAll() {
+            return Object.keys(req.cookies).map((name) => ({ name, value: req.cookies[name] }));
+          },
+          setAll(cookiesToSet: any[]) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // OPTIMIZATION: Netlify Proxy drops or corrupts responses with too many Set-Cookie headers 
+              // or total sizes > 4KB. By skipping the massive sb-*-auth-token.* chunks and relying
+              // entirely on hh_session for our backend, we bypass the proxy header limits.
+              if (name.includes('-auth-token.')) return;
+
+              // Transform SSR cookie options to Express cookie options
+              res.cookie(name, value, {
+                ...options,
+                sameSite: 'none',
+                secure: true,
+                httpOnly: true,
+              });
             });
-          });
-        }
-      } : {
+          }
+        } : {
         getAll() { return []; },
         setAll() {}
       }

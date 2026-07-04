@@ -37,48 +37,10 @@ export const createAuthMiddleware = (
         ? req.headers.authorization.split(' ')[1] 
         : undefined;
 
-      // 2. If no header, extract the access_token manually from Supabase cookies
-      // We do this manually to bypass @supabase/ssr's automatic session refresh logic
-      // which throws "refresh_token_not_found" if the OAuth provider didn't return one.
-      if (!token) {
-        const { env } = require('../config/env');
-        
-        // Find the project ref from the Supabase URL
-        // e.g. https://xyz.supabase.co -> xyz
-        const supabaseUrl = new URL(env.SUPABASE_URL);
-        const projectRef = supabaseUrl.hostname.split('.')[0];
-        
-        const cookiePrefix = `sb-${projectRef}-auth-token.`;
-        
-        // Collect all chunk keys
-        const chunkKeys = Object.keys(req.cookies)
-          .filter(key => key.startsWith(cookiePrefix))
-          .sort((a, b) => {
-            const idxA = parseInt(a.split('.').pop() || '0');
-            const idxB = parseInt(b.split('.').pop() || '0');
-            return idxA - idxB;
-          });
-          
-        if (chunkKeys.length > 0) {
-          try {
-            // Concatenate chunks
-            const rawValue = chunkKeys.map(key => req.cookies[key]).join('');
-            
-            // The value is usually prefixed with 'base64-'
-            let jsonStr = rawValue;
-            if (rawValue.startsWith('base64-')) {
-              jsonStr = Buffer.from(rawValue.replace('base64-', ''), 'base64').toString('utf-8');
-            }
-            
-            const sessionData = JSON.parse(jsonStr);
-            if (sessionData && sessionData.access_token) {
-              token = sessionData.access_token;
-              console.log(`[AuthMiddleware] Successfully extracted access_token from cookies.`);
-            }
-          } catch (parseError) {
-            console.error(`[AuthMiddleware] Failed to parse Supabase cookie chunks:`, parseError);
-          }
-        }
+      // 2. If no header, extract token from hh_session cookie
+      if (!token && req.cookies && req.cookies.hh_session) {
+        token = req.cookies.hh_session;
+        console.log(`[AuthMiddleware] Successfully extracted token from hh_session.`);
       }
 
       if (!token) {
