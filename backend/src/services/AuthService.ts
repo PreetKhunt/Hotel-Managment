@@ -226,6 +226,10 @@ export class AuthService {
       provider,
       options: {
         redirectTo: redirectUrl,
+        queryParams: {
+          prompt: 'select_account consent',
+          access_type: 'offline',
+        },
       }
     });
 
