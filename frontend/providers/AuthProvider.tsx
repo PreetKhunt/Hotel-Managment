@@ -24,8 +24,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[Auth Debug] document.cookie:', typeof document !== 'undefined' ? document.cookie : 'SSR');
         console.log('[Auth Debug] Attempting GET /api/v1/users/me');
         const res = await api.get('/users/me');
+        console.log('[Auth Debug] GET /api/v1/users/me response data:', res.data);
         return res.data.data as User;
-      } catch (error) {
+      } catch (error: any) {
+        console.error('[Auth Debug] GET /api/v1/users/me FAILED with error:', error.response?.status, error.message);
         return null;
       }
     },
@@ -48,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    console.trace('[Auth Debug] logout() was invoked! Stack trace:');
     try {
       await api.post('/auth/logout');
     } catch (error) {
