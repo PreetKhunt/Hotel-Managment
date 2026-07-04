@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { IUserRepository } from '../domain/repositories/IUserRepository';
 import { AuthAuditLogService } from './AuthAuditLogService';
 import { authConfig } from '../config/auth';
-import { UserStatus } from '../domain/entities/User';
+import { User, UserStatus } from '../domain/entities/User';
 import { AppError, ErrorCode } from '../utils/AppError';
 
 import { env } from '../config/env';
