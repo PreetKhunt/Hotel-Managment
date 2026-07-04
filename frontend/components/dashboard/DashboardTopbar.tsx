@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search, User, Settings, LogOut, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import TopLeftBackButton from '@/components/shared/TopLeftBackButton';
 
 const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   '/dashboard': { title: 'Overview', breadcrumb: ['Dashboard', 'Overview'] },
@@ -64,37 +65,40 @@ export default function DashboardTopbar() {
       }}
     >
       {/* Left: Title + Breadcrumb */}
-      <div>
-        <h1
-          style={{
-            color: '#ffffff',
-            fontWeight: 700,
-            fontSize: '1.05rem',
-            margin: 0,
-            lineHeight: 1.2,
-          }}
-        >
-          {pageInfo.title}
-        </h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '2px' }}>
-          {pageInfo.breadcrumb.map((crumb, i) => (
-            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              {i > 0 && (
-                <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem' }}>/</span>
-              )}
-              <span
-                style={{
-                  color: i === pageInfo.breadcrumb.length - 1
-                    ? '#C9A84C'
-                    : 'rgba(255,255,255,0.35)',
-                  fontSize: '0.73rem',
-                  fontWeight: i === pageInfo.breadcrumb.length - 1 ? 600 : 400,
-                }}
-              >
-                {crumb}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <TopLeftBackButton />
+        <div>
+          <h1
+            style={{
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: '1.05rem',
+              margin: 0,
+              lineHeight: 1.2,
+            }}
+          >
+            {pageInfo.title}
+          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '2px' }}>
+            {pageInfo.breadcrumb.map((crumb, i) => (
+              <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                {i > 0 && (
+                  <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem' }}>/</span>
+                )}
+                <span
+                  style={{
+                    color: i === pageInfo.breadcrumb.length - 1
+                      ? '#C9A84C'
+                      : 'rgba(255,255,255,0.35)',
+                    fontSize: '0.73rem',
+                    fontWeight: i === pageInfo.breadcrumb.length - 1 ? 600 : 400,
+                  }}
+                >
+                  {crumb}
+                </span>
               </span>
-            </span>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 

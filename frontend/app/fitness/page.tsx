@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Dumbbell, Users, Activity, Heart, Shield, ArrowRight } from 'lucide-react';
 import FitnessBookingModal from '@/components/services/FitnessBookingModal';
+import TopLeftBackButton from '@/components/shared/TopLeftBackButton';
 
 export default function FitnessPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,6 +20,8 @@ export default function FitnessPage() {
       
       {/* Hero Section */}
       <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden mb-20">
+        <TopLeftBackButton className="absolute top-4 left-4 sm:top-8 sm:left-8 z-50" />
+        
         <div className="absolute inset-0">
           <img 
             src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2000" 
