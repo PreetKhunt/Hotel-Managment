@@ -22,7 +22,7 @@ const envSchema = z.object({
 // Prepare environment variables with smart defaults for production
 const processEnv = { ...process.env };
 if (processEnv.NODE_ENV === 'production' && !processEnv.GOOGLE_CALLBACK_URL) {
-  processEnv.GOOGLE_CALLBACK_URL = 'https://hotel-managment-production-8824.up.railway.app/api/v1/auth/google/callback';
+  processEnv.GOOGLE_CALLBACK_URL = 'https://hotel-managments.netlify.app/api/v1/auth/google/callback';
 }
 
 const parsed = envSchema.safeParse(processEnv);

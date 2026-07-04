@@ -113,6 +113,14 @@ export class AuthController {
 
   logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      console.error("\n========== BACKEND LOGOUT TRIGGERED ==========");
+      console.log("Request Headers:", JSON.stringify(req.headers, null, 2));
+      console.log("Origin:", req.headers.origin);
+      console.log("Referer:", req.headers.referer);
+      console.log("User-Agent:", req.headers['user-agent']);
+      console.log("Stack identifier:", (new Error()).stack);
+      console.log("Correlation ID (requestId):", (req as any).id || 'unknown');
+
       const token = req.cookies[authConfig.session.cookieName] || req.headers.authorization?.split(' ')[1];
       
       const reqInfo = {

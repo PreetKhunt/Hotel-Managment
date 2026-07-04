@@ -50,7 +50,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    console.trace('[Auth Debug] logout() was invoked! Stack trace:');
+    console.error("========== LOGOUT CALLED ==========");
+    console.trace();
+    console.log("Current URL:", typeof window !== 'undefined' ? window.location.href : 'SSR');
+    console.log("Current User:", user);
     try {
       await api.post('/auth/logout');
     } catch (error) {
