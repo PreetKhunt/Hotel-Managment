@@ -14,10 +14,22 @@ export class AuthService {
     private readonly auditLogger: AuthAuditLogService
   ) {}
 
-  private createTempAuthClient() {
+  private createTempAuthClient(req?: any, res?: any) {
     const { createClient } = require('@supabase/supabase-js');
+    
+    // If req/res provided, use them for PKCE code verifier cookie storage
+    const storage = req && res ? {
+      getItem: (key: string) => req.cookies[key],
+      setItem: (key: string, value: string) => res.cookie(key, value, { httpOnly: true, secure: true, sameSite: 'none' }),
+      removeItem: (key: string) => res.clearCookie(key, { httpOnly: true, secure: true, sameSite: 'none' })
+    } : undefined;
+
     return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false }
+      auth: { 
+        persistSession: false, 
+        autoRefreshToken: false,
+        ...(storage ? { storage, flowType: 'pkce' } : {})
+      }
     });
   }
 
@@ -197,12 +209,12 @@ export class AuthService {
     return { user: signInData.user, session: signInData.session };
   }
 
-  async getOAuthUrl(provider: 'google', redirectUrl: string, reqInfo: { ip: string, userAgent: string, requestId: string }) {
+  async getOAuthUrl(provider: 'google', redirectUrl: string, reqInfo: { ip: string, userAgent: string, requestId: string }, req: any, res: any) {
     if (provider === 'google' && !authConfig.features.googleLoginEnabled) {
       throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
     }
 
-    const { data, error } = await this.createTempAuthClient().auth.signInWithOAuth({
+    const { data, error } = await this.createTempAuthClient(req, res).auth.signInWithOAuth({
       provider,
       options: {
         redirectTo: redirectUrl,
@@ -222,8 +234,8 @@ export class AuthService {
     return data.url;
   }
 
-  async exchangeCodeForSession(code: string, reqInfo: { ip: string, userAgent: string, requestId: string }) {
-    const { data, error } = await this.createTempAuthClient().auth.exchangeCodeForSession(code);
+  async exchangeCodeForSession(code: string, reqInfo: { ip: string, userAgent: string, requestId: string }, req: any, res: any) {
+    const { data, error } = await this.createTempAuthClient(req, res).auth.exchangeCodeForSession(code);
 
     if (error || !data.user) {
       await this.auditLogger.logAction({

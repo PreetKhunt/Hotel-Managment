@@ -113,7 +113,8 @@ export class AuthController {
 
   googleOAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const redirectUrl = req.query.redirectUrl as string || `${env.CORS_ORIGIN}/auth/callback`;
+      const nextParam = req.query.next as string || '/';
+      const redirectUrl = `${env.CORS_ORIGIN}/api/v1/auth/callback?next=${encodeURIComponent(nextParam)}`;
       
       const reqInfo = {
         ip: req.ip || req.connection.remoteAddress || 'unknown',
@@ -121,7 +122,7 @@ export class AuthController {
         requestId: (req as any).id || 'unknown',
       };
 
-      const url = await this.authService.getOAuthUrl('google', redirectUrl, reqInfo);
+      const url = await this.authService.getOAuthUrl('google', redirectUrl, reqInfo, req, res);
       
       res.redirect(url);
     } catch (error) {
@@ -144,7 +145,7 @@ export class AuthController {
         requestId: (req as any).id || 'unknown',
       };
 
-      const { session } = await this.authService.exchangeCodeForSession(code, reqInfo);
+      const { session } = await this.authService.exchangeCodeForSession(code, reqInfo, req, res);
       
       if (session) {
         this.setSessionCookie(res, session.access_token);
