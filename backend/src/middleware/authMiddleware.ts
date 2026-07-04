@@ -102,8 +102,15 @@ export const createAuthMiddleware = (
          console.log(`[AuthMiddleware] JWT verified locally. User ID: ${authUser.id}`);
       } catch (jwtError: any) {
          console.error(`[AuthMiddleware] Local JWT verification failed:`, jwtError.message);
-         // Fallback to Supabase API
-         const { data, error } = await _supabase.auth.getUser(token);
+         // Fallback to Supabase API using a temporary ANON client.
+         // We cannot use the global `_supabase` client here because it was instantiated 
+         // with the service_role key, which GoTrue rejects for the /user endpoint.
+         const { createClient } = require('@supabase/supabase-js');
+         const fallbackClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+            auth: { persistSession: false, autoRefreshToken: false }
+         });
+         
+         const { data, error } = await fallbackClient.auth.getUser(token);
          if (error || !data.user) {
             throw new AppError('Invalid or expired authentication token', 401, ErrorCode.UNAUTHORIZED);
          }
