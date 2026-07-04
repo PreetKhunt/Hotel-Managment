@@ -93,14 +93,14 @@ router.get('/google', authController.googleOAuth);
 
 /**
  * @swagger
- * /auth/callback:
+ * /auth/google/callback:
  *   get:
- *     summary: Handle OAuth Callback
+ *     summary: Handle Google OAuth Callback
  *     tags: [Auth]
  *     responses:
  *       302:
  *         description: Redirects to frontend
  */
-router.get('/callback', authController.googleCallback);
+router.get('/google/callback', authController.googleCallback);
 
 export default router;
