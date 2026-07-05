@@ -120,6 +120,9 @@ export class AuthController {
       console.log("[FORENSIC] Calling clearSessionCookie...");
       this.clearSessionCookie(res);
 
+      res.setHeader('X-Logout-Source', 'backend-auth-controller');
+      res.setHeader('X-Logout-Timestamp', Date.now().toString());
+
       res.status(200).json({
         status: 'success',
         message: 'Logged out successfully',
