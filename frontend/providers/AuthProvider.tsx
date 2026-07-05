@@ -29,10 +29,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await api.get('/users/me');
         if (mounted && res.status === 200) {
+          console.log("[Auth Audit] Fetched user from /users/me:", res.data);
           setUser(res.data.data as User);
           queryClient.setQueryData(['user'], res.data.data as User);
         }
       } catch (error: any) {
+        console.error("[Auth Audit] /users/me failed:", error.response?.status, error.message);
         if (mounted) {
           setUser(null);
           queryClient.setQueryData(['user'], null);
@@ -82,6 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       queryClient.setQueryData(['user'], null);
     }
   };
+
+  console.log("[Auth Audit] AuthProvider render - user:", user);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser }}>
