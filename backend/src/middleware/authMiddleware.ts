@@ -46,16 +46,18 @@ export const createAuthMiddleware = (
 
       // 2. If no header, extract token from hh_session cookie
       if (!token && req.cookies && req.cookies.hh_session) {
-        token = req.cookies.hh_session;
-        console.log(`[AuthMiddleware] Successfully extracted token from hh_session. Length: ${token.length}`);
+        token = req.cookies.hh_session as string;
+        console.log(`[AuthMiddleware] Successfully extracted token from hh_session.`);
       } else if (!token) {
         console.log(`[AuthMiddleware] Failed to extract token from either header or hh_session cookie.`);
       }
 
       if (!token) {
         console.error(`[AuthMiddleware] REJECTED (401): Authentication token missing`);
-        throw new AppError('Authentication token missing', 401, ErrorCode.UNAUTHORIZED);
+        return next(new AppError('Authentication token missing', 401, ErrorCode.UNAUTHORIZED));
       }
+
+      console.log(`[AuthMiddleware] Token length: ${token.length}`);
 
       const { env } = require('../config/env');
       
