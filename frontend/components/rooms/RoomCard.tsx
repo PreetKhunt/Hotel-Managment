@@ -163,7 +163,7 @@ export default function RoomCard({ room, index = 0 }: RoomCardProps) {
           </h3>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={{ color: GOLD, fontSize: '20px', fontWeight: 700, lineHeight: 1 }}>
-              ${room.pricePerNight.toLocaleString()}
+              ₹{room.pricePerNight.toLocaleString()}
             </div>
             <div style={{ color: SECONDARY, fontSize: '11px', marginTop: '2px' }}>/night</div>
           </div>

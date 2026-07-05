@@ -82,10 +82,10 @@ export default function AvailabilityCalendar({ roomId }: AvailabilityCalendarPro
         >
           <span className="font-semibold text-sm">{i}</span>
           {!isPast && isAvailable && priceModifier > 0 && (
-             <span style={{ color: GOLD, fontSize: '10px', marginTop: '2px' }}>+${priceModifier}</span>
+             <span style={{ color: GOLD, fontSize: '10px', marginTop: '2px' }}>+₹{priceModifier}</span>
           )}
           {!isPast && isAvailable && priceModifier < 0 && (
-             <span style={{ color: "#34D399", fontSize: '10px', marginTop: '2px' }}>-${Math.abs(priceModifier)}</span>
+             <span style={{ color: "#34D399", fontSize: '10px', marginTop: '2px' }}>-₹{Math.abs(priceModifier)}</span>
           )}
           {!isPast && !isAvailable && (
              <span style={{ fontSize: '10px', marginTop: '2px' }}>Booked</span>

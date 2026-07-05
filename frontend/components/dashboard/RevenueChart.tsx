@@ -34,7 +34,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps) {
           {label}
         </p>
         <p style={{ color: '#ffffff', fontWeight: 700, fontSize: '0.95rem' }}>
-          ${payload[0].value.toLocaleString()}
+          ₹{payload[0].value.toLocaleString()}
         </p>
       </div>
     );
@@ -83,7 +83,7 @@ export default function RevenueChart() {
             tick={{ fill: 'rgba(255,255,255,0.45)', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+            tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(201,168,76,0.2)', strokeWidth: 1 }} />
           <Area

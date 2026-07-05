@@ -18,7 +18,7 @@ const faqs = [
   {
     question: 'Do you allow pets?',
     answer:
-      'We warmly welcome well-behaved pets up to 25 kg in our designated pet-friendly suites. A refundable security deposit of $150 applies. Please inform us at the time of booking, as pet-friendly rooms are limited and subject to availability.',
+      'We warmly welcome well-behaved pets up to 25 kg in our designated pet-friendly suites. A refundable security deposit of ₹15,000 applies. Please inform us at the time of booking, as pet-friendly rooms are limited and subject to availability.',
   },
   {
     question: 'What amenities are included with my stay?',

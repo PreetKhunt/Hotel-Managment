@@ -179,7 +179,7 @@ export default function RecentBookingsTable() {
                     {booking.checkOut}
                   </td>
                   <td style={{ padding: '0.85rem 1rem', color: '#ffffff', fontSize: '0.88rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                    ${booking.totalAmount.toLocaleString()}
+                    ₹{booking.totalAmount.toLocaleString()}
                   </td>
                   <td style={{ padding: '0.85rem 1rem' }}>
                     <StatusBadge status={booking.status} />

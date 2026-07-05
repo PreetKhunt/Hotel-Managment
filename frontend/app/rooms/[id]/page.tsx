@@ -453,7 +453,7 @@ export default function RoomDetailPage() {
                     boxShadow: '0 4px 20px rgba(201,168,76,0.4)', letterSpacing: '0.04em',
                   }}
                 >
-                  Book This Room — ${room.pricePerNight.toLocaleString()}/night
+                  Book This Room — ₹{room.pricePerNight.toLocaleString()}/night
                 </button>
               </div>
             </motion.div>

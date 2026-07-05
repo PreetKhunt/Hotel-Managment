@@ -136,7 +136,7 @@ export default function FeaturedRooms() {
                     fontSize: "1rem",
                   }}
                 >
-                  ${room.pricePerNight.toLocaleString()}
+                  ₹{room.pricePerNight.toLocaleString()}
                   <span style={{ fontSize: "0.65rem", fontWeight: 600 }}>/night</span>
                 </div>
               </div>

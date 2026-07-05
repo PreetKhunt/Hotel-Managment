@@ -116,13 +116,13 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
 
   // ── Clear all ──
   function clearAll() {
-    onChange({ types: [], minPrice: 0, maxPrice: 50000, guests: 0, amenities: [], minRating: 0 });
+    onChange({ types: [], minPrice: 10000, maxPrice: 100000, guests: 0, amenities: [], minRating: 0 });
   }
 
   const hasActiveFilters =
     filters.types.length > 0 ||
     filters.minPrice > 0 ||
-    filters.maxPrice < 50000 ||
+    filters.maxPrice < 100000 ||
     filters.guests > 0 ||
     filters.amenities.length > 0 ||
     filters.minRating > 0;
@@ -194,7 +194,7 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
         <SectionTitle>Price Range</SectionTitle>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '11px', color: SECONDARY, display: 'block', marginBottom: '5px' }}>Min ($)</label>
+            <label style={{ fontSize: '11px', color: SECONDARY, display: 'block', marginBottom: '5px' }}>Min (₹)</label>
             <input
               type="number"
               min={0}
@@ -213,11 +213,11 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
           </div>
           <span style={{ color: SECONDARY, fontSize: '14px', marginTop: '16px' }}>—</span>
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '11px', color: SECONDARY, display: 'block', marginBottom: '5px' }}>Max ($)</label>
+            <label style={{ fontSize: '11px', color: SECONDARY, display: 'block', marginBottom: '5px' }}>Max (₹)</label>
             <input
               type="number"
               min={filters.minPrice}
-              max={50000}
+              max={100000}
               value={filters.maxPrice}
               onChange={(e) => onChange({ ...filters, maxPrice: Number(e.target.value) })}
               style={{
@@ -232,11 +232,11 @@ export default function FilterSidebar({ filters, onChange }: FilterSidebarProps)
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-          <span style={{ color: SECONDARY, fontSize: '11px' }}>${filters.minPrice}</span>
+          <span style={{ color: SECONDARY, fontSize: '11px' }}>₹{filters.minPrice}</span>
           <span style={{ color: GOLD, fontSize: '12px', fontWeight: 600 }}>
-            ${filters.minPrice} – ${filters.maxPrice}
+            ₹{filters.minPrice} – ₹{filters.maxPrice}
           </span>
-          <span style={{ color: SECONDARY, fontSize: '11px' }}>${filters.maxPrice}</span>
+          <span style={{ color: SECONDARY, fontSize: '11px' }}>₹{filters.maxPrice}</span>
         </div>
       </div>
 

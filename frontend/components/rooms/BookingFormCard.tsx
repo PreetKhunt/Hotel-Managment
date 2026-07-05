@@ -142,7 +142,7 @@ export default function BookingFormCard({ room, onClose }: BookingFormCardProps)
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
           <div>
             <div style={{ color: GOLD, fontSize: '24px', fontWeight: 700, lineHeight: 1 }}>
-              ${room.pricePerNight.toLocaleString()}
+              ₹{room.pricePerNight.toLocaleString()}
               <span style={{ color: SECONDARY, fontSize: '14px', fontWeight: 400 }}>/night</span>
             </div>
             <div style={{ color: SECONDARY, fontSize: '12px', marginTop: '4px' }}>
@@ -228,7 +228,7 @@ export default function BookingFormCard({ room, onClose }: BookingFormCardProps)
                   ['Check-out', form.checkOut],
                   ['Guests',    String(form.guests)],
                   ['Nights',    String(nights)],
-                  ['Total',     `$${total.toLocaleString()}`],
+                  ['Total',     `₹${total.toLocaleString()}`],
                 ].map(([label, val]) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
                     <span style={{ color: SECONDARY, fontSize: '12px' }}>{label}</span>
@@ -359,8 +359,8 @@ export default function BookingFormCard({ room, onClose }: BookingFormCardProps)
                     Price Summary
                   </div>
                   {[
-                    [`$${room.pricePerNight.toLocaleString()} × ${nights} night${nights > 1 ? 's' : ''}`, `$${subtotal.toLocaleString()}`],
-                    ['Taxes & fees (12%)', `$${taxes.toLocaleString()}`],
+                    [`₹${room.pricePerNight.toLocaleString()} × ${nights} night${nights > 1 ? 's' : ''}`, `₹${subtotal.toLocaleString()}`],
+                    ['Taxes & fees (12%)', `₹${taxes.toLocaleString()}`],
                   ].map(([label, val]) => (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                       <span style={{ color: SECONDARY, fontSize: '13px' }}>{label}</span>
@@ -371,7 +371,7 @@ export default function BookingFormCard({ room, onClose }: BookingFormCardProps)
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: TEXT, fontSize: '15px', fontWeight: 700 }}>Total</span>
                     <span style={{ color: GOLD, fontSize: '20px', fontWeight: 800 }}>
-                      ${total.toLocaleString()}
+                      ₹{total.toLocaleString()}
                     </span>
                   </div>
                 </motion.div>
