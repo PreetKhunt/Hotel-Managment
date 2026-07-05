@@ -28,10 +28,17 @@ export const createAuthMiddleware = (
   roleRepo: IRoleRepository
 ) => {
   return async (req: Request, _res: Response, next: NextFunction) => {
+    const debugReqId = req.headers['x-debug-request-id'] || 'MISSING';
+    console.log(`\n========== [AuthMiddleware] START REQ: ${debugReqId} ==========`);
+    console.log(`[AuthMiddleware] req.originalUrl: ${req.originalUrl}`);
+    console.log(`[AuthMiddleware] req.method: ${req.method}`);
+    console.log(`[AuthMiddleware] req.headers.origin: ${req.headers.origin}`);
+    console.log(`[AuthMiddleware] req.headers.referer: ${req.headers.referer}`);
+    console.log(`[AuthMiddleware] req.headers.cookie:`, req.headers.cookie);
+    console.log(`[AuthMiddleware] Parsed req.cookies:`, JSON.stringify(req.cookies));
+    console.log(`[AuthMiddleware] hh_session exists in cookies? ${!!(req.cookies && req.cookies.hh_session)}`);
+
     try {
-      // Extract token from header or cookie
-      console.log(`[Auth Debug] Incoming req.headers.cookie:`, req.headers.cookie);
-      console.log(`[Auth Debug] Parsed req.cookies:`, JSON.stringify(req.cookies));
       // 1. Try to get token from Authorization header
       let token = req.headers.authorization?.startsWith('Bearer ') 
         ? req.headers.authorization.split(' ')[1] 
@@ -40,11 +47,13 @@ export const createAuthMiddleware = (
       // 2. If no header, extract token from hh_session cookie
       if (!token && req.cookies && req.cookies.hh_session) {
         token = req.cookies.hh_session;
-        console.log(`[AuthMiddleware] Successfully extracted token from hh_session.`);
+        console.log(`[AuthMiddleware] Successfully extracted token from hh_session. Length: ${token.length}`);
+      } else if (!token) {
+        console.log(`[AuthMiddleware] Failed to extract token from either header or hh_session cookie.`);
       }
 
       if (!token) {
-        console.debug(`[AuthMiddleware] Token missing. Origin: ${req.headers.origin}`);
+        console.error(`[AuthMiddleware] REJECTED (401): Authentication token missing`);
         throw new AppError('Authentication token missing', 401, ErrorCode.UNAUTHORIZED);
       }
 
@@ -52,28 +61,32 @@ export const createAuthMiddleware = (
       
       let authUser;
       
-      // Use Supabase API using a temporary ANON client to verify the token.
-      // We cannot use the global `_supabase` client here because it was instantiated 
-      // with the service_role key, which GoTrue rejects for the /user endpoint.
       const { createClient } = require('@supabase/supabase-js');
       const fallbackClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
          auth: { persistSession: false, autoRefreshToken: false }
       });
       
+      console.log(`[AuthMiddleware] Calling fallbackClient.auth.getUser(token)...`);
       const { data, error } = await fallbackClient.auth.getUser(token);
+      
       if (error || !data.user) {
+         console.error(`[AuthMiddleware] JWT Verification Failed (401). Error:`, error);
          throw new AppError('Invalid or expired authentication token', 401, ErrorCode.UNAUTHORIZED);
       }
+      
+      console.log(`[AuthMiddleware] JWT Verified successfully. Supabase User ID: ${data.user.id}`);
       authUser = data.user;
 
       // Fetch user details from public schema
       const dbUser = await userRepo.findById(authUser.id);
       
       if (!dbUser) {
+        console.error(`[AuthMiddleware] REJECTED (401): User profile not found in db for ID ${authUser.id}`);
         throw new AppError('User profile not found', 401, ErrorCode.UNAUTHORIZED);
       }
 
       if (dbUser.status === UserStatus.SUSPENDED || dbUser.status === UserStatus.DELETED || dbUser.status === UserStatus.INACTIVE) {
+        console.error(`[AuthMiddleware] REJECTED (403): User account status is ${dbUser.status}`);
         throw new AppError('User account is inactive or suspended', 403, ErrorCode.FORBIDDEN);
       }
 
@@ -99,8 +112,11 @@ export const createAuthMiddleware = (
         permissions,
       };
 
+      console.log(`[AuthMiddleware] Authentication successful. req.user populated with ID: ${req.user.id}`);
+      console.log(`========== [AuthMiddleware] END REQ: ${debugReqId} ==========\n`);
       next();
     } catch (error) {
+      console.error(`========== [AuthMiddleware] END REQ: ${debugReqId} (WITH ERROR) ==========\n`);
       next(error);
     }
   };

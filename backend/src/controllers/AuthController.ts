@@ -8,13 +8,16 @@ export class AuthController {
 
   private setSessionCookie(res: Response, sessionToken?: string) {
     if (sessionToken) {
-      res.cookie('hh_session', sessionToken, {
+      const cookieOptions = {
         httpOnly: true,
         secure: true, // true for production
         sameSite: 'none' as const,
         path: '/',
         maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
-      });
+      };
+      console.log(`[AuthController] setSessionCookie executing. Cookie name: hh_session, Options:`, JSON.stringify(cookieOptions));
+      res.cookie('hh_session', sessionToken, cookieOptions);
+      console.log(`[AuthController] Exact Set-Cookie header generated:`, res.getHeader('set-cookie'));
     }
   }
 

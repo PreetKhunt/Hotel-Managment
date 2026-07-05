@@ -12,9 +12,13 @@ const api = axios.create({
 
 // Request Interceptor
 api.interceptors.request.use((config) => {
+  const debugRequestId = crypto.randomUUID();
+  config.headers['X-Debug-Request-ID'] = debugRequestId;
+
   console.log(`[AXIOS REQUEST] ${config.method?.toUpperCase()} ${config.url}`);
-  console.log(`[AXIOS REQUEST] Headers:`, config.headers);
+  console.log(`[AXIOS REQUEST] Final URL: ${config.baseURL}${config.url}`);
   console.log(`[AXIOS REQUEST] withCredentials: ${config.withCredentials}`);
+  console.log(`[AXIOS REQUEST] Headers:`, config.headers);
   try {
       console.log(`[AXIOS REQUEST] Caller Stack:`, new Error().stack);
   } catch(e) {}

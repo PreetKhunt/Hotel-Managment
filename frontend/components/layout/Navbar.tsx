@@ -17,7 +17,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout, isLoading } = useAuth();
 
-  console.log("[Auth Audit] Navbar render - user:", user, "isLoading:", isLoading);
+  console.log(`[Auth Audit] Navbar render: isLoading=${isLoading}, user=${!!user}, branch=${!isLoading ? (user ? 'User Menu' : 'Login Button') : 'Loading'}`);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
