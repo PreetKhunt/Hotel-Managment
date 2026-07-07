@@ -40,19 +40,46 @@ export class AuthController {
       const reqInfo = {
         ip: req.ip || req.connection.remoteAddress || 'unknown',
         userAgent: req.headers['user-agent'] || 'unknown',
-        requestId: (req as any).id || 'unknown', // Assuming request tracing middleware adds id
+        requestId: (req as any).id || 'unknown',
       };
 
-      const { user, session } = await this.authService.login(email, password, reqInfo);
+      const { user: authUser, session } = await this.authService.login(email, password, reqInfo);
       
       if (session) {
         this.setSessionCookie(res);
       }
 
+      // Fetch complete profile with role
+      const userRepo = (this.authService as any).userRepo;
+      const dbUser = await userRepo.findById(authUser.id);
+      
+      let roleName = 'Guest';
+      let permissions: string[] = [];
+      if (dbUser?.roleId) {
+        // Find role dynamically
+        const roleRepo = require('../domain/repositories/postgres/RoleRepository').RoleRepository;
+        const pool = require('../infrastructure/database/postgres').pool;
+        const tempRoleRepo = new roleRepo(pool);
+        const role = await tempRoleRepo.findById(dbUser.roleId);
+        if (role) {
+          roleName = role.name;
+          const perms = await tempRoleRepo.getPermissionsForRole(role.id);
+          permissions = perms.map((p: any) => p.name);
+        }
+      }
+
+      const fullUser = {
+        ...(dbUser || authUser),
+        role: {
+          name: roleName,
+          permissions: permissions
+        }
+      };
+
       res.status(200).json({
         status: 'success',
         data: {
-          user,
+          user: fullUser,
         },
       });
     } catch (error) {
