@@ -10,26 +10,35 @@ export default function SettingsManagement() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const fetchSettings = async () => {
+    try {
+      const { data } = await api.get('/super-admin/settings');
+      console.log('Fetched settings:', data);
+      setSettings(data.data || {});
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      toast.error('Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const { data } = await api.get('/super-admin/settings');
-        setSettings(data.data || {});
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchSettings();
   }, []);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/super-admin/settings', settings);
+      // Filter out system fields to avoid DB update errors
+      const { id, hotel_id, created_at, updated_at, ...updateData } = settings;
+      
+      await api.put('/super-admin/settings', updateData);
       toast.success('Settings saved successfully');
+      // Reload settings to ensure we have the latest
+      await fetchSettings();
     } catch (error) {
+      console.error('Error saving settings:', error);
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);
@@ -77,23 +86,68 @@ export default function SettingsManagement() {
             <input 
               type="email" 
               className="w-full p-2 border rounded-md" 
-              value={settings?.email || ''} 
-              onChange={e => setSettings({...settings, email: e.target.value})}
+              value={settings?.support_email || ''} 
+              onChange={e => setSettings({...settings, support_email: e.target.value})}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Phone</label>
+            <label className="text-sm font-medium">Contact Phone</label>
             <input 
               type="text" 
               className="w-full p-2 border rounded-md" 
-              value={settings?.phone || ''} 
-              onChange={e => setSettings({...settings, phone: e.target.value})}
+              value={settings?.support_phone || ''} 
+              onChange={e => setSettings({...settings, support_phone: e.target.value})}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tax Percentage (GST)</label>
+            <input 
+              type="number" 
+              className="w-full p-2 border rounded-md" 
+              value={settings?.gst_percentage || 0} 
+              onChange={e => setSettings({...settings, gst_percentage: parseFloat(e.target.value) || 0})}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Logo URL</label>
+            <input 
+              type="text" 
+              className="w-full p-2 border rounded-md" 
+              value={settings?.logo_url || ''} 
+              onChange={e => setSettings({...settings, logo_url: e.target.value})}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Check-In Time</label>
+            <input 
+              type="time" 
+              className="w-full p-2 border rounded-md" 
+              value={settings?.check_in_time || '14:00'} 
+              onChange={e => setSettings({...settings, check_in_time: e.target.value})}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Check-Out Time</label>
+            <input 
+              type="time" 
+              className="w-full p-2 border rounded-md" 
+              value={settings?.check_out_time || '11:00'} 
+              onChange={e => setSettings({...settings, check_out_time: e.target.value})}
             />
           </div>
         </div>
         
         <div className="space-y-2">
-          <label className="text-sm font-medium">Description</label>
+          <label className="text-sm font-medium">Physical Address</label>
+          <textarea 
+            className="w-full p-2 border rounded-md h-20" 
+            value={settings?.address || ''} 
+            onChange={e => setSettings({...settings, address: e.target.value})}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Hotel Description</label>
           <textarea 
             className="w-full p-2 border rounded-md h-32" 
             value={settings?.description || ''} 

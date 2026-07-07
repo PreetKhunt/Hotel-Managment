@@ -168,29 +168,36 @@ export class SuperAdminController {
       
       // Automatically create a default hotel_settings record if none exists
       if (!data) {
-        const defaultSettings = {
-          name: 'Hospitality Hub',
-          currency: 'USD',
-          tax_rate: 10,
-          check_in_time: '14:00',
-          check_out_time: '11:00',
-          description: 'Welcome to Hospitality Hub',
-          address: '',
-          phone: '',
-          email: '',
-          cancellation_policy: 'Standard 24-hour cancellation policy.',
-          social_links: {},
-          banner_images: []
-        };
+        // Find the default hotel to link
+        const { data: hotel } = await this.supabase.from('hotels').select('id').limit(1).single();
         
-        const { data: newSettings, error: insertError } = await this.supabase
-          .from('hotel_settings')
-          .insert([defaultSettings])
-          .select()
-          .single();
+        if (hotel) {
+          const defaultSettings = {
+            hotel_id: hotel.id,
+            hotel_name: 'Hospitality Hub',
+            currency: 'USD',
+            gst_percentage: 10,
+            check_in_time: '14:00',
+            check_out_time: '11:00',
+            description: 'Welcome to Hospitality Hub',
+            address: '',
+            support_phone: '',
+            support_email: '',
+            cancellation_policy: 'Standard 24-hour cancellation policy.',
+            social_links: {},
+            banner_images: []
+          };
           
-        if (insertError) throw insertError;
-        data = newSettings;
+          const { data: newSettings, error: insertError } = await this.supabase
+            .from('hotel_settings')
+            .insert([defaultSettings])
+            .select()
+            .single();
+            
+          if (!insertError) {
+            data = newSettings;
+          }
+        }
       }
       
       res.status(200).json({ success: true, data });
