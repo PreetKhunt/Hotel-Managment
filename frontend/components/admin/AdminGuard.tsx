@@ -14,7 +14,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     if (!isLoading) {
       if (!user) {
         router.replace('/');
-      } else if (!user.role.permissions.includes('SUPER_ADMIN')) {
+      } else if (!Array.isArray(user.role?.permissions) || !user.role.permissions.includes('SUPER_ADMIN')) {
         router.replace('/dashboard');
       } else {
         setIsAuthorized(true);
