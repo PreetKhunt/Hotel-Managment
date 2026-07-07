@@ -141,3 +141,22 @@ export const requirePermission = (permission: string) => {
     }
   };
 };
+
+export const requireSuperAdmin = () => {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      if (!req.user) {
+        throw new AppError('Authentication required', 401, ErrorCode.UNAUTHORIZED);
+      }
+
+      // Explicitly check for SUPER_ADMIN permission, not role name.
+      if (req.user.permissions.includes('SUPER_ADMIN')) {
+        return next();
+      }
+
+      throw new AppError('Insufficient permissions. Super Admin access required.', 403, ErrorCode.FORBIDDEN);
+    } catch (error) {
+      next(error);
+    }
+  };
+};

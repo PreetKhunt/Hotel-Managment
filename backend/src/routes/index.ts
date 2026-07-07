@@ -28,6 +28,8 @@ import restaurantRoutes from './restaurantRoutes';
 import spaRoutes from './spaRoutes';
 import fitnessRoutes from './fitnessRoutes';
 
+import superAdminRoutes from './superAdminRoutes';
+
 // Mounted resource routers
 router.use('/auth', authRoutes);
 router.use('/hotels', hotelRoutes);
@@ -41,5 +43,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/restaurant', restaurantRoutes);
 router.use('/spa', spaRoutes);
 router.use('/fitness', fitnessRoutes);
+router.use('/super-admin', superAdminRoutes);
 
 export default router;
