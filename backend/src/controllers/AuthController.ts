@@ -46,7 +46,7 @@ export class AuthController {
       const { user: authUser, session } = await this.authService.login(email, password, reqInfo);
       
       if (session) {
-        this.setSessionCookie(res);
+        this.setSessionCookie(res, session.access_token);
       }
 
       // Fetch complete profile with role
@@ -103,7 +103,7 @@ export class AuthController {
       const { user, session } = await this.authService.register(email, password, firstName, lastName, reqInfo);
 
       if (session) {
-        this.setSessionCookie(res);
+        this.setSessionCookie(res, session.access_token);
       }
 
       res.status(201).json({

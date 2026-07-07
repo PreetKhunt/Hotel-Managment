@@ -12,11 +12,16 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading) {
+      console.log("[AdminGuard] Checking authorization. User object:", user);
+      
       if (!user) {
+        console.log("[AdminGuard] Redirecting to / because user is null");
         router.replace('/');
       } else if (!Array.isArray(user.role?.permissions) || !user.role.permissions.includes('SUPER_ADMIN')) {
+        console.log("[AdminGuard] Redirecting to /dashboard because permissions do not include SUPER_ADMIN. user.role:", user.role);
         router.replace('/dashboard');
       } else {
+        console.log("[AdminGuard] User authorized!");
         setIsAuthorized(true);
       }
     }

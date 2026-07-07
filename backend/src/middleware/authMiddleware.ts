@@ -104,6 +104,8 @@ export const createAuthMiddleware = (
         }
       }
 
+      console.log(`[AuthMiddleware] req.user assembled for ${dbUser.email}: roleName=${roleName}, permissions=${permissions}`);
+
       // Attach user to request
       req.user = {
         id: dbUser.id,
@@ -128,6 +130,7 @@ export const requirePermission = (permission: string) => {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
+        console.log(`[AuthMiddleware] requirePermission failed: No user found`);
         throw new AppError('Authentication required for this action', 401, ErrorCode.UNAUTHORIZED);
       }
 
