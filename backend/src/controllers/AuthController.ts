@@ -11,7 +11,7 @@ export class AuthController {
       const cookieOptions = {
         httpOnly: true,
         secure: true, // true for production
-        sameSite: 'none' as const,
+        sameSite: 'lax' as const,
         path: '/',
         maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
       };
@@ -36,7 +36,7 @@ export class AuthController {
     res.clearCookie('hh_session', {
       httpOnly: true,
       secure: true,
-      sameSite: 'none' as const,
+      sameSite: 'lax' as const,
       path: '/',
     });
   }
@@ -184,7 +184,7 @@ export class AuthController {
       res.cookie('oauth_next', nextParam, {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
+        sameSite: 'lax',
         path: '/',
         maxAge: 10 * 60 * 1000, // 10 minutes
       });
@@ -228,7 +228,7 @@ export class AuthController {
       res.clearCookie('oauth_next', {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
+        sameSite: 'lax',
         path: '/',
       });
       
