@@ -15,9 +15,20 @@ export class AuthController {
         path: '/',
         maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
       };
-      console.log(`[AuthController] setSessionCookie executing. Cookie name: hh_session, Options:`, JSON.stringify(cookieOptions));
+      console.log(`\n========== [COOKIE FORENSICS] ==========`);
+      console.log(`- Token exists?`, !!sessionToken);
+      console.log(`- Token length:`, sessionToken.length);
+      console.log(`- Cookie options:`, JSON.stringify(cookieOptions));
+      console.log(`- Response headers BEFORE res.cookie():`, res.getHeaders());
+      
       res.cookie('hh_session', sessionToken, cookieOptions);
-      console.log(`[AuthController] Exact Set-Cookie header generated:`, res.getHeader('set-cookie'));
+      
+      console.log(`- Response headers AFTER res.cookie():`, res.getHeaders());
+      console.log(`==========================================\n`);
+    } else {
+      console.log(`\n========== [COOKIE FORENSICS] ==========`);
+      console.log(`WARNING: setSessionCookie called but sessionToken is missing/undefined!`);
+      console.log(`==========================================\n`);
     }
   }
 
