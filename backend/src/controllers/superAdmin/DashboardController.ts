@@ -4,7 +4,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 export class DashboardController {
   constructor(private supabase: SupabaseClient) {}
 
-  getDashboardStats = async (_req: Request, res: Response, next: NextFunction) => {
+  getDashboardStats = async (_req: Request, res: Response, _next: NextFunction) => {
     try {
       let roomsStats = { total: 0, available: 0, occupied: 0, maintenance: 0 };
       let bookingsStats = { total: 0, pending: 0, confirmed: 0, cancelled: 0 };
