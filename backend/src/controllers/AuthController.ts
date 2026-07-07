@@ -56,10 +56,10 @@ export class AuthController {
       let roleName = 'Guest';
       let permissions: string[] = [];
       if (dbUser?.roleId) {
-        // Find role dynamically
-        const roleRepo = require('../domain/repositories/postgres/RoleRepository').RoleRepository;
-        const pool = require('../infrastructure/database/postgres').pool;
-        const tempRoleRepo = new roleRepo(pool);
+        // Find role dynamically using the correct config path
+        const { RoleRepository } = require('../domain/repositories/postgres/RoleRepository');
+        const { pgPool } = require('../config/database');
+        const tempRoleRepo = new RoleRepository(pgPool);
         const role = await tempRoleRepo.findById(dbUser.roleId);
         if (role) {
           roleName = role.name;
