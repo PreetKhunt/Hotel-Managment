@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireSuperAdmin } from '../middleware/authMiddleware';
+import { authenticate } from '../middleware/auth';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '../config/env';
 import { DashboardController } from '../controllers/superAdmin/DashboardController';
@@ -14,6 +15,9 @@ const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 const dashboardController = new DashboardController(supabase);
 const auditLogService = new AdminAuditLogService(supabase);
 const superAdminController = new SuperAdminController(supabase, auditLogService);
+
+// Authenticate user and inject req.user
+router.use(authenticate);
 
 // ALL routes below this middleware require SUPER_ADMIN permission
 router.use(requireSuperAdmin());
