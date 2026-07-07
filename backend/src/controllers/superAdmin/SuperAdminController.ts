@@ -162,8 +162,37 @@ export class SuperAdminController {
   // ================= SETTINGS =================
   getSettings = async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      const { data, error } = await this.supabase.from('hotel_settings').select('*').limit(1).single();
+      let { data, error } = await this.supabase.from('hotel_settings').select('*').limit(1).single();
+      
       if (error && error.code !== 'PGRST116') throw error; // PGRST116 is no rows
+      
+      // Automatically create a default hotel_settings record if none exists
+      if (!data) {
+        const defaultSettings = {
+          name: 'Hospitality Hub',
+          currency: 'USD',
+          tax_rate: 10,
+          check_in_time: '14:00',
+          check_out_time: '11:00',
+          description: 'Welcome to Hospitality Hub',
+          address: '',
+          phone: '',
+          email: '',
+          cancellation_policy: 'Standard 24-hour cancellation policy.',
+          social_links: {},
+          banner_images: []
+        };
+        
+        const { data: newSettings, error: insertError } = await this.supabase
+          .from('hotel_settings')
+          .insert([defaultSettings])
+          .select()
+          .single();
+          
+        if (insertError) throw insertError;
+        data = newSettings;
+      }
+      
       res.status(200).json({ success: true, data });
     } catch (error) { next(error); }
   };
