@@ -19,19 +19,22 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- 2. Seed the Default Super Admin Account
 -- Password: K1e2n3i4l5!!
--- Supabase uses bcrypt for password hashing in auth.users. 
--- For a safe migration seed, we use pgcrypto.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 DO $$ 
 DECLARE
     super_admin_role_id UUID;
-    admin_uuid UUID := '22222222-2222-2222-2222-222222222222'::uuid; -- A fixed UUID for the default admin
+    admin_uuid UUID;
 BEGIN
     SELECT id INTO super_admin_role_id FROM public.roles WHERE name = 'Super Admin' LIMIT 1;
 
-    -- Ensure auth.users has this user
-    IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = '2403051051049@paruluniversity.ac.in') THEN
+    -- Check if user already exists
+    SELECT id INTO admin_uuid FROM auth.users WHERE email = '2403051051049@paruluniversity.ac.in' LIMIT 1;
+
+    IF admin_uuid IS NULL THEN
+        admin_uuid := gen_random_uuid();
+        
+        -- Insert into auth.users (trigger will auto-insert into public.users)
         INSERT INTO auth.users (
             instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, 
             recovery_sent_at, last_sign_in_at, raw_app_meta_data, raw_user_meta_data, 
@@ -43,19 +46,14 @@ BEGIN
             NOW(), NOW(), '', '', '', ''
         );
     ELSE
-        SELECT id INTO admin_uuid FROM auth.users WHERE email = '2403051051049@paruluniversity.ac.in' LIMIT 1;
         -- Update password just in case
         UPDATE auth.users SET encrypted_password = crypt('K1e2n3i4l5!!', gen_salt('bf')) WHERE id = admin_uuid;
     END IF;
 
-    -- Ensure public.users has this user and correct role
-    -- Note: handle_new_user trigger might have already created this row as a Guest. We must update it.
-    IF EXISTS (SELECT 1 FROM public.users WHERE id = admin_uuid) THEN
-        UPDATE public.users SET role_id = super_admin_role_id, status = 'active', first_name = 'Super', last_name = 'Admin' WHERE id = admin_uuid;
-    ELSE
-        INSERT INTO public.users (id, email, first_name, last_name, role_id, status)
-        VALUES (admin_uuid, '2403051051049@paruluniversity.ac.in', 'Super', 'Admin', super_admin_role_id, 'active');
-    END IF;
+    -- Ensure public.users has this user and correct role (trigger might have set it as Guest)
+    UPDATE public.users 
+    SET role_id = super_admin_role_id, status = 'active', first_name = 'Super', last_name = 'Admin' 
+    WHERE id = admin_uuid;
 END $$;
 
 
@@ -78,18 +76,17 @@ CREATE TABLE IF NOT EXISTS public.room_images (
 
 CREATE INDEX IF NOT EXISTS idx_room_images_room_id ON public.room_images(room_id);
 
--- Optional: Migrate existing array images to the new table
+-- Migrate existing array images to the new table
 DO $$
 DECLARE
     r RECORD;
     idx INTEGER;
     img TEXT;
 BEGIN
-    -- Check if 'images' column exists on rooms table before attempting migration
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='rooms' AND column_name='images') THEN
-        FOR r IN SELECT id, images FROM public.rooms WHERE images IS NOT NULL AND jsonb_array_length(images) > 0 LOOP
+        FOR r IN SELECT id, images FROM public.rooms WHERE images IS NOT NULL AND array_length(images, 1) > 0 LOOP
             idx := 0;
-            FOR img IN SELECT jsonb_array_elements_text(r.images) LOOP
+            FOR img IN SELECT unnest(r.images) LOOP
                 INSERT INTO public.room_images (room_id, image_url, display_order, is_featured)
                 VALUES (r.id, img, idx, (idx = 0)) ON CONFLICT DO NOTHING;
                 idx := idx + 1;
