@@ -29,7 +29,7 @@ BEGIN
     SELECT id INTO super_admin_role_id FROM public.roles WHERE name = 'Super Admin' LIMIT 1;
 
     -- Check if user already exists
-    SELECT id INTO admin_uuid FROM auth.users WHERE email = '2403051051049@paruluniversity.ac.in' LIMIT 1;
+    SELECT id INTO admin_uuid FROM auth.users WHERE email = 'khuntpreet12@gmail.com' LIMIT 1;
 
     IF admin_uuid IS NULL THEN
         admin_uuid := gen_random_uuid();
@@ -40,14 +40,14 @@ BEGIN
             recovery_sent_at, last_sign_in_at, raw_app_meta_data, raw_user_meta_data, 
             created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token
         ) VALUES (
-            '00000000-0000-0000-0000-000000000000', admin_uuid, 'authenticated', 'authenticated', '2403051051049@paruluniversity.ac.in',
-            crypt('K1e2n3i4l5!!', gen_salt('bf')), NOW(), 
+            '00000000-0000-0000-0000-000000000000', admin_uuid, 'authenticated', 'authenticated', 'khuntpreet12@gmail.com',
+            crypt('P1r2e3e4t5!', gen_salt('bf')), NOW(), 
             NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{"full_name":"Super Admin"}',
             NOW(), NOW(), '', '', '', ''
         );
     ELSE
         -- Update password just in case
-        UPDATE auth.users SET encrypted_password = crypt('K1e2n3i4l5!!', gen_salt('bf')) WHERE id = admin_uuid;
+        UPDATE auth.users SET encrypted_password = crypt('P1r2e3e4t5!', gen_salt('bf')) WHERE id = admin_uuid;
     END IF;
 
     -- Ensure public.users has this user and correct role (trigger might have set it as Guest)
