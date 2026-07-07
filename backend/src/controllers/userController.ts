@@ -13,9 +13,17 @@ export class UserController {
 
       const profile = await this.userService.getUserProfile(userId);
 
+      const dataToReturn = {
+        ...profile,
+        role: {
+          name: req.user?.roleName || 'Guest',
+          permissions: req.user?.permissions || [],
+        },
+      };
+
       res.status(HTTP_STATUS.OK).json({
         success: true,
-        data: profile,
+        data: dataToReturn,
       });
     } catch (error) {
       next(error);
