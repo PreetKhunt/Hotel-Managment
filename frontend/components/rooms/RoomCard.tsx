@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Room } from '@/types';
+import { RoomBadge } from '@/lib/stay-match';
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
 const GOLD = '#C9A84C';
@@ -70,9 +71,10 @@ function getAmenityIcon(amenity: string): string {
 interface RoomCardProps {
   room: Room;
   index?: number;
+  badges?: RoomBadge[];
 }
 
-export default function RoomCard({ room, index = 0 }: RoomCardProps) {
+export default function RoomCard({ room, index = 0, badges = [] }: RoomCardProps) {
   const typeBadge   = typeBadgeColor(room.type);
   const statusBadge = statusBadgeStyle(room.status);
   const topThree    = room.amenities.slice(0, 3);
@@ -175,6 +177,29 @@ export default function RoomCard({ room, index = 0 }: RoomCardProps) {
           <span style={{ color: TEXT, fontSize: '13px', fontWeight: 600 }}>{room.rating.toFixed(1)}</span>
           <span style={{ color: SECONDARY, fontSize: '12px' }}>({room.reviewCount} reviews)</span>
         </div>
+
+        {/* Intelligent Stay Match Badges */}
+        {badges && badges.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '-2px', marginBottom: '2px' }}>
+            {badges.map((b) => (
+              <span key={b.id} style={{
+                padding: '4px 10px',
+                borderRadius: '16px',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: b.color || '#C9A84C',
+                background: b.bgColor || 'rgba(201,168,76,0.15)',
+                border: `1px solid ${b.color || '#C9A84C'}44`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}>
+                <span>{b.icon}</span>
+                <span>{b.label}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Amenity chips */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>

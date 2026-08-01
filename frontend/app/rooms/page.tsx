@@ -7,6 +7,8 @@ import { Room } from '@/types';
 import FilterSidebar, { FilterState } from '@/components/rooms/FilterSidebar';
 import RoomCard from '@/components/rooms/RoomCard';
 import { useRooms } from '@/hooks/useRooms';
+import { useStayMatch } from '@/hooks/useStayMatch';
+import { StayMatchWizard, StayMatchSummary, StayMatchEmptyState } from '@/components/stay-match';
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
 const GOLD = '#C9A84C';
@@ -126,10 +128,23 @@ export default function RoomsPage() {
 
   const { data: rooms = [], isLoading, isError } = useRooms();
 
+  const {
+    isWizardOpen,
+    activePreferences,
+    isMatchActive,
+    matchedRooms: stayMatchedRooms,
+    openWizard,
+    closeWizard,
+    applyPreferences,
+    clearPreferences,
+    getBadgesForRoom,
+  } = useStayMatch(rooms);
+
   const filteredRooms = useMemo(() => {
-    const filtered = filterRooms(rooms, filters, searchQuery);
+    const sourceRooms = isMatchActive ? stayMatchedRooms : rooms;
+    const filtered = filterRooms(sourceRooms, filters, searchQuery);
     return sortRooms(filtered, sortBy);
-  }, [searchQuery, filters, sortBy, rooms]);
+  }, [searchQuery, filters, sortBy, rooms, stayMatchedRooms, isMatchActive]);
 
   function clearAll() {
     setFilters(DEFAULT_FILTERS);
@@ -285,6 +300,29 @@ export default function RoomsPage() {
             </select>
           </div>
 
+          {/* Intelligent Stay Match Trigger */}
+          <button
+            type="button"
+            onClick={openWizard}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '12px 20px', borderRadius: '12px', cursor: 'pointer',
+              background: isMatchActive
+                ? 'rgba(201,168,76,0.2)'
+                : 'linear-gradient(135deg, #C9A84C 0%, #E8C96A 50%, #C9A84C 100%)',
+              border: isMatchActive ? '1px solid #C9A84C' : 'none',
+              color: isMatchActive ? GOLD : '#0A0F1E', fontSize: '14px', fontWeight: 700,
+              transition: 'all 0.2s ease',
+              boxShadow: isMatchActive ? 'none' : '0 4px 16px rgba(201,168,76,0.35)',
+            }}
+          >
+            <span>✨</span>
+            <span>{isMatchActive ? 'Stay Match Active' : 'Find My Perfect Stay'}</span>
+            {isMatchActive && (
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: GOLD, boxShadow: `0 0 6px ${GOLD}` }} />
+            )}
+          </button>
+
           {/* Mobile filter toggle */}
           <button
             onClick={() => setMobileFilterOpen((p) => !p)}
@@ -357,6 +395,16 @@ export default function RoomsPage() {
           )}
         </div>
 
+        {/* Stay Match Summary Card */}
+        {isMatchActive && activePreferences && (
+          <StayMatchSummary
+            preferences={activePreferences}
+            matchCount={filteredRooms.length}
+            onEdit={openWizard}
+            onReset={clearPreferences}
+          />
+        )}
+
         {/* ── Two-column layout ── */}
         <div style={{ display: 'flex', gap: '28px', alignItems: 'flex-start' }}>
           {/* Sidebar — desktop only */}
@@ -378,7 +426,11 @@ export default function RoomsPage() {
                 <p>Failed to load rooms. Please try again later.</p>
               </div>
             ) : filteredRooms.length === 0 ? (
-              <EmptyState onClear={clearAll} />
+              isMatchActive ? (
+                <StayMatchEmptyState onEdit={openWizard} onReset={clearPreferences} />
+              ) : (
+                <EmptyState onClear={clearAll} />
+              )
             ) : (
               <motion.div
                 style={{
@@ -397,7 +449,7 @@ export default function RoomsPage() {
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3, delay: i * 0.04 }}
                     >
-                      <RoomCard room={room} index={i} />
+                      <RoomCard room={room} index={i} badges={getBadgesForRoom(room)} />
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -406,6 +458,14 @@ export default function RoomsPage() {
           </div>
         </div>
       </div>
+
+      {/* Intelligent Stay Match Wizard Modal */}
+      <StayMatchWizard
+        isOpen={isWizardOpen}
+        onClose={closeWizard}
+        onComplete={applyPreferences}
+        initialPreferences={activePreferences}
+      />
 
       <style>{`
         .sidebar-desktop { display: block; }
