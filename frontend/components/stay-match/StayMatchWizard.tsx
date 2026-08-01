@@ -8,6 +8,8 @@ import {
   STAY_MATCH_QUESTIONS,
   INITIAL_PREFERENCES,
 } from '@/lib/stay-match';
+import WizardProgress from './WizardProgress';
+import PreferenceCard from './PreferenceCard';
 
 // ─── Luxury Branding Palette ──────────────────────────────────────────────────
 const GOLD = '#C9A84C';
@@ -210,19 +212,8 @@ export default function StayMatchWizard({
                   ✕
                 </button>
               </div>
-
               {/* Progress Bar & Step Indicator */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '13px', color: TEXT_SECONDARY, fontWeight: 500 }}>
-                <span>Step {currentStep + 1} of {totalSteps}</span>
-                <span style={{ color: GOLD, fontWeight: 700 }}>{progressPercentage}% Complete</span>
-              </div>
-              <div style={{ width: '100%', height: '4px', background: 'rgba(148, 163, 184, 0.15)', borderRadius: '4px', overflow: 'hidden' }}>
-                <motion.div
-                  animate={{ width: `${progressPercentage}%` }}
-                  transition={{ duration: 0.35, ease: 'easeOut' }}
-                  style={{ height: '100%', background: `linear-gradient(90deg, ${GOLD}, ${GOLD_LIGHT})`, borderRadius: '4px' }}
-                />
-              </div>
+              <WizardProgress currentStep={currentStep} totalSteps={totalSteps} />
             </div>
 
             {/* ── Question Body ── */}
@@ -242,100 +233,33 @@ export default function StayMatchWizard({
                 {/* 1. Single Card Selector */}
                 {currentQuestion.type === 'single-card' && (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-                    {currentQuestion.options.map((opt) => {
-                      const isSelected = preferences[currentQuestion.id] === opt.value;
-                      return (
-                        <button
-                          key={String(opt.value)}
-                          type="button"
-                          onClick={() => handleValueChange(opt.value)}
-                          style={{
-                            textAlign: 'left',
-                            padding: '16px',
-                            borderRadius: '16px',
-                            background: isSelected ? CARD_BG_ACTIVE : CARD_BG,
-                            border: `2px solid ${isSelected ? GOLD : BORDER_DEFAULT}`,
-                            color: TEXT_PRIMARY,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '8px',
-                            transition: 'all 0.2s ease',
-                            boxShadow: isSelected ? '0 8px 24px rgba(201, 168, 76, 0.15)' : 'none',
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!isSelected) (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(201, 168, 76, 0.35)';
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isSelected) (e.currentTarget as HTMLButtonElement).style.borderColor = BORDER_DEFAULT;
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                            <span style={{ fontSize: '24px' }}>{opt.icon}</span>
-                            <div style={{
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: '50%',
-                              border: `2px solid ${isSelected ? GOLD : 'rgba(148, 163, 184, 0.4)'}`,
-                              background: isSelected ? GOLD : 'transparent',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}>
-                              {isSelected && (
-                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0D1526' }} />
-                              )}
-                            </div>
-                          </div>
-                          <div style={{ fontWeight: 700, fontSize: '15px', color: isSelected ? GOLD_LIGHT : TEXT_PRIMARY }}>
-                            {opt.label}
-                          </div>
-                          {opt.description && (
-                            <div style={{ fontSize: '12.5px', color: TEXT_SECONDARY, lineHeight: 1.45 }}>
-                              {opt.description}
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
+                    {currentQuestion.options.map((opt) => (
+                      <PreferenceCard
+                        key={String(opt.value)}
+                        label={opt.label}
+                        icon={opt.icon}
+                        description={opt.description}
+                        isSelected={preferences[currentQuestion.id] === opt.value}
+                        onClick={() => handleValueChange(opt.value)}
+                        layout="card"
+                      />
+                    ))}
                   </div>
                 )}
 
                 {/* 2. Number Selector Toggle */}
                 {currentQuestion.type === 'number-selector' && (
                   <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-                    {currentQuestion.options.map((opt) => {
-                      const isSelected = preferences[currentQuestion.id] === opt.value;
-                      return (
-                        <button
-                          key={String(opt.value)}
-                          type="button"
-                          onClick={() => handleValueChange(opt.value)}
-                          style={{
-                            flex: '1',
-                            minWidth: '130px',
-                            padding: '20px 16px',
-                            borderRadius: '16px',
-                            background: isSelected ? 'linear-gradient(135deg, rgba(201, 168, 76, 0.25), rgba(201, 168, 76, 0.1))' : CARD_BG,
-                            border: `2px solid ${isSelected ? GOLD : BORDER_DEFAULT}`,
-                            color: isSelected ? GOLD_LIGHT : TEXT_PRIMARY,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            fontWeight: 700,
-                            fontSize: '16px',
-                            transition: 'all 0.2s ease',
-                            boxShadow: isSelected ? '0 8px 24px rgba(201, 168, 76, 0.2)' : 'none',
-                          }}
-                        >
-                          <span style={{ fontSize: '28px' }}>{opt.icon}</span>
-                          <span>{opt.label}</span>
-                        </button>
-                      );
-                    })}
+                    {currentQuestion.options.map((opt) => (
+                      <PreferenceCard
+                        key={String(opt.value)}
+                        label={opt.label}
+                        icon={opt.icon}
+                        isSelected={preferences[currentQuestion.id] === opt.value}
+                        onClick={() => handleValueChange(opt.value)}
+                        layout="compact"
+                      />
+                    ))}
                   </div>
                 )}
 

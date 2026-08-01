@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { StayMatchPreferences } from '@/lib/stay-match';
+import BadgePill from './BadgePill';
 
 const GOLD = '#C9A84C';
 const CARD_BG = '#1A2235';
@@ -141,24 +142,13 @@ export default function StayMatchSummary({
           Your Preferences:
         </span>
         {activeTags.map((tag, i) => (
-          <div
+          <BadgePill
             key={i}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '5px 12px',
-              borderRadius: '16px',
-              background: '#0D1526',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
-              color: TEXT_PRIMARY,
-              fontSize: '12.5px',
-              fontWeight: 600,
-            }}
-          >
-            <span>{tag.icon}</span>
-            <span>{tag.label}</span>
-          </div>
+            icon={tag.icon}
+            label={tag.label}
+            color={TEXT_PRIMARY}
+            bgColor="#0D1526"
+          />
         ))}
       </div>
     </motion.div>

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Room } from '@/types';
 import { RoomBadge } from '@/lib/stay-match';
+import { BadgePill } from '@/components/stay-match';
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
 const GOLD = '#C9A84C';
@@ -182,21 +183,7 @@ export default function RoomCard({ room, index = 0, badges = [] }: RoomCardProps
         {badges && badges.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '-2px', marginBottom: '2px' }}>
             {badges.map((b) => (
-              <span key={b.id} style={{
-                padding: '4px 10px',
-                borderRadius: '16px',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                color: b.color || '#C9A84C',
-                background: b.bgColor || 'rgba(201,168,76,0.15)',
-                border: `1px solid ${b.color || '#C9A84C'}44`,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}>
-                <span>{b.icon}</span>
-                <span>{b.label}</span>
-              </span>
+              <BadgePill key={b.id} icon={b.icon} label={b.label} color={b.color} bgColor={b.bgColor} />
             ))}
           </div>
         )}
