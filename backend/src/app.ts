@@ -37,6 +37,7 @@ app.use(
         'http://localhost:3000',
         'http://localhost:3001',
         'https://hotel-managments.netlify.app',
+        'https://vermillion-pothos-b232ea.netlify.app',
         'https://hotel-managment-production-8824.up.railway.app'
       ];
       
@@ -46,7 +47,7 @@ app.use(
       }
       
       // Allow Netlify Deploy Previews dynamically
-      if (origin.endsWith('--hotel-managments.netlify.app')) {
+      if (origin.endsWith('--hotel-managments.netlify.app') || origin.endsWith('--vermillion-pothos-b232ea.netlify.app')) {
         return callback(null, true);
       }
       

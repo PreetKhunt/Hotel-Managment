@@ -26,7 +26,7 @@ const envSchema = z.object({
 const processEnv = { ...process.env };
 if (processEnv.NODE_ENV === 'production') {
   if (!processEnv.GOOGLE_CALLBACK_URL || processEnv.GOOGLE_CALLBACK_URL.includes('localhost') || processEnv.GOOGLE_CALLBACK_URL.includes('127.0.0.1')) {
-    processEnv.GOOGLE_CALLBACK_URL = 'https://hotel-managments.netlify.app/api/v1/auth/google/callback';
+    processEnv.GOOGLE_CALLBACK_URL = 'https://vermillion-pothos-b232ea.netlify.app/api/v1/auth/google/callback';
   }
 }
 
