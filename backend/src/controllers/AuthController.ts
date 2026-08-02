@@ -177,7 +177,7 @@ export class AuthController {
       
       // Fix: The redirectUrl MUST EXACTLY match the Supabase whitelist.
       // Do NOT append query parameters like ?next=... here, otherwise Supabase silently rejects it
-      // and redirects to the Site URL (Netlify) instead of Railway!
+      // and redirects to the Site URL (Netlify) instead of Render!
       const redirectUrl = env.GOOGLE_CALLBACK_URL;
       
       // Store 'next' in a secure cookie to read it during the callback

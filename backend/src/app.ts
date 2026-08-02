@@ -16,7 +16,7 @@ import { globalLimiter } from './middleware/rateLimiter';
 
 const app: Express = express();
 
-// Trust reverse proxy for Railway/Vercel (required for rate limiting)
+// Trust reverse proxy for Render/Netlify (required for rate limiting)
 app.set('trust proxy', 1);
 
 // Swagger Documentation Route
@@ -38,7 +38,7 @@ app.use(
         'http://localhost:3001',
         'https://hotel-managments.netlify.app',
         'https://vermillion-pothos-b232ea.netlify.app',
-        'https://hotel-managment-production-8824.up.railway.app'
+        'https://hotel-management-backend-s0s0.onrender.com'
       ];
       
       // Allow if no origin (e.g. server-to-server) or if it's in the exact list

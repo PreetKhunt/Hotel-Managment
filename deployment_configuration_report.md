@@ -12,11 +12,11 @@ Based on a deep inspection of the `backend` and `frontend` source code (includin
 | **`SUPABASE_SERVICE_ROLE_KEY`** | **Yes** | Secret service role key for bypassing RLS during admin operations. | Supabase (Settings > API > Project API Keys) | `eyJhbGci...` |
 | **`RAZORPAY_KEY_ID`** | **Yes** | Public identifier for Razorpay API. | Razorpay Dashboard (API Keys > Live Mode) | `rzp_live_abc123` |
 | **`RAZORPAY_KEY_SECRET`** | **Yes** | Secret key for Razorpay API authentication and Webhook signature validation. | Razorpay Dashboard (API Keys > Live Mode) | `secret_xyz987` |
-| **`PORT`** | No | Port for the backend Express server (defaults to 5000). | Railway (Automatically assigned) | `5000` |
+| **`PORT`** | No | Port for the backend Express server (defaults to 5000). | Render (Automatically assigned) | `10000` |
 | **`NODE_ENV`** | No | Environment mode (defaults to development). | Manually input | `production` |
-| **`CORS_ORIGIN`** | No | The frontend URL allowed to make API requests (defaults to localhost:3001). | Vercel (Production deployment URL) | `https://hotel-management.vercel.app` |
+| **`CORS_ORIGIN`** | No | The frontend URL allowed to make API requests (defaults to localhost:3001). | Netlify (Production deployment URL) | `https://vermillion-pothos-b232ea.netlify.app` |
 | **`SUPABASE_JWT_SECRET`** | No | Secret used to verify Supabase JWT signatures (defaults to fallback string). | Supabase (Settings > API > JWT Secret) | `super-secret-jwt...` |
-| **`NEXT_PUBLIC_API_URL`** | No | Frontend variable pointing to the Backend REST API (defaults to localhost:5000). | Railway (Production deployment URL) | `https://hotel-backend.up.railway.app/api/v1` |
+| **`NEXT_PUBLIC_API_URL`** | No | Frontend variable pointing to the Backend REST API (defaults to localhost:5000). | Render (Production deployment URL) | `https://hotel-management-backend-s0s0.onrender.com/api/v1` |
 | **`NEXT_PUBLIC_RAZORPAY_KEY_ID`** | No | Frontend variable for loading the Razorpay checkout script. | Razorpay Dashboard | `rzp_live_abc123` |
 
 ---
@@ -41,8 +41,8 @@ During the code audit, several discrepancies were found between the `README.md` 
 
 ## 3. Platform Configuration Checklists
 
-### Railway (Backend) Checklist
-Configure these exactly as written in your Railway project settings:
+### Render (Backend) Checklist
+Configure these exactly as written in your Render project settings:
 
 - [ ] `DATABASE_URL`
 - [ ] `SUPABASE_URL`
@@ -57,5 +57,5 @@ Configure these exactly as written in your Railway project settings:
 ### Vercel (Frontend) Checklist
 Configure these exactly as written in your Vercel project settings:
 
-- [ ] `NEXT_PUBLIC_API_URL` *(Must be the Railway URL + `/api/v1`)*
+- [ ] `NEXT_PUBLIC_API_URL` *(Must be the Render URL + `/api/v1`)*
 - [ ] `NEXT_PUBLIC_RAZORPAY_KEY_ID`
