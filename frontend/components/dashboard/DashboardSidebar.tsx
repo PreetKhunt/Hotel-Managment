@@ -14,6 +14,8 @@ import {
   UtensilsCrossed,
   Sparkles,
   Dumbbell,
+  Brush,
+  Wrench,
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -21,6 +23,8 @@ const adminNavItems = [
   { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
   { icon: BedDouble, label: 'Rooms', href: '/dashboard/rooms' },
   { icon: CalendarDays, label: 'Bookings', href: '/dashboard/bookings' },
+  { icon: Brush, label: 'Housekeeping', href: '/dashboard/housekeeping' },
+  { icon: Wrench, label: 'Maintenance', href: '/dashboard/maintenance' },
   { icon: UtensilsCrossed, label: 'Dining', href: '/dashboard/dining' },
   { icon: Sparkles, label: 'Spa', href: '/dashboard/spa' },
   { icon: Dumbbell, label: 'Fitness', href: '/dashboard/fitness' },
@@ -38,11 +42,23 @@ const guestNavItems = [
   { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
 ];
 
+const staffNavItems = [
+  { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
+  { icon: BedDouble, label: 'Rooms', href: '/dashboard/rooms' },
+  { icon: Brush, label: 'Housekeeping', href: '/dashboard/housekeeping' },
+  { icon: Wrench, label: 'Maintenance', href: '/dashboard/maintenance' },
+  { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+];
+
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
   
-  const navItems = user?.role?.name === 'Admin' ? adminNavItems : guestNavItems;
+  const u = user as any;
+  const roleName = u?.role?.name || u?.roleName || u?.role;
+  const isAdmin = roleName === 'Admin' || roleName === 'Super Admin' || roleName === 'manager' || u?.permissions?.includes('full_access');
+  const isStaff = roleName === 'Housekeeping' || roleName === 'Technician' || roleName === 'Reception' || roleName === 'receptionist' || roleName === 'staff';
+  const navItems = isAdmin ? adminNavItems : isStaff ? staffNavItems : guestNavItems;
 
   return (
     <aside

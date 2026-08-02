@@ -29,6 +29,9 @@ import spaRoutes from './spaRoutes';
 import fitnessRoutes from './fitnessRoutes';
 
 import superAdminRoutes from './superAdminRoutes';
+import housekeepingRoutes from './housekeepingRoutes';
+import maintenanceRoutes from './maintenanceRoutes';
+import notificationRoutes from './notificationRoutes';
 
 // Mounted resource routers
 router.use('/auth', authRoutes);
@@ -44,5 +47,8 @@ router.use('/restaurant', restaurantRoutes);
 router.use('/spa', spaRoutes);
 router.use('/fitness', fitnessRoutes);
 router.use('/super-admin', superAdminRoutes);
+router.use('/housekeeping', housekeepingRoutes);
+router.use('/maintenance', maintenanceRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

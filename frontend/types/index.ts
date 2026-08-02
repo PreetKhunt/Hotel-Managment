@@ -97,3 +97,98 @@ export interface ServiceFAQ {
   question: string;
   answer: string;
 }
+
+// ─── Housekeeping Types ───────────────────────────────────────────────────────
+export type HousekeepingStatus = 'Pending' | 'In Progress' | 'Completed' | 'Verified' | 'Cancelled';
+export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Emergency';
+
+export interface HousekeepingTask {
+  id: string;
+  room_id: string;
+  room_number?: string;
+  assigned_to?: string | null;
+  assigned_name?: string;
+  assigned_by?: string | null;
+  status: HousekeepingStatus;
+  priority: TaskPriority;
+  remarks?: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CleaningHistoryRecord {
+  id: string;
+  task_id: string;
+  room_id: string;
+  room_number?: string;
+  assigned_by?: string | null;
+  completed_by: string;
+  staff_name?: string;
+  time_taken_minutes: number;
+  completed_at: string;
+  remarks?: string;
+  created_by?: string | null;
+  created_at: string;
+}
+
+// ─── Maintenance Types ────────────────────────────────────────────────────────
+export type MaintenanceStatus = 'Reported' | 'Assigned' | 'In Progress' | 'On Hold' | 'Completed' | 'Verified' | 'Cancelled';
+export type IssueType = 'Plumbing' | 'Electrical' | 'HVAC' | 'Furniture' | 'Appliance' | 'Structural' | 'Technology' | 'Other';
+
+export interface MaintenanceRequest {
+  id: string;
+  room_id: string;
+  room_number?: string;
+  reported_by: string;
+  reporter_name?: string;
+  assigned_to?: string | null;
+  technician_name?: string;
+  status: MaintenanceStatus;
+  priority: TaskPriority;
+  issue_type: IssueType;
+  description: string;
+  estimated_cost: number;
+  actual_cost: number;
+  started_at?: string | null;
+  completed_at?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaintenanceAuditLog {
+  id: string;
+  request_id: string;
+  action_type: string;
+  old_status?: string | null;
+  new_status?: string | null;
+  performed_by: string;
+  performer_email?: string;
+  assigned_technician_id?: string | null;
+  technician_name?: string;
+  cost_delta?: number | null;
+  notes?: string;
+  created_at: string;
+}
+
+// ─── System Notification Types ────────────────────────────────────────────────
+export interface SystemNotification {
+  id: string;
+  role_target?: string | null;
+  user_target?: string | null;
+  title: string;
+  message: string;
+  priority: 'Info' | 'Warning' | 'Critical';
+  link?: string | null;
+  is_read: boolean;
+  created_by?: string | null;
+  created_at: string;
+}
+

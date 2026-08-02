@@ -2,22 +2,25 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, Search, User, Settings, LogOut, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Bell, Search, User, Settings, LogOut, CheckCircle, Clock, AlertTriangle, Info } from 'lucide-react';
 import TopLeftBackButton from '@/components/shared/TopLeftBackButton';
+import { useSystemNotifications } from '@/hooks/useOperationalModules';
 
 const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   '/dashboard': { title: 'Overview', breadcrumb: ['Dashboard', 'Overview'] },
   '/dashboard/rooms': { title: 'Room Management', breadcrumb: ['Dashboard', 'Rooms'] },
   '/dashboard/bookings': { title: 'Bookings', breadcrumb: ['Dashboard', 'Bookings'] },
+  '/dashboard/housekeeping': { title: 'Housekeeping Management', breadcrumb: ['Dashboard', 'Housekeeping'] },
+  '/dashboard/maintenance': { title: 'Maintenance Operations', breadcrumb: ['Dashboard', 'Maintenance'] },
   '/dashboard/revenue': { title: 'Revenue', breadcrumb: ['Dashboard', 'Revenue'] },
   '/dashboard/users': { title: 'Users', breadcrumb: ['Dashboard', 'Users'] },
   '/dashboard/settings': { title: 'Settings', breadcrumb: ['Dashboard', 'Settings'] },
 };
 
 const mockNotifications = [
-  { id: '1', text: 'New booking BK-2401 confirmed for James Morrison', time: '5 mins ago', type: 'success', icon: CheckCircle, color: '#10B981' },
-  { id: '2', text: 'Booking BK-2402 is pending confirmation from Sophia Chen', time: '1 hour ago', type: 'pending', icon: Clock, color: '#fbbf24' },
-  { id: '3', text: 'Room Deluxe Ocean View 002 set to maintenance state', time: '2 hours ago', type: 'alert', icon: AlertTriangle, color: '#EF4444' }
+  { id: '1', text: 'New booking BK-2401 confirmed for James Morrison', time: '5 mins ago', type: 'success', icon: CheckCircle, color: '#10B981', link: '/dashboard/bookings' },
+  { id: '2', text: 'Booking BK-2402 is pending confirmation from Sophia Chen', time: '1 hour ago', type: 'pending', icon: Clock, color: '#fbbf24', link: '/dashboard/bookings' },
+  { id: '3', text: 'Room Deluxe Ocean View 002 set to maintenance state', time: '2 hours ago', type: 'alert', icon: AlertTriangle, color: '#EF4444', link: '/dashboard/maintenance' }
 ];
 
 export default function DashboardTopbar() {
@@ -27,7 +30,10 @@ export default function DashboardTopbar() {
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(true);
+  const [localUnread, setLocalUnread] = useState(true);
+  
+  const { notifications: liveNotifs, unreadCount: apiUnread, markAllRead, markRead } = useSystemNotifications();
+  const hasUnread = (apiUnread > 0) || (localUnread && liveNotifs.length === 0);
 
   const notificationsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -133,7 +139,7 @@ export default function DashboardTopbar() {
             onClick={() => {
               setShowNotifications(!showNotifications);
               setShowProfile(false);
-              setUnreadNotifications(false);
+              setLocalUnread(false);
             }}
             style={{
               position: 'relative',
@@ -161,7 +167,7 @@ export default function DashboardTopbar() {
           >
             <Bell size={17} color={showNotifications ? '#C9A84C' : 'rgba(255,255,255,0.7)'} />
             {/* Red Dot Badge */}
-            {unreadNotifications && (
+            {hasUnread && (
               <span
                 style={{
                   position: 'absolute',
@@ -184,26 +190,51 @@ export default function DashboardTopbar() {
                 position: 'absolute',
                 top: '44px',
                 right: '0',
-                width: '320px',
+                width: '340px',
                 background: '#1A2235',
                 border: '1px solid rgba(201,168,76,0.25)',
                 borderRadius: '12px',
                 boxShadow: '0 10px 25px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.05)',
                 padding: '0.85rem',
                 zIndex: 100,
+                maxHeight: '400px',
+                overflowY: 'auto'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <span style={{ color: '#ffffff', fontWeight: 600, fontSize: '0.85rem' }}>Notifications</span>
-                <span style={{ color: '#C9A84C', fontSize: '0.72rem', cursor: 'pointer' }} onClick={() => setUnreadNotifications(false)}>Mark all as read</span>
+                <span style={{ color: '#C9A84C', fontSize: '0.72rem', cursor: 'pointer' }} onClick={() => { setLocalUnread(false); if (liveNotifs.length > 0) markAllRead(); }}>Mark all as read</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.65rem' }}>
+                {liveNotifs.map((n) => {
+                  const color = n.priority === 'Critical' ? '#EF4444' : n.priority === 'Warning' ? '#fbbf24' : '#3b82f6';
+                  const Icon = n.priority === 'Critical' ? AlertTriangle : n.priority === 'Warning' ? Clock : Info;
+                  return (
+                    <div key={n.id} style={{ display: 'flex', gap: '0.65rem', padding: '0.5rem', borderRadius: '6px', background: n.is_read ? 'transparent' : 'rgba(201,168,76,0.08)', transition: 'background 0.2s', cursor: 'pointer' }}
+                         onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                         onMouseLeave={(e) => (e.currentTarget.style.background = n.is_read ? 'transparent' : 'rgba(201,168,76,0.08)')}
+                         onClick={() => {
+                           if (!n.is_read) markRead(n.id);
+                           if (n.link) { setShowNotifications(false); router.push(n.link); }
+                         }}>
+                      <div style={{ background: `${color}15`, borderRadius: '6px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon size={14} color={color} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                        <span style={{ color: '#C9A84C', fontSize: '0.75rem', fontWeight: 600, lineHeight: '1.2' }}>{n.title}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.73rem', lineHeight: '1.25', marginTop: '2px' }}>{n.message}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.65rem', marginTop: '3px' }}>{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  );
+                })}
                 {mockNotifications.map((notif) => {
                   const IconComponent = notif.icon;
                   return (
                     <div key={notif.id} style={{ display: 'flex', gap: '0.65rem', padding: '0.45rem', borderRadius: '6px', transition: 'background 0.2s', cursor: 'pointer' }}
                          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                         onClick={() => { if (notif.link) { setShowNotifications(false); router.push(notif.link); } }}>
                       <div style={{ background: `${notif.color}15`, borderRadius: '6px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyItems: 'center', flexShrink: 0, justifyContent: 'center' }}>
                         <IconComponent size={14} color={notif.color} />
                       </div>

@@ -127,6 +127,28 @@ export class SuperAdminController {
       const { data, error } = await this.supabase.from('bookings').update({ status }).eq('id', id).select().single();
       if (error) throw error;
 
+      if (status === 'checked_out' && data?.room_id) {
+        try {
+          await this.supabase.from('rooms').update({ status: 'dirty' }).eq('id', data.room_id);
+          await this.supabase.from('housekeeping_tasks').insert({
+            room_id: data.room_id,
+            priority: 'High',
+            remarks: `Automated post-checkout room turnover cleaning for booking #${id.substring(0, 8)}`,
+            created_by: req.user?.id || null
+          });
+          await this.supabase.from('system_notifications').insert({
+            role_target: 'Housekeeping',
+            title: `Room Checkout: Urgent Turnaround Needed`,
+            message: `Guest checked out of Room #${data.room_id.substring(0, 8)}. Room marked as Dirty and requires urgent High-priority cleaning.`,
+            priority: 'Warning',
+            link: '/dashboard/housekeeping',
+            created_by: req.user?.id || null
+          });
+        } catch (err) {
+          console.error('Automated checkout cleaning task generation error:', err);
+        }
+      }
+
       await this.auditLogService.logAction(
         req.user!.id, req.user!.roleName, 'UPDATE_STATUS', 'booking', id, before, data, req.id, req.ip || ''
       );
