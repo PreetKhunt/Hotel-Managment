@@ -134,7 +134,10 @@ export const requirePermission = (permission: string) => {
         throw new AppError('Authentication required for this action', 401, ErrorCode.UNAUTHORIZED);
       }
 
-      if (req.user.permissions.includes('full_access') || req.user.permissions.includes(permission)) {
+      const isSuperAdmin = req.user.permissions.includes('SUPER_ADMIN') || req.user.roleName === 'Super Admin';
+      const isAdmin = req.user.permissions.includes('full_access') || req.user.roleName === 'Admin' || req.user.roleName === 'Super Admin';
+
+      if (isSuperAdmin || isAdmin || req.user.permissions.includes(permission)) {
         return next();
       }
 

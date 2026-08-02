@@ -1,8 +1,9 @@
--- ============================================================================
--- MIGRATION 012: Housekeeping & Maintenance Management Modules (Sprints 2 & 3)
--- Enterprise architecture with soft delete, optimistic locking, and audit trail
--- ============================================================================
+import { Pool } from 'pg';
+import * as fs from 'fs';
+import * as path from 'path';
+import { logger } from './logger';
 
+const FALLBACK_SQL_012 = `
 -- 1. Safely Expand room status constraint without losing production data
 ALTER TABLE rooms DROP CONSTRAINT IF EXISTS rooms_status_check;
 ALTER TABLE rooms ADD CONSTRAINT rooms_status_check 
@@ -19,8 +20,8 @@ ON CONFLICT (name) DO NOTHING;
 -- 3. Create System Notifications Table for role-aware persistent alerts
 CREATE TABLE IF NOT EXISTS system_notifications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  recipient_id UUID REFERENCES users(id) ON DELETE CASCADE NULL, -- NULL implies broadcast to specified role
-  role_target VARCHAR(50) NULL, -- e.g., 'Admin', 'Housekeeping', 'Technician', 'Reception'
+  recipient_id UUID REFERENCES users(id) ON DELETE CASCADE NULL,
+  role_target VARCHAR(50) NULL,
   title VARCHAR(255) NOT NULL,
   message TEXT NOT NULL,
   priority VARCHAR(50) DEFAULT 'Info' CHECK (priority IN ('Info', 'Warning', 'Critical')),
@@ -45,7 +46,7 @@ CREATE TABLE IF NOT EXISTS housekeeping_tasks (
   status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Accepted', 'In Progress', 'Completed', 'Cancelled')),
   priority VARCHAR(50) DEFAULT 'Medium' CHECK (priority IN ('Low', 'Medium', 'High', 'Emergency')),
   remarks TEXT NULL,
-  version INTEGER DEFAULT 1 NOT NULL, -- Optimistic locking concurrency control
+  version INTEGER DEFAULT 1 NOT NULL,
   started_at TIMESTAMPTZ NULL,
   completed_at TIMESTAMPTZ NULL,
   created_by UUID REFERENCES users(id) ON DELETE SET NULL NULL,
@@ -53,7 +54,7 @@ CREATE TABLE IF NOT EXISTS housekeeping_tasks (
   deleted_by UUID REFERENCES users(id) ON DELETE SET NULL NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMPTZ NULL -- Soft delete support
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_hk_tasks_room ON housekeeping_tasks(room_id) WHERE deleted_at IS NULL;
@@ -93,7 +94,7 @@ CREATE TABLE IF NOT EXISTS maintenance_requests (
   status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Assigned', 'In Progress', 'Completed', 'Cancelled')),
   estimated_cost NUMERIC(10, 2) DEFAULT 0.00,
   actual_cost NUMERIC(10, 2) DEFAULT 0.00,
-  version INTEGER DEFAULT 1 NOT NULL, -- Optimistic locking concurrency control
+  version INTEGER DEFAULT 1 NOT NULL,
   started_at TIMESTAMPTZ NULL,
   completed_at TIMESTAMPTZ NULL,
   created_by UUID REFERENCES users(id) ON DELETE SET NULL NULL,
@@ -111,7 +112,7 @@ CREATE INDEX IF NOT EXISTS idx_maint_req_status ON maintenance_requests(status) 
 CREATE INDEX IF NOT EXISTS idx_maint_req_priority ON maintenance_requests(priority) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_maint_req_issue_type ON maintenance_requests(issue_type) WHERE deleted_at IS NULL;
 
--- 7. Create Maintenance Audit Logs Table (Full mutation & reporting history)
+-- 7. Create Maintenance Audit Logs Table
 CREATE TABLE IF NOT EXISTS maintenance_audit_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   request_id UUID REFERENCES maintenance_requests(id) ON DELETE CASCADE NULL,
@@ -167,7 +168,6 @@ ALTER TABLE cleaning_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE maintenance_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE maintenance_audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Allow read/write for authenticated service roles and valid users
 DROP POLICY IF EXISTS "Allow authenticated access to system_notifications" ON system_notifications;
 CREATE POLICY "Allow authenticated access to system_notifications" ON system_notifications FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated access to housekeeping_tasks" ON housekeeping_tasks;
@@ -178,46 +178,45 @@ DROP POLICY IF EXISTS "Allow authenticated access to maintenance_requests" ON ma
 CREATE POLICY "Allow authenticated access to maintenance_requests" ON maintenance_requests FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated access to maintenance_audit_logs" ON maintenance_audit_logs;
 CREATE POLICY "Allow authenticated access to maintenance_audit_logs" ON maintenance_audit_logs FOR ALL USING (true) WITH CHECK (true);
+`;
 
--- 10. Configure Supabase Realtime Publications for zero-polling state updates
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_rel pr
-    JOIN pg_publication p ON p.oid = pr.prpubid
-    JOIN pg_class c ON c.oid = pr.prrelid
-    WHERE p.pubname = 'supabase_realtime' AND c.relname = 'system_notifications'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE system_notifications;
-  END IF;
+export async function runDatabaseMigrations(pool: Pool): Promise<void> {
+  logger.info('🔍 [Database Audit]: Checking operational tables in PostgreSQL schema...');
+  try {
+    const res = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+        AND table_name IN ('housekeeping_tasks', 'maintenance_requests');
+    `);
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_rel pr
-    JOIN pg_publication p ON p.oid = pr.prpubid
-    JOIN pg_class c ON c.oid = pr.prrelid
-    WHERE p.pubname = 'supabase_realtime' AND c.relname = 'housekeeping_tasks'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE housekeeping_tasks;
-  END IF;
+    const foundTables = res.rows.map(r => r.table_name);
+    logger.info(`🔍 [Database Audit]: Found existing tables: ${JSON.stringify(foundTables)}`);
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_rel pr
-    JOIN pg_publication p ON p.oid = pr.prpubid
-    JOIN pg_class c ON c.oid = pr.prrelid
-    WHERE p.pubname = 'supabase_realtime' AND c.relname = 'maintenance_requests'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE maintenance_requests;
-  END IF;
+    if (!foundTables.includes('housekeeping_tasks') || !foundTables.includes('maintenance_requests')) {
+      logger.warn('⚠️ [Database Audit]: Operational tables missing! Applying idempotent migration 012...');
+      
+      let sqlContent = FALLBACK_SQL_012;
+      const possiblePaths = [
+        path.join(process.cwd(), 'supabase', 'migrations', '012_housekeeping_and_maintenance.sql'),
+        path.join(__dirname, '../../supabase/migrations/012_housekeeping_and_maintenance.sql'),
+        path.join(__dirname, '../../../supabase/migrations/012_housekeeping_and_maintenance.sql')
+      ];
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_rel pr
-    JOIN pg_publication p ON p.oid = pr.prpubid
-    JOIN pg_class c ON c.oid = pr.prrelid
-    WHERE p.pubname = 'supabase_realtime' AND c.relname = 'rooms'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE rooms;
-  END IF;
-EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE 'Supabase Realtime publication setup encountered a minor warning: %', SQLERRM;
-END;
-$$;
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          logger.info(`📂 [Database Audit]: Loading migration file from ${p}`);
+          sqlContent = fs.readFileSync(p, 'utf8');
+          break;
+        }
+      }
+
+      await pool.query(sqlContent);
+      logger.info('✅ [Database Audit]: Migration 012 applied successfully! Operational schema verified.');
+    } else {
+      logger.info('✅ [Database Audit]: Operational schema already present.');
+    }
+  } catch (error: any) {
+    logger.error(`❌ [Database Audit]: Migration check failed: ${error.message}`);
+  }
+}

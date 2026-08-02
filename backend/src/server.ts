@@ -2,16 +2,21 @@ import app from './app';
 import { env } from './config/env';
 import { logger } from './utils/logger';
 import { startPaymentExpirer } from './workers/paymentExpirer';
+import { pgPool } from './config/database';
+import { runDatabaseMigrations } from './utils/dbMigrator';
 
 // Start Background Workers
 startPaymentExpirer();
 
 // Start Express Server
-const server = app.listen(env.PORT, () => {
+const server = app.listen(env.PORT, async () => {
   logger.info(`🚀 [Server]: Server is running in [${env.NODE_ENV}] mode on port: ${env.PORT}`);
   logger.info(`🔗 [Supabase]: Connected to project at ${env.SUPABASE_URL}`);
   logger.info(`⚙️ [Config]: GOOGLE_CALLBACK_URL = ${env.GOOGLE_CALLBACK_URL}`);
   logger.info(`⚙️ [Config]: CORS_ORIGIN = ${env.CORS_ORIGIN}`);
+  
+  // Perform idempotent operational database check and auto-migration
+  await runDatabaseMigrations(pgPool);
 });
 
 // Graceful Shutdown & Process Crash Handling
