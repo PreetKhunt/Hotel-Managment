@@ -46,10 +46,11 @@ export class MaintenanceRepository implements IMaintenanceRepository {
     const db = this.getExecutor(client);
     const query = `
       SELECT m.*,
-             r.room_number,
-             u.name AS reporter_name,
+             r.name AS room_name,
+             r.name AS room_number,
+             COALESCE(NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), u.email, 'User') AS reporter_name,
              u.email AS reporter_email,
-             tech.name AS technician_name,
+             COALESCE(NULLIF(TRIM(tech.first_name || ' ' || tech.last_name), ''), tech.email, 'Unassigned') AS technician_name,
              tech.email AS technician_email
       FROM maintenance_requests m
       LEFT JOIN rooms r ON r.id = m.room_id
@@ -65,10 +66,11 @@ export class MaintenanceRepository implements IMaintenanceRepository {
     const db = this.getExecutor(client);
     let query = `
       SELECT m.*,
-             r.room_number,
-             u.name AS reporter_name,
+             r.name AS room_name,
+             r.name AS room_number,
+             COALESCE(NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), u.email, 'User') AS reporter_name,
              u.email AS reporter_email,
-             tech.name AS technician_name,
+             COALESCE(NULLIF(TRIM(tech.first_name || ' ' || tech.last_name), ''), tech.email, 'Unassigned') AS technician_name,
              tech.email AS technician_email
       FROM maintenance_requests m
       LEFT JOIN rooms r ON r.id = m.room_id
@@ -234,9 +236,10 @@ export class MaintenanceRepository implements IMaintenanceRepository {
     const offset = filters?.offset || 0;
     const query = `
       SELECT l.*,
-             r.room_number,
+             r.name AS room_name,
+             r.name AS room_number,
              u.email AS performer_email,
-             tech.name AS technician_name
+             COALESCE(NULLIF(TRIM(tech.first_name || ' ' || tech.last_name), ''), tech.email, 'Unassigned') AS technician_name
       FROM maintenance_audit_logs l
       LEFT JOIN rooms r ON r.id = l.room_id
       LEFT JOIN users u ON u.id = l.performed_by
@@ -298,7 +301,7 @@ export class MaintenanceRepository implements IMaintenanceRepository {
     const query = `
       SELECT
         u.id AS technician_id,
-        u.name AS technician_name,
+        COALESCE(NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), u.email, 'Technician') AS technician_name,
         u.email,
         COUNT(m.id) AS assigned_count,
         COUNT(m.id) FILTER (WHERE m.status = 'Completed') AS completed_count,
@@ -307,7 +310,7 @@ export class MaintenanceRepository implements IMaintenanceRepository {
       FROM maintenance_requests m
       JOIN users u ON u.id = m.assigned_to
       WHERE m.deleted_at IS NULL
-      GROUP BY u.id, u.name, u.email
+      GROUP BY u.id, u.first_name, u.last_name, u.email
       ORDER BY completed_count DESC, total_repair_cost DESC
       LIMIT $1
     `;

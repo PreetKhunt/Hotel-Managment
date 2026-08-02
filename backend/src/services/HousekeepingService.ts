@@ -25,11 +25,11 @@ export class HousekeepingService {
       await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
 
       // 1. Check if room exists
-      const roomCheck = await client.query('SELECT id, room_number FROM rooms WHERE id = $1', [dto.room_id]);
+      const roomCheck = await client.query('SELECT id, name FROM rooms WHERE id = $1', [dto.room_id]);
       if (roomCheck.rows.length === 0) {
         throw new AppError('Targeted room does not exist in inventory', 404, ErrorCode.NOT_FOUND);
       }
-      const roomNumber = roomCheck.rows[0].room_number || dto.room_id.substring(0, 8);
+      const roomNumber = roomCheck.rows[0].name || dto.room_id.substring(0, 8);
 
       // 2. Create the task
       const task = await this.housekeepingRepo.createTask(dto, client);
@@ -110,8 +110,8 @@ export class HousekeepingService {
         if (dto.status === HousekeepingStatus.IN_PROGRESS && !currentTask.started_at) {
           updates.started_at = new Date();
         }
-        // Update Room Status to 'Under Cleaning'
-        await client.query(`UPDATE rooms SET status = 'Under Cleaning' WHERE id = $1`, [currentTask.room_id]);
+        // Update Room Status to 'under cleaning'
+        await client.query(`UPDATE rooms SET status = 'under cleaning' WHERE id = $1`, [currentTask.room_id]);
       }
 
       // If completing task
@@ -120,8 +120,8 @@ export class HousekeepingService {
         const start = currentTask.started_at ? new Date(currentTask.started_at).getTime() : Date.now() - (30 * 60 * 1000);
         const diffMinutes = Math.max(1, Math.round((Date.now() - start) / (1000 * 60)));
 
-        // 1. Update Room Status to 'Clean'
-        await client.query(`UPDATE rooms SET status = 'Clean' WHERE id = $1`, [currentTask.room_id]);
+        // 1. Update Room Status to 'available' (Clean)
+        await client.query(`UPDATE rooms SET status = 'available' WHERE id = $1`, [currentTask.room_id]);
 
         // 2. Create cleaning history entry
         await this.housekeepingRepo.createCleaningHistory({
@@ -138,8 +138,8 @@ export class HousekeepingService {
         // 3. Notify Reception and Admin that room is clean and ready
         await this.notificationRepo.createNotification({
           role_target: 'Reception',
-          title: `Room ${currentTask.room_number || ''} Clean & Ready`,
-          message: `Housekeeping has finished cleaning Room ${currentTask.room_number || ''} in ${diffMinutes} minutes. Status is now Clean.`,
+          title: `Room ${currentTask.room_name || currentTask.room_number || ''} Clean & Ready`,
+          message: `Housekeeping has finished cleaning Room ${currentTask.room_name || currentTask.room_number || ''} in ${diffMinutes} minutes. Status is now Clean.`,
           priority: NotificationPriority.INFO,
           link: `/dashboard/rooms`,
           created_by: actorId

@@ -106,6 +106,7 @@ export interface HousekeepingTask {
   id: string;
   room_id: string;
   room_number?: string;
+  room_name?: string;
   assigned_to?: string | null;
   assigned_name?: string;
   assigned_by?: string | null;
@@ -126,6 +127,7 @@ export interface CleaningHistoryRecord {
   task_id: string;
   room_id: string;
   room_number?: string;
+  room_name?: string;
   assigned_by?: string | null;
   completed_by: string;
   staff_name?: string;
@@ -144,6 +146,7 @@ export interface MaintenanceRequest {
   id: string;
   room_id: string;
   room_number?: string;
+  room_name?: string;
   reported_by: string;
   reporter_name?: string;
   assigned_to?: string | null;

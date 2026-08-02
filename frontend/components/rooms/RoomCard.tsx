@@ -27,9 +27,13 @@ function typeBadgeColor(type: string): { bg: string; color: string } {
 }
 
 function statusBadgeStyle(status: string): { bg: string; color: string; dot: string } {
-  switch (status) {
-    case 'available':   return { bg: 'rgba(16,185,129,0.15)',  color: '#34D399', dot: '#34D399' };
+  switch (status.toLowerCase()) {
+    case 'available':
+    case 'clean':       return { bg: 'rgba(16,185,129,0.15)',  color: '#34D399', dot: '#34D399' };
     case 'occupied':    return { bg: 'rgba(239,68,68,0.15)',   color: '#F87171', dot: '#F87171' };
+    case 'dirty':       return { bg: 'rgba(249,115,22,0.15)',  color: '#FB923C', dot: '#FB923C' };
+    case 'under cleaning':
+    case 'cleaning':    return { bg: 'rgba(59,130,246,0.15)',  color: '#60A5FA', dot: '#60A5FA' };
     case 'reserved':    return { bg: 'rgba(234,179,8,0.15)',   color: '#FCD34D', dot: '#FCD34D' };
     case 'maintenance': return { bg: 'rgba(148,163,184,0.15)', color: SECONDARY, dot: SECONDARY };
     default:            return { bg: 'rgba(148,163,184,0.15)', color: SECONDARY, dot: SECONDARY };

@@ -44,6 +44,7 @@ export interface MaintenanceRequest {
   deleted_at: Date | null;
   // Joins
   room_number?: string;
+  room_name?: string;
   reporter_name?: string;
   reporter_email?: string;
   technician_name?: string;
@@ -69,6 +70,7 @@ export interface MaintenanceAuditLog {
   created_at: Date;
   // Joins
   room_number?: string;
+  room_name?: string;
   performer_email?: string;
   technician_name?: string;
 }

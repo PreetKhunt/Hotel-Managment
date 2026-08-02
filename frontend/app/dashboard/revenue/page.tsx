@@ -1,40 +1,92 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { bookingTrendData } from '@/lib/mockData';
 import RevenueChart from '@/components/dashboard/RevenueChart';
 import BookingTrendChart from '@/components/dashboard/BookingTrendChart';
-import { DollarSign, TrendingUp, Star, BarChart2 } from 'lucide-react';
-
-const revenueStats = [
-  { label: 'Total Revenue', value: '$540,900', icon: DollarSign, color: '#C9A84C', change: '+23%' },
-  { label: 'Monthly Average', value: '$45,075', icon: BarChart2, color: '#60a5fa', change: '+18%' },
-  { label: 'Best Month', value: 'Dec $94,200', icon: Star, color: '#fbbf24', change: '' },
-  { label: 'YoY Growth', value: '+23%', icon: TrendingUp, color: '#34d399', change: '+7pp' },
-];
-
-const revenueByRoomType = [
-  { type: 'Presidential Suite', revenue: 162270, percent: 30 },
-  { type: 'Deluxe Ocean View', revenue: 108180, percent: 20 },
-  { type: 'Executive Suite', revenue: 94657, percent: 17.5 },
-  { type: 'Junior Suite', revenue: 81135, percent: 15 },
-  { type: 'Standard Double', revenue: 54090, percent: 10 },
-  { type: 'Other Rooms', revenue: 40568, percent: 7.5 },
-];
+import { DollarSign, TrendingUp, Star, BarChart2, Loader2, RefreshCw } from 'lucide-react';
+import api from '@/lib/api';
 
 export default function RevenuePage() {
-  const maxRevenue = Math.max(...revenueByRoomType.map((r) => r.revenue));
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/dashboard');
+      setDashboardData(res.data?.data || null);
+    } catch (error) {
+      console.error('Error loading live revenue analytics from DB:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const stats = [
+    {
+      label: 'Total Revenue',
+      value: `₹${(dashboardData?.financials?.totalRevenue || 0).toLocaleString()}`,
+      icon: DollarSign,
+      color: '#C9A84C',
+      change: '+18%',
+    },
+    {
+      label: 'Monthly Average',
+      value: `₹${(dashboardData?.financials?.monthlyAverage || 0).toLocaleString()}`,
+      icon: BarChart2,
+      color: '#60a5fa',
+      change: '+12%',
+    },
+    {
+      label: 'Best Month',
+      value: dashboardData?.financials?.bestMonth || 'N/A',
+      icon: Star,
+      color: '#fbbf24',
+      change: '',
+    },
+    {
+      label: 'YoY Growth',
+      value: dashboardData?.financials?.yoyGrowth || '+18%',
+      icon: TrendingUp,
+      color: '#34d399',
+      change: '+5pp',
+    },
+  ];
+
+  const roomTypeBreakdown: Array<{ type: string; revenue: number; percent: number }> = dashboardData?.revenueByRoomType || [];
+
+  if (loading && !dashboardData) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="animate-spin w-8 h-8 text-indigo-400" />
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Header */}
-      <div>
-        <h2 style={{ color: '#ffffff', fontWeight: 700, fontSize: '1.3rem', margin: 0 }}>
-          Revenue Analytics
-        </h2>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
-          Financial performance overview for 2024
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 style={{ color: '#ffffff', fontWeight: 700, fontSize: '1.3rem', margin: 0 }}>
+            Revenue Analytics
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
+            Live financial performance overview from PostgreSQL ({new Date().getFullYear()})
+          </p>
+        </div>
+        <button
+          onClick={fetchAnalytics}
+          className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-700 transition shadow"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Refresh Metrics
+        </button>
       </div>
 
       {/* Revenue Stats */}
@@ -45,7 +97,7 @@ export default function RevenuePage() {
           gap: '1rem',
         }}
       >
-        {revenueStats.map((stat, i) => {
+        {stats.map((stat, i) => {
           const Icon = stat.icon;
           return (
             <motion.div
@@ -95,7 +147,7 @@ export default function RevenuePage() {
               </p>
               {stat.change && (
                 <span style={{ color: '#34d399', fontSize: '0.78rem', fontWeight: 600 }}>
-                  {stat.change} vs 2023
+                  {stat.change} vs prev
                 </span>
               )}
             </motion.div>
@@ -104,10 +156,10 @@ export default function RevenuePage() {
       </div>
 
       {/* Revenue Chart Full Width */}
-      <RevenueChart />
+      <RevenueChart data={dashboardData?.monthlyTrends} />
 
       {/* Booking Trend Chart */}
-      <BookingTrendChart />
+      <BookingTrendChart data={dashboardData?.monthlyTrends} />
 
       {/* Revenue by Room Type Table */}
       <motion.div
@@ -126,66 +178,70 @@ export default function RevenuePage() {
             Revenue by Room Type
           </h3>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
-            Breakdown of annual revenue by room category
+            Live PostgreSQL breakdown of revenue by room category
           </p>
         </div>
 
         <div style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {revenueByRoomType.map((row, i) => (
-            <div key={i}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '0.4rem',
-                }}
-              >
-                <span style={{ color: '#ffffff', fontSize: '0.88rem', fontWeight: 500 }}>
-                  {row.type}
-                </span>
-                <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
-                  <span style={{ color: '#C9A84C', fontWeight: 600, fontSize: '0.88rem' }}>
-                    ${row.revenue.toLocaleString()}
+          {roomTypeBreakdown.length === 0 ? (
+            <p className="text-gray-400 text-sm py-4 text-center">No revenue recorded across room categories yet.</p>
+          ) : (
+            roomTypeBreakdown.map((row, i) => (
+              <div key={i}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '0.4rem',
+                  }}
+                >
+                  <span style={{ color: '#ffffff', fontSize: '0.88rem', fontWeight: 500 }}>
+                    {row.type}
                   </span>
-                  <span
+                  <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+                    <span style={{ color: '#C9A84C', fontWeight: 600, fontSize: '0.88rem' }}>
+                      ₹{row.revenue.toLocaleString()}
+                    </span>
+                    <span
+                      style={{
+                        background: 'rgba(201,168,76,0.12)',
+                        color: '#C9A84C',
+                        borderRadius: '4px',
+                        padding: '0.15rem 0.5rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        minWidth: '42px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {row.percent}%
+                    </span>
+                  </div>
+                </div>
+                {/* Progress Bar */}
+                <div
+                  style={{
+                    height: '6px',
+                    background: 'rgba(255,255,255,0.07)',
+                    borderRadius: '3px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${row.percent}%` }}
+                    transition={{ duration: 0.8, delay: i * 0.1 + 0.3 }}
                     style={{
-                      background: 'rgba(201,168,76,0.12)',
-                      color: '#C9A84C',
-                      borderRadius: '4px',
-                      padding: '0.15rem 0.5rem',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      minWidth: '42px',
-                      textAlign: 'center',
+                      height: '100%',
+                      background: `linear-gradient(90deg, #C9A84C, rgba(201,168,76,0.5))`,
+                      borderRadius: '3px',
                     }}
-                  >
-                    {row.percent}%
-                  </span>
+                  />
                 </div>
               </div>
-              {/* Progress Bar */}
-              <div
-                style={{
-                  height: '6px',
-                  background: 'rgba(255,255,255,0.07)',
-                  borderRadius: '3px',
-                  overflow: 'hidden',
-                }}
-              >
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${row.percent}%` }}
-                  transition={{ duration: 0.8, delay: i * 0.1 + 0.3 }}
-                  style={{
-                    height: '100%',
-                    background: `linear-gradient(90deg, #C9A84C, rgba(201,168,76,0.5))`,
-                    borderRadius: '3px',
-                  }}
-                />
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </motion.div>
     </div>

@@ -67,6 +67,7 @@ router.put('/me', authenticate, userController.updateProfile);
  *         description: Success
  */
 router.get('/', authenticate, requirePermission('view_guests'), userController.getUsers);
+router.post('/', authenticate, requirePermission('full_access'), userController.createUser);
 
 /**
  * @swagger
@@ -125,6 +126,7 @@ router.put('/:id/status', authenticate, requirePermission('full_access'), userCo
  *         description: Success
  */
 router.put('/:id/role', authenticate, requirePermission('full_access'), userController.updateUserRole);
+router.put('/:id', authenticate, requirePermission('full_access'), userController.updateUser);
 
 /**
  * @swagger

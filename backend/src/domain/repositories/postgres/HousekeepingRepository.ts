@@ -43,10 +43,11 @@ export class HousekeepingRepository implements IHousekeepingRepository {
     const db = this.getExecutor(client);
     const query = `
       SELECT t.*,
-             r.room_number,
+             r.name AS room_name,
+             r.name AS room_number,
              r.status AS room_status,
-             u.name AS assignee_name,
-             ab.name AS assigner_name
+             COALESCE(NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), u.email, 'Unassigned') AS assignee_name,
+             COALESCE(NULLIF(TRIM(ab.first_name || ' ' || ab.last_name), ''), ab.email, 'System') AS assigner_name
       FROM housekeeping_tasks t
       LEFT JOIN rooms r ON r.id = t.room_id
       LEFT JOIN users u ON u.id = t.assigned_to
@@ -61,10 +62,11 @@ export class HousekeepingRepository implements IHousekeepingRepository {
     const db = this.getExecutor(client);
     let query = `
       SELECT t.*,
-             r.room_number,
+             r.name AS room_name,
+             r.name AS room_number,
              r.status AS room_status,
-             u.name AS assignee_name,
-             ab.name AS assigner_name
+             COALESCE(NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), u.email, 'Unassigned') AS assignee_name,
+             COALESCE(NULLIF(TRIM(ab.first_name || ' ' || ab.last_name), ''), ab.email, 'System') AS assigner_name
       FROM housekeeping_tasks t
       LEFT JOIN rooms r ON r.id = t.room_id
       LEFT JOIN users u ON u.id = t.assigned_to
@@ -207,8 +209,9 @@ export class HousekeepingRepository implements IHousekeepingRepository {
     const offset = filters?.offset || 0;
     const query = `
       SELECT ch.*,
-             r.room_number,
-             u.name AS cleaner_name,
+             r.name AS room_name,
+             r.name AS room_number,
+             COALESCE(NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), u.email, 'Staff Member') AS cleaner_name,
              u.email AS cleaner_email
       FROM cleaning_history ch
       LEFT JOIN rooms r ON r.id = ch.room_id
@@ -266,14 +269,14 @@ export class HousekeepingRepository implements IHousekeepingRepository {
     const query = `
       SELECT
         u.id AS staff_id,
-        u.name AS staff_name,
+        COALESCE(NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), u.email, 'Staff Member') AS staff_name,
         u.email,
         COUNT(ch.id) AS completed_tasks,
         COALESCE(AVG(ch.time_taken_minutes), 0) AS average_time_minutes
       FROM cleaning_history ch
       JOIN users u ON u.id = ch.completed_by
       WHERE ch.deleted_at IS NULL
-      GROUP BY u.id, u.name, u.email
+      GROUP BY u.id, u.first_name, u.last_name, u.email
       ORDER BY completed_tasks DESC, average_time_minutes ASC
       LIMIT $1
     `;

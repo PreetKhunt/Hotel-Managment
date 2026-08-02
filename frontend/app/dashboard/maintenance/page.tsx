@@ -251,7 +251,7 @@ export default function MaintenanceDashboard() {
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                     <td style={{ padding: '0.85rem', fontWeight: 700, color: '#ffffff', fontSize: '0.9rem' }}>
-                      Room #{req.room_number || req.room_id.substring(0, 6)}
+                      Room: {req.room_name || req.room_number || req.room_id.substring(0, 6)}
                     </td>
                     <td style={{ padding: '0.85rem' }}>
                       <span style={{ background: 'rgba(201,168,76,0.15)', color: '#C9A84C', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>

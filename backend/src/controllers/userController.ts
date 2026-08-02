@@ -104,6 +104,52 @@ export class UserController {
     }
   };
 
+  createUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, password, firstName, lastName, phone, roleName, roleId, status } = req.body;
+      if (!email) {
+        throw new AppError('Email is required', 400, ErrorCode.VALIDATION_ERROR);
+      }
+
+      const createdUser = await this.userService.createUser({
+        email,
+        password,
+        firstName,
+        lastName,
+        phone,
+        roleName,
+        roleId,
+        status,
+      });
+
+      res.status(HTTP_STATUS.CREATED).json({
+        success: true,
+        message: 'User created successfully',
+        data: createdUser,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const adminId = req.user?.id;
+      if (!adminId) throw new AppError('An error occurred', 400, ErrorCode.VALIDATION_ERROR);
+      const targetUserId = req.params.id;
+
+      const updatedUser = await this.userService.updateUser(adminId, targetUserId, req.body);
+
+      res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: 'User updated successfully',
+        data: updatedUser,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const adminId = req.user?.id;

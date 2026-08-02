@@ -247,7 +247,7 @@ export default function HousekeepingDashboard() {
                         onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                       <td style={{ padding: '0.85rem', fontWeight: 700, color: '#ffffff', fontSize: '0.9rem' }}>
-                        Room #{task.room_number || task.room_id.substring(0, 6)}
+                        Room: {task.room_name || task.room_number || task.room_id.substring(0, 6)}
                       </td>
                       <td style={{ padding: '0.85rem' }}>
                         <StatusBadge status={task.priority} />
@@ -388,7 +388,7 @@ export default function HousekeepingDashboard() {
                 {history.data.map((rec) => (
                   <tr key={rec.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <td style={{ padding: '0.85rem', fontWeight: 700, color: '#ffffff', fontSize: '0.9rem' }}>
-                      Room #{rec.room_number || rec.room_id.substring(0, 6)}
+                      Room: {rec.room_name || rec.room_number || rec.room_id.substring(0, 6)}
                     </td>
                     <td style={{ padding: '0.85rem', color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem' }}>
                       {rec.staff_name || `Staff #${rec.completed_by.substring(0, 6)}`}

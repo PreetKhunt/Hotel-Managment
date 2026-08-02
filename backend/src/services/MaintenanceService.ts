@@ -26,11 +26,11 @@ export class MaintenanceService {
       await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
 
       // 1. Check room inventory
-      const roomCheck = await client.query('SELECT id, room_number FROM rooms WHERE id = $1', [dto.room_id]);
+      const roomCheck = await client.query('SELECT id, name FROM rooms WHERE id = $1', [dto.room_id]);
       if (roomCheck.rows.length === 0) {
         throw new AppError('Targeted room does not exist in inventory', 404, ErrorCode.NOT_FOUND);
       }
-      const roomNumber = roomCheck.rows[0].room_number || dto.room_id.substring(0, 8);
+      const roomNumber = roomCheck.rows[0].name || dto.room_id.substring(0, 8);
 
       // 2. Create Request
       const request = await this.maintenanceRepo.createRequest({ ...dto, created_by: actorId }, client);
@@ -155,8 +155,8 @@ export class MaintenanceService {
         // Notify Reception & Admin
         await this.notificationRepo.createNotification({
           role_target: 'Reception',
-          title: `Room ${currentReq.room_number || ''} Maintenance Resolved`,
-          message: `Technician resolved ${currentReq.issue_type} issue in Room ${currentReq.room_number || ''} (Time: ${repairTimeMinutes} min, Cost: $${finalCost}). Room is now available.`,
+          title: `Room ${currentReq.room_name || currentReq.room_number || ''} Maintenance Resolved`,
+          message: `Technician resolved ${currentReq.issue_type} issue in Room ${currentReq.room_name || currentReq.room_number || ''} (Time: ${repairTimeMinutes} min, Cost: $${finalCost}). Room is now available.`,
           priority: NotificationPriority.INFO,
           link: `/dashboard/rooms`,
           created_by: actorId

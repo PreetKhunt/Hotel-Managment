@@ -127,6 +127,22 @@ export class SuperAdminController {
       const { data, error } = await this.supabase.from('bookings').update({ status }).eq('id', id).select().single();
       if (error) throw error;
 
+      if (status === 'checked_in' && data?.room_id) {
+        try {
+          await this.supabase.from('rooms').update({ status: 'occupied' }).eq('id', data.room_id);
+          await this.supabase.from('system_notifications').insert({
+            role_target: 'Reception',
+            title: `Guest Checked In`,
+            message: `Guest checked into Room #${data.room_id.substring(0, 8)} (Booking #${id.substring(0, 8)}). Room status updated to Occupied.`,
+            priority: 'Info',
+            link: '/dashboard/bookings',
+            created_by: req.user?.id || null
+          });
+        } catch (err) {
+          console.error('Automated check-in room status transition error:', err);
+        }
+      }
+
       if (status === 'checked_out' && data?.room_id) {
         try {
           await this.supabase.from('rooms').update({ status: 'dirty' }).eq('id', data.room_id);

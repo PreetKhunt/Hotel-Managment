@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -9,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { bookingTrendData } from '@/lib/mockData';
+import api from '@/lib/api';
 
 interface TooltipProps {
   active?: boolean;
@@ -40,7 +41,38 @@ function CustomTooltip({ active, payload, label }: TooltipProps) {
   return null;
 }
 
-export default function BookingTrendChart() {
+const defaultMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(m => ({
+  name: m,
+  month: m,
+  bookings: 0,
+  revenue: 0
+}));
+
+interface BookingTrendChartProps {
+  data?: any[];
+}
+
+export default function BookingTrendChart({ data: propData }: BookingTrendChartProps) {
+  const [chartData, setChartData] = useState<any[]>(propData || defaultMonths);
+
+  useEffect(() => {
+    if (propData && propData.length > 0) {
+      setChartData(propData);
+      return;
+    }
+    async function fetchTrendData() {
+      try {
+        const res = await api.get('/dashboard');
+        if (res.data?.data?.monthlyTrends) {
+          setChartData(res.data.data.monthlyTrends);
+        }
+      } catch (error) {
+        console.error('Failed to load booking trends from DB:', error);
+      }
+    }
+    fetchTrendData();
+  }, [propData]);
+
   return (
     <div
       style={{
@@ -52,16 +84,16 @@ export default function BookingTrendChart() {
     >
       <div style={{ marginBottom: '1.25rem' }}>
         <h3 style={{ color: '#ffffff', fontWeight: 700, fontSize: '1rem', margin: 0 }}>
-          Booking Trends 2024
+          Booking Trends ({new Date().getFullYear()})
         </h3>
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-          Monthly booking volume overview
+          Live monthly booking volume from PostgreSQL
         </p>
       </div>
 
       <ResponsiveContainer width="100%" height={300}>
         <BarChart
-          data={bookingTrendData}
+          data={chartData}
           margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
           barCategoryGap="30%"
         >

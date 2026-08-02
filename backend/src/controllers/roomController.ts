@@ -69,25 +69,44 @@ export const getRoomById = async (req: Request, res: Response): Promise<void> =>
 
 export const createRoom = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, type, pricePerNight, capacity, description } = req.body;
+    const price = req.body.pricePerNight !== undefined ? req.body.pricePerNight : (req.body.price_per_night || 250);
+    const maxCapacity = req.body.maxGuests !== undefined ? req.body.maxGuests : (req.body.capacity || 2);
+    const bed = req.body.bedType !== undefined ? req.body.bedType : (req.body.bed_type || 'Queen Bed');
+    const longDesc = req.body.longDescription !== undefined ? req.body.longDescription : (req.body.long_description || req.body.description || '');
 
     const { data, error } = await supabase
       .from('rooms')
-      .insert([
-        { name, type, price_per_night: pricePerNight, capacity, description, status: 'available' }
-      ])
+      .insert([{
+        name: req.body.name,
+        type: req.body.type || 'standard',
+        price_per_night: Number(price),
+        capacity: Number(maxCapacity),
+        size: Number(req.body.size || 350),
+        bed_type: bed,
+        floor: Number(req.body.floor || 1),
+        description: req.body.description || '',
+        long_description: longDesc,
+        amenities: req.body.amenities || ['Free Wi-Fi', 'Room Service', 'Flat Screen TV'],
+        images: req.body.images || ['https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200'],
+        status: req.body.status || 'available',
+        rating: Number(req.body.rating || 5.0),
+        review_count: Number(req.body.reviewCount || req.body.review_count || 0),
+        featured: Boolean(req.body.featured || false)
+      }])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
+      return;
+    }
 
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
       message: 'Room created in Supabase',
-      data
+      data: mapRoom(data)
     });
   } catch (error) {
-    console.error('Error creating room:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to create room' });
   }
 };
@@ -95,24 +114,43 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
 export const updateRoom = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, type, pricePerNight, capacity, description, status } = req.body;
+    const updatePayload: Record<string, any> = {};
+    if (req.body.name !== undefined) updatePayload.name = req.body.name;
+    if (req.body.type !== undefined) updatePayload.type = req.body.type;
+    if (req.body.status !== undefined) updatePayload.status = req.body.status;
+    if (req.body.pricePerNight !== undefined) updatePayload.price_per_night = Number(req.body.pricePerNight);
+    else if (req.body.price_per_night !== undefined) updatePayload.price_per_night = Number(req.body.price_per_night);
+    if (req.body.maxGuests !== undefined) updatePayload.capacity = Number(req.body.maxGuests);
+    else if (req.body.capacity !== undefined) updatePayload.capacity = Number(req.body.capacity);
+    if (req.body.size !== undefined) updatePayload.size = Number(req.body.size);
+    if (req.body.bedType !== undefined) updatePayload.bed_type = req.body.bedType;
+    else if (req.body.bed_type !== undefined) updatePayload.bed_type = req.body.bed_type;
+    if (req.body.floor !== undefined) updatePayload.floor = Number(req.body.floor);
+    if (req.body.description !== undefined) updatePayload.description = req.body.description;
+    if (req.body.longDescription !== undefined) updatePayload.long_description = req.body.longDescription;
+    else if (req.body.long_description !== undefined) updatePayload.long_description = req.body.long_description;
+    if (req.body.amenities !== undefined) updatePayload.amenities = req.body.amenities;
+    if (req.body.images !== undefined) updatePayload.images = req.body.images;
+    if (req.body.featured !== undefined) updatePayload.featured = Boolean(req.body.featured);
 
     const { data, error } = await supabase
       .from('rooms')
-      .update({ name, type, price_per_night: pricePerNight, capacity, description, status })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
+      return;
+    }
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
       message: `Room with ID ${id} updated in Supabase`,
-      data
+      data: mapRoom(data)
     });
   } catch (error) {
-    console.error('Error updating room:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to update room' });
   }
 };

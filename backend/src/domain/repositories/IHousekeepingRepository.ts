@@ -34,6 +34,7 @@ export interface HousekeepingTask {
   deleted_at: Date | null;
   // Joins
   room_number?: string;
+  room_name?: string;
   room_status?: string;
   assignee_name?: string;
   assigner_name?: string;
@@ -54,6 +55,7 @@ export interface CleaningHistoryRecord {
   deleted_at: Date | null;
   // Joins
   room_number?: string;
+  room_name?: string;
   cleaner_name?: string;
   cleaner_email?: string;
 }

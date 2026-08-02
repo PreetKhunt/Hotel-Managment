@@ -8,5 +8,5 @@ export interface IHotelRepository {
 
 export interface IHotelSettingsRepository {
   findByHotelId(hotelId: string): Promise<HotelSettings | null>;
-  update(hotelId: string, data: Partial<HotelSettings>): Promise<HotelSettings>;
+  update(hotelId: string, data: Partial<HotelSettings> | Record<string, any>): Promise<HotelSettings>;
 }

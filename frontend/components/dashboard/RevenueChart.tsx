@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import {
   AreaChart,
   Area,
@@ -8,10 +9,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
 } from 'recharts';
-import { bookingTrendData } from '@/lib/mockData';
+import api from '@/lib/api';
 
 interface TooltipProps {
   active?: boolean;
@@ -42,7 +41,38 @@ function CustomTooltip({ active, payload, label }: TooltipProps) {
   return null;
 }
 
-export default function RevenueChart() {
+const defaultMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(m => ({
+  name: m,
+  month: m,
+  bookings: 0,
+  revenue: 0
+}));
+
+interface RevenueChartProps {
+  data?: any[];
+}
+
+export default function RevenueChart({ data: propData }: RevenueChartProps) {
+  const [chartData, setChartData] = useState<any[]>(propData || defaultMonths);
+
+  useEffect(() => {
+    if (propData && propData.length > 0) {
+      setChartData(propData);
+      return;
+    }
+    async function fetchRevenueData() {
+      try {
+        const res = await api.get('/dashboard');
+        if (res.data?.data?.monthlyTrends) {
+          setChartData(res.data.data.monthlyTrends);
+        }
+      } catch (error) {
+        console.error('Failed to load revenue trends from DB:', error);
+      }
+    }
+    fetchRevenueData();
+  }, [propData]);
+
   return (
     <div
       style={{
@@ -54,16 +84,16 @@ export default function RevenueChart() {
     >
       <div style={{ marginBottom: '1.25rem' }}>
         <h3 style={{ color: '#ffffff', fontWeight: 700, fontSize: '1rem', margin: 0 }}>
-          Revenue Overview 2024
+          Revenue Overview ({new Date().getFullYear()})
         </h3>
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-          Monthly revenue performance (USD)
+          Monthly revenue performance from PostgreSQL (INR)
         </p>
       </div>
 
       <ResponsiveContainer width="100%" height={300}>
         <AreaChart
-          data={bookingTrendData}
+          data={chartData}
           margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
         >
           <defs>

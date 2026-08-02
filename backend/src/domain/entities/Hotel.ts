@@ -44,6 +44,13 @@ export interface HotelSettings {
   supportEmail: string | null;
   supportPhone: string | null;
   logoUrl: string | null;
+  description: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  cancellationPolicy: string | null;
+  bannerImages: string[] | null;
+  socialLinks: Record<string, string> | null;
   featureFlags: FeatureFlags;
   createdAt?: Date;
   updatedAt?: Date;

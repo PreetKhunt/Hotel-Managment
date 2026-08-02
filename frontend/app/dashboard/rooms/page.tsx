@@ -6,6 +6,8 @@ import { useRooms } from '@/hooks/useRooms';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { Plus, Edit2, Eye, BedDouble, CheckCircle, XCircle, Wrench, Loader2 } from 'lucide-react';
 import { Room } from '@/types';
+import RoomDetailsModal from '@/components/dashboard/RoomDetailsModal';
+import RoomFormModal from '@/components/dashboard/RoomFormModal';
 
 type FilterStatus = 'all' | 'available' | 'occupied' | 'maintenance';
 
@@ -18,6 +20,10 @@ const statusFilters: { label: string; value: FilterStatus }[] = [
 
 export default function RoomsPage() {
   const [filter, setFilter] = useState<FilterStatus>('all');
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const { data: rooms = [], isLoading, isError } = useRooms();
 
@@ -54,6 +60,7 @@ export default function RoomsPage() {
         <motion.button
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.97 }}
+          onClick={() => setIsCreateModalOpen(true)}
           style={{
             background: 'linear-gradient(135deg, #C9A84C, #a8863c)',
             color: '#0A0F1E',
@@ -233,6 +240,10 @@ export default function RoomsPage() {
                 {/* Action Buttons */}
                 <div style={{ display: 'flex', gap: '0.6rem' }}>
                   <button
+                    onClick={() => {
+                      setSelectedRoom(room);
+                      setIsViewModalOpen(true);
+                    }}
                     style={{
                       flex: 1,
                       background: 'rgba(201,168,76,0.1)',
@@ -253,6 +264,10 @@ export default function RoomsPage() {
                     View
                   </button>
                   <button
+                    onClick={() => {
+                      setSelectedRoom(room);
+                      setIsEditModalOpen(true);
+                    }}
                     style={{
                       flex: 1,
                       background: 'rgba(99,102,241,0.1)',
@@ -278,6 +293,27 @@ export default function RoomsPage() {
           ))}
         </div>
       )}
+
+      {/* Production Enterprise Modals */}
+      <RoomDetailsModal
+        room={selectedRoom}
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        onEdit={() => {
+          setIsViewModalOpen(false);
+          setIsEditModalOpen(true);
+        }}
+      />
+      <RoomFormModal
+        room={selectedRoom}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+      />
+      <RoomFormModal
+        room={null}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 }

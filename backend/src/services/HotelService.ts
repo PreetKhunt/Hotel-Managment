@@ -24,20 +24,20 @@ export class HotelService {
     return settings;
   }
 
-  async updateHotelSettings(hotelId: string, data: Partial<HotelSettings>): Promise<HotelSettings> {
+  async updateHotelSettings(hotelId: string, data: Partial<HotelSettings> | Record<string, any>): Promise<HotelSettings> {
     // Only allow safe updatable fields in settings
-    const safeData: Partial<HotelSettings> = {};
-    const updatableKeys: (keyof HotelSettings)[] = [
-      'hotelName', 'currency', 'timezone', 'gstPercentage', 'checkInTime',
-      'checkOutTime', 'maximumBookingDays', 'freeCancellationHours', 
-      'invoicePrefix', 'bookingPrefix', 'supportEmail', 'supportPhone', 
-      'logoUrl', 'featureFlags'
+    const safeData: Record<string, any> = {};
+    const updatableKeys: string[] = [
+      'hotelName', 'hotel_name', 'currency', 'timezone', 'gstPercentage', 'gst_percentage', 'checkInTime',
+      'check_in_time', 'checkOutTime', 'check_out_time', 'maximumBookingDays', 'maximum_booking_days', 'freeCancellationHours',
+      'free_cancellation_hours', 'invoicePrefix', 'invoice_prefix', 'bookingPrefix', 'booking_prefix', 'supportEmail', 'support_email',
+      'supportPhone', 'support_phone', 'logoUrl', 'logo_url', 'description', 'address', 'phone', 'email', 'cancellationPolicy', 'cancellation_policy',
+      'bannerImages', 'banner_images', 'socialLinks', 'social_links', 'featureFlags', 'feature_flags'
     ];
 
     for (const key of updatableKeys) {
-      if (data[key] !== undefined) {
-         // TypeScript doesn't let us dynamically assign different types easily without casting
-         (safeData as any)[key] = data[key];
+      if ((data as Record<string, any>)[key] !== undefined) {
+         safeData[key] = (data as Record<string, any>)[key];
       }
     }
 
