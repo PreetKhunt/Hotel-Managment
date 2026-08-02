@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+const { v4: uuidv4 }: { v4: () => string } = require('uuid');
 import { loggerContext } from '../utils/logger';
 
 export const tracingMiddleware = (req: Request, res: Response, next: NextFunction) => {

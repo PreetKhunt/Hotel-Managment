@@ -1,5 +1,5 @@
 import { supabase } from '../config/supabase';
-import { v4 as uuidv4 } from 'uuid';
+const { v4: uuidv4 }: { v4: () => string } = require('uuid');
 
 const imageSets = {
   standard: [

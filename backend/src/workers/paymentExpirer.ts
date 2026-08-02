@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+const cron: { schedule: (expression: string, func: () => void | Promise<void>) => any } = require('node-cron');
 import { pgPool } from '../config/database';
 import { logger } from '../utils/logger';
 import { BookingStatus, RoomStatus } from '../domain/enums';
