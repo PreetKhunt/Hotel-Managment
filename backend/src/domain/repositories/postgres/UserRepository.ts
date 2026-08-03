@@ -45,14 +45,15 @@ export class UserRepository implements IUserRepository {
   async create(user: User): Promise<User> {
     // Note: Most users are created by the Supabase auth trigger. 
     // This method is for programmatic creation if needed.
+    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'User';
     const result = await this.pool.query(
       `INSERT INTO users (
-        id, email, role_id, status, first_name, last_name, phone, avatar_url, date_of_birth, gender, address, city, state, country, postal_code
+        id, email, name, role_id, status, first_name, last_name, phone, avatar_url, date_of_birth, gender, address, city, state, country, postal_code
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
       ) RETURNING *`,
       [
-        user.id, user.email, user.roleId, user.status, user.firstName, user.lastName, user.phone,
+        user.id, user.email, fullName, user.roleId, user.status, user.firstName, user.lastName, user.phone,
         user.avatarUrl, user.dateOfBirth, user.gender, user.address, user.city, user.state, user.country, user.postalCode
       ]
     );
@@ -71,6 +72,18 @@ export class UserRepository implements IUserRepository {
         values.push(value);
       }
     };
+
+    if (user.firstName !== undefined || user.lastName !== undefined) {
+      const current = await this.findById(id);
+      if (current) {
+        const first = user.firstName !== undefined ? user.firstName : (current.firstName || '');
+        const last = user.lastName !== undefined ? user.lastName : (current.lastName || '');
+        const newName = `${first} ${last}`.trim();
+        if (newName) {
+          addField('name', newName);
+        }
+      }
+    }
 
     addField('role_id', user.roleId);
     addField('status', user.status);

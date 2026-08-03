@@ -183,6 +183,14 @@ CREATE POLICY "Allow authenticated access to maintenance_audit_logs" ON maintena
 export async function runDatabaseMigrations(pool: Pool): Promise<void> {
   logger.info('🔍 [Database Audit]: Checking operational tables in PostgreSQL schema...');
   try {
+    // Ensure legacy 'name' column in users table is nullable for modern split name (first_name/last_name) compatibility
+    try {
+      await pool.query('ALTER TABLE public.users ALTER COLUMN name DROP NOT NULL;');
+      logger.info("✅ [Database Audit]: Ensured 'name' column on public.users is nullable for OAuth and split-name compatibility.");
+    } catch (colErr: any) {
+      logger.debug(`[Database Audit]: Note on users.name modification: ${colErr.message}`);
+    }
+
     const res = await pool.query(`
       SELECT table_name 
       FROM information_schema.tables 
