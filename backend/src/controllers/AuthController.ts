@@ -257,8 +257,9 @@ export class AuthController {
         throw exchangeError; // Rethrow to outer catch
       }
 
-      const { session } = sessionData;
-      console.log('[OAuth Callback] 5. exchangeCodeForSession finished successfully.');
+      const { session, nextUrl: restoredNextUrl } = sessionData as any;
+      const effectiveNextUrl = restoredNextUrl || nextUrl || '/';
+      console.log(`[OAuth Callback] 5. exchangeCodeForSession finished successfully. Effective nextUrl: ${effectiveNextUrl}`);
             if (session) {
           console.log('[OAuth Callback] 6. Valid session returned. Creating cookie...');
           try {
@@ -266,7 +267,7 @@ export class AuthController {
             console.log(`[OAuth] JWT created`);
             console.log(`[OAuth] Session created`);
             console.log(`[OAuth] Redirecting to frontend`);
-            const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
+            const finalRedirectUrl = effectiveNextUrl.startsWith('http') ? effectiveNextUrl : `${env.CORS_ORIGIN}${effectiveNextUrl}`;
             res.redirect(finalRedirectUrl);
             return; // Prevent duplicate redirect execution
           } catch (cookieErr: any) {

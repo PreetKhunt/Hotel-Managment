@@ -7,6 +7,21 @@ import { AppError, ErrorCode } from '../utils/AppError';
 
 import { env } from '../config/env';
 
+// Server-side PKCE code verifier storage map to overcome cross-domain cookie stripping on OAuth redirects
+interface PKCECacheEntry {
+  verifier: string;
+  nextUrl: string;
+  timestamp: number;
+}
+const pkceStorage = new Map<string, PKCECacheEntry>();
+
+const getClientIdentifier = (req?: any): string => {
+  if (!req) return 'default';
+  const ip = req.headers?.['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || 'unknown';
+  const userAgent = req.headers?.['user-agent'] || 'unknown';
+  return `${ip}_${userAgent}`;
+};
+
 export class AuthService {
   constructor(
     private readonly supabase: SupabaseClient,
@@ -22,13 +37,67 @@ export class AuthService {
     const client = createServerClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
         cookies: req && res ? {
           getAll() {
-            console.log('[Forensics] getAll() called. req.cookies:', JSON.stringify(req.cookies));
-            return Object.keys(req.cookies).map((name) => ({ name, value: req.cookies[name] }));
+            console.log('[Forensics] getAll() called. req.cookies:', JSON.stringify(req.cookies || {}));
+            const cookieList = Object.keys(req.cookies || {}).map((name) => ({ name, value: req.cookies[name] }));
+            
+            // Check if PKCE code verifier is present in req.cookies
+            const hasPkce = cookieList.some(c => c.name.includes('-auth-token-code-verifier'));
+            if (!hasPkce) {
+              console.log('[PKCE Cache] PKCE code verifier cookie missing in request! Checking server-side fallback storage...');
+              const clientKey = getClientIdentifier(req);
+              let cached = pkceStorage.get(clientKey);
+
+              // Clean up expired verifiers (> 15 minutes)
+              const now = Date.now();
+              for (const [key, val] of pkceStorage.entries()) {
+                if (now - val.timestamp > 15 * 60 * 1000) {
+                  pkceStorage.delete(key);
+                }
+              }
+
+              // If no exact match by IP/User-Agent, fallback to the most recently generated unexpired verifier
+              if (!cached && pkceStorage.size > 0) {
+                console.log('[PKCE Cache] No exact IP/User-Agent match found. Using latest unexpired PKCE verifier from cache...');
+                let latestTime = 0;
+                for (const val of pkceStorage.values()) {
+                  if (val.timestamp > latestTime) {
+                    latestTime = val.timestamp;
+                    cached = val;
+                  }
+                }
+              }
+
+              if (cached) {
+                console.log(`[PKCE Cache] Successfully retrieved fallback code verifier from server memory!`);
+                const projectRef = env.SUPABASE_URL.replace('https://', '').replace('http://', '').split('.')[0];
+                const cookieName = `sb-${projectRef}-auth-token-code-verifier`;
+                cookieList.push({ name: cookieName, value: cached.verifier });
+                
+                // Restore oauth_next cookie if missing
+                if (req.cookies && !req.cookies.oauth_next && cached.nextUrl) {
+                  req.cookies.oauth_next = cached.nextUrl;
+                  console.log(`[PKCE Cache] Restored target nextUrl: ${cached.nextUrl}`);
+                }
+              } else {
+                console.warn('[PKCE Cache] WARNING: No fallback code verifier found in server memory.');
+              }
+            }
+            return cookieList;
           },
           setAll(cookiesToSet: any[]) {
             console.log('[Forensics] setAll() called with cookies:', JSON.stringify(cookiesToSet));
             cookiesToSet.forEach(({ name, value, options }) => {
               console.log(`[Forensics] Setting cookie: ${name}`);
+              if (name.includes('-auth-token-code-verifier')) {
+                const clientKey = getClientIdentifier(req);
+                const nextUrl = req.query?.next || req.cookies?.oauth_next || '/';
+                console.log(`[PKCE Cache] Storing PKCE code verifier in server memory for client: ${clientKey}`);
+                pkceStorage.set(clientKey, {
+                  verifier: value,
+                  nextUrl: String(nextUrl),
+                  timestamp: Date.now()
+                });
+              }
               // Transform SSR cookie options to Express cookie options
               res.cookie(name, value, {
                 ...options,
@@ -346,7 +415,7 @@ export class AuthService {
       });
 
       console.log(`[AuthService] 4.9. Returning user and session data.`);
-      return { user: data.user, session: data.session };
+      return { user: data.user, session: data.session, nextUrl: req?.cookies?.oauth_next || '/' };
     } catch (dbError: any) {
       console.error('[AuthService] CRITICAL ERROR during OAuth user sync:', dbError.message || dbError);
       if (dbError.stack) console.error('[AuthService] Stack trace:', dbError.stack);
