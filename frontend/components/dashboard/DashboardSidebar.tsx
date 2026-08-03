@@ -52,7 +52,7 @@ const staffNavItems = [
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   
   const u = user as any;
   const roleName = u?.role?.name || u?.roleName || u?.role;
@@ -174,6 +174,7 @@ export default function DashboardSidebar() {
       {/* Logout */}
       <div style={{ padding: '1rem 0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <button
+          onClick={() => logout()}
           style={{
             display: 'flex',
             alignItems: 'center',

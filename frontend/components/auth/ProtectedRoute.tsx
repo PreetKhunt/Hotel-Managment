@@ -13,9 +13,9 @@ export default function ProtectedRoute({ children, adminOnly = false }: { childr
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
-        router.push(`/login?next=${encodeURIComponent(pathname)}`);
+        router.replace(`/login?next=${encodeURIComponent(pathname)}`);
       } else if (adminOnly && user.role?.name !== "Admin") {
-        router.push("/");
+        router.replace("/");
       }
     }
   }, [user, isLoading, router, pathname, adminOnly]);

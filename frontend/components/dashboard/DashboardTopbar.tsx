@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search, User, Settings, LogOut, CheckCircle, Clock, AlertTriangle, Info } from 'lucide-react';
 import TopLeftBackButton from '@/components/shared/TopLeftBackButton';
 import { useSystemNotifications } from '@/hooks/useOperationalModules';
+import { useAuth } from '@/providers/AuthProvider';
 
 const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   '/dashboard': { title: 'Overview', breadcrumb: ['Dashboard', 'Overview'] },
@@ -26,6 +27,7 @@ const mockNotifications = [
 export default function DashboardTopbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { logout } = useAuth();
   const pageInfo = pageTitles[pathname] || { title: 'Dashboard', breadcrumb: ['Dashboard'] };
 
   const [showNotifications, setShowNotifications] = useState(false);
@@ -53,7 +55,7 @@ export default function DashboardTopbar() {
   }, []);
 
   const handleLogout = () => {
-    router.push('/');
+    logout();
   };
 
   return (

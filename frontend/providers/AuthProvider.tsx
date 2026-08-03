@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { User, AuthContextType } from '@/types/auth';
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -89,15 +90,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log(`====================================================\n`);
     try {
       await api.post('/auth/logout');
+      toast.success("Logged out successfully.");
     } catch (error) {
       console.error('[Logout] Failed:', error);
+      toast.error("Logout request encountered an error. Cleaning up local session.");
     } finally {
       console.log("[Auth Audit] logout() final block. Setting user state to: null");
       setUser(null);
-      console.log("[Auth Audit] Calling queryClient.setQueryData for logout");
+      console.log("[Auth Audit] Calling queryClient clear methods for logout");
       queryClient.setQueryData(['user'], null);
-      queryClient.removeQueries(); // Clears everything
-      router.push('/');
+      queryClient.removeQueries();
+      queryClient.clear(); // Complete React Query cache purge
+
+      if (typeof window !== 'undefined') {
+        // Clear any localStorage/sessionStorage auth data if present
+        const authKeys = ['token', 'user', 'auth', 'session', 'hh_session', 'supabase.auth.token'];
+        authKeys.forEach(key => {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        });
+        Object.keys(localStorage).forEach(key => {
+          if (/auth|supabase|session|token|user/i.test(key)) {
+            localStorage.removeItem(key);
+          }
+        });
+        Object.keys(sessionStorage).forEach(key => {
+          if (/auth|supabase|session|token|user/i.test(key)) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      }
+
+      router.replace('/');
     }
   };
 
