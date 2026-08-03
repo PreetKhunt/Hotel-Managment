@@ -1,0 +1,106 @@
+name: Production CI/CD Reliability & Build Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - production
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/**'
+      - 'package.json'
+      - 'docker-compose.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - production
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  validate-backend:
+    name: Backend Build & Validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: ./backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        run: npm ci
+
+      - name: Verify TypeScript Schema & Compilation
+        env:
+          NODE_ENV: test
+          PORT: 5000
+          DATABASE_URL: postgresql://postgres:mock_password_for_ci@localhost:5432/mock_test_db
+          SUPABASE_URL: https://mock.supabase.co
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-service-key
+          SUPABASE_JWT_SECRET: mock-jwt-secret-for-ci-testing-purposes
+          GOOGLE_CLIENT_ID: ci-mock-google-client-id
+          GOOGLE_CLIENT_SECRET: ci-mock-google-client-secret
+          RAZORPAY_KEY_ID: rzp_test_mock
+          RAZORPAY_KEY_SECRET: rzp_test_secret_mock
+        run: |
+          npx tsc --noEmit
+          npm run build
+
+  validate-frontend:
+    name: Frontend Build & Validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: ./frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Build Next.js Frontend Application
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+          NEXT_PUBLIC_SUPABASE_URL: https://mock.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-anon-key
+        run: npm run build
+
+  pipeline-summary:
+    name: CI/CD Health & Readiness Check
+    needs: [validate-backend, validate-frontend]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Assess Production Ready Status
+        run: |
+          if [ "${{ needs.validate-backend.result }}" = "success" ] && [ "${{ needs.validate-frontend.result }}" = "success" ]; then
+            echo "✅ [Production CI/CD Audit]: Both backend and frontend builds succeeded on main pipeline!"
+            exit 0
+          else
+            echo "❌ [Production CI/CD Audit]: One or more validation builds failed."
+            exit 1
+          fi

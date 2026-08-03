@@ -146,7 +146,57 @@ export class HousekeepingService {
         }, client);
       }
 
+      // If verifying task (Requirement #7: automatically adopt latest version for optimistic locking on verification)
+      if (dto.status === HousekeepingStatus.VERIFIED) {
+        updates.version = currentTask.version;
+        if (!currentTask.completed_at) {
+          updates.completed_at = new Date();
+        }
+        await client.query(`UPDATE rooms SET status = 'available' WHERE id = $1`, [currentTask.room_id]);
+      }
+
       const updatedTask = await this.housekeepingRepo.updateTask(taskId, updates, client);
+      await client.query('COMMIT');
+      return updatedTask;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async verifyTask(
+    taskId: string,
+    actorId: string,
+    _actorRole?: string | null,
+    dto: UpdateHousekeepingTaskDTO = {}
+  ): Promise<HousekeepingTask> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
+
+      // Automatically fetch latest version before verify (Requirement #7)
+      const currentTask = await this.housekeepingRepo.findById(taskId, client);
+      if (!currentTask) {
+        throw new AppError('Housekeeping task not found', 404, ErrorCode.NOT_FOUND);
+      }
+
+      const updates: UpdateHousekeepingTaskDTO = {
+        ...dto,
+        status: HousekeepingStatus.VERIFIED,
+        updated_by: actorId,
+        version: currentTask.version,
+      };
+
+      if (!updates.completed_at && !currentTask.completed_at) {
+        updates.completed_at = new Date();
+      }
+
+      const updatedTask = await this.housekeepingRepo.updateTask(taskId, updates, client);
+
+      await client.query(`UPDATE rooms SET status = 'available' WHERE id = $1`, [currentTask.room_id]);
+
       await client.query('COMMIT');
       return updatedTask;
     } catch (error) {

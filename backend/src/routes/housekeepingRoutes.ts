@@ -9,6 +9,7 @@ import { validateRequest } from '../middleware/validationHandler';
 import {
   createHousekeepingTaskSchema,
   updateHousekeepingTaskSchema,
+  verifyHousekeepingTaskSchema,
   filterHousekeepingHistorySchema
 } from '../validations/housekeepingValidations';
 
@@ -49,6 +50,7 @@ router.get('/tasks', allowRoles(['Housekeeping', 'Technician']), hkController.ge
 router.get('/tasks/:id', allowRoles(['Housekeeping']), hkController.getTaskById);
 router.post('/tasks', allowRoles(['Housekeeping']), validateRequest(createHousekeepingTaskSchema), hkController.createTask);
 router.patch('/tasks/:id/status', allowRoles(['Housekeeping']), validateRequest(updateHousekeepingTaskSchema), hkController.updateTask);
+router.post(['/:id/verify', '/tasks/:id/verify'], allowRoles(['Housekeeping', 'Technician']), validateRequest(verifyHousekeepingTaskSchema), hkController.verifyTask);
 router.delete('/tasks/:id', allowRoles([]), hkController.deleteTask); // Admins & Reception only
 
 // Cleaning History (Audit log & staff timing)

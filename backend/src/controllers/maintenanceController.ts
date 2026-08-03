@@ -94,6 +94,31 @@ export class MaintenanceController {
     }
   };
 
+  public verifyRequest = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+      if (!user) throw new AppError('Authentication required', 401, ErrorCode.UNAUTHORIZED);
+
+      const { id } = req.params;
+      const verifiedReq = await this.maintenanceService.verifyRequest(
+        id,
+        user.id,
+        user.roleName || null,
+        req.body || {},
+        req.ip || '',
+        req.headers['x-correlation-id'] as string || ''
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Maintenance repair verified successfully',
+        data: verifiedReq,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public deleteRequest = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = req.user;

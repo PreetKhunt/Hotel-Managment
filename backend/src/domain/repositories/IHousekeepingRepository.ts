@@ -5,6 +5,7 @@ export enum HousekeepingStatus {
   ACCEPTED = 'Accepted',
   IN_PROGRESS = 'In Progress',
   COMPLETED = 'Completed',
+  VERIFIED = 'Verified',
   CANCELLED = 'Cancelled'
 }
 

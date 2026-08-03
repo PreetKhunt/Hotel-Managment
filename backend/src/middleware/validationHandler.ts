@@ -13,13 +13,22 @@ export const validateRequest = (schema: AnyZodObject): RequestHandler => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
+        const formattedErrors = error.errors.map((e) => {
+          const cleanPath = e.path.filter((p) => p !== 'body' && p !== 'params' && p !== 'query').join('.');
+          return {
+            field: cleanPath || e.path.join('.'),
+            message: e.message,
+          };
+        });
+        const firstError = formattedErrors[0] || { field: 'unknown', message: 'Validation failed' };
+
+        console.error(`❌ [Zod Validation Error] on ${req.method} ${req.originalUrl}:`, JSON.stringify(formattedErrors, null, 2));
+
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
-          message: 'Validation failed',
-          errors: error.errors.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
+          field: firstError.field,
+          message: firstError.message,
+          errors: formattedErrors,
         });
         return;
       }

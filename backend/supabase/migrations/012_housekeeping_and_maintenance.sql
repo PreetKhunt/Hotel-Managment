@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS housekeeping_tasks (
   room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
   assigned_to UUID REFERENCES users(id) ON DELETE SET NULL NULL,
   assigned_by UUID REFERENCES users(id) ON DELETE SET NULL NULL,
-  status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Accepted', 'In Progress', 'Completed', 'Cancelled')),
+  status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Accepted', 'In Progress', 'Completed', 'Verified', 'Cancelled')),
   priority VARCHAR(50) DEFAULT 'Medium' CHECK (priority IN ('Low', 'Medium', 'High', 'Emergency')),
   remarks TEXT NULL,
   version INTEGER DEFAULT 1 NOT NULL, -- Optimistic locking concurrency control
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS maintenance_requests (
   issue_type VARCHAR(100) NOT NULL CHECK (issue_type IN ('Electrical', 'Plumbing', 'Furniture', 'Internet', 'AC', 'TV', 'Bathroom', 'Door Lock', 'Water', 'Other')),
   description TEXT NOT NULL,
   priority VARCHAR(50) DEFAULT 'Medium' CHECK (priority IN ('Low', 'Medium', 'High', 'Emergency')),
-  status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Assigned', 'In Progress', 'Completed', 'Cancelled')),
+  status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Reported', 'Assigned', 'In Progress', 'On Hold', 'Completed', 'Verified', 'Cancelled')),
   estimated_cost NUMERIC(10, 2) DEFAULT 0.00,
   actual_cost NUMERIC(10, 2) DEFAULT 0.00,
   version INTEGER DEFAULT 1 NOT NULL, -- Optimistic locking concurrency control
@@ -221,3 +221,11 @@ EXCEPTION WHEN OTHERS THEN
   RAISE NOTICE 'Supabase Realtime publication setup encountered a minor warning: %', SQLERRM;
 END;
 $$;
+
+-- 11. Idempotently update check constraints for existing installations
+ALTER TABLE public.housekeeping_tasks DROP CONSTRAINT IF EXISTS housekeeping_tasks_status_check;
+ALTER TABLE public.housekeeping_tasks ADD CONSTRAINT housekeeping_tasks_status_check CHECK (status IN ('Pending', 'Accepted', 'In Progress', 'Completed', 'Verified', 'Cancelled'));
+
+ALTER TABLE public.maintenance_requests DROP CONSTRAINT IF EXISTS maintenance_requests_status_check;
+ALTER TABLE public.maintenance_requests ADD CONSTRAINT maintenance_requests_status_check CHECK (status IN ('Pending', 'Reported', 'Assigned', 'In Progress', 'On Hold', 'Completed', 'Verified', 'Cancelled'));
+

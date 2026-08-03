@@ -167,6 +167,15 @@ export class MaintenanceService {
         actionName = 'CANCELLED';
       }
 
+      if (dto.status === MaintenanceStatus.VERIFIED) {
+        actionName = 'VERIFIED';
+        updates.version = currentReq.version;
+        if (!currentReq.completed_at) {
+          updates.completed_at = new Date();
+        }
+        await client.query(`UPDATE rooms SET status = 'available' WHERE id = $1`, [currentReq.room_id]);
+      }
+
       const updatedReq = await this.maintenanceRepo.updateRequest(id, updates, client);
 
       // Record detailed Audit Log
@@ -182,9 +191,73 @@ export class MaintenanceService {
         ip_address: ipAddress || null,
         correlation_id: correlationId || null,
         repair_time_minutes: repairTimeMinutes,
-        repair_cost: finalCost,
+        repair_cost: finalCost !== null ? finalCost : updatedReq.actual_cost,
         remarks: dto.remarks || `Status transitioned to ${updatedReq.status}`,
         completion_time: updates.completed_at || null
+      }, client);
+
+      await client.query('COMMIT');
+      return updatedReq;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async verifyRequest(
+    id: string,
+    actorId: string,
+    _actorRole?: string | null,
+    dto: any = {},
+    ipAddress?: string,
+    correlationId?: string
+  ): Promise<MaintenanceRequest> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
+
+      // Automatically fetch latest version before verify (Requirement #7)
+      const currentReq = await this.maintenanceRepo.findById(id, client);
+      if (!currentReq) {
+        throw new AppError('Maintenance request not found', 404, ErrorCode.NOT_FOUND);
+      }
+
+      const finalCost = dto.actual_cost ?? dto.actualCost ?? currentReq.actual_cost ?? currentReq.estimated_cost ?? 0.00;
+      const remarks = dto.remarks || 'Repair verified and quality assured by staff';
+
+      const updates: UpdateMaintenanceRequestDTO = {
+        status: MaintenanceStatus.VERIFIED,
+        actual_cost: finalCost,
+        remarks: remarks,
+        updated_by: actorId,
+        version: currentReq.version,
+      };
+
+      if (!currentReq.completed_at) {
+        updates.completed_at = new Date();
+      }
+
+      const updatedReq = await this.maintenanceRepo.updateRequest(id, updates, client);
+
+      await client.query(`UPDATE rooms SET status = 'available' WHERE id = $1`, [currentReq.room_id]);
+
+      await this.maintenanceRepo.logAudit({
+        request_id: currentReq.id,
+        room_id: currentReq.room_id,
+        reporter_id: currentReq.reported_by,
+        assigned_technician_id: updatedReq.assigned_to,
+        performed_by: actorId,
+        action: 'VERIFIED',
+        old_value: currentReq,
+        new_value: updatedReq,
+        ip_address: ipAddress || null,
+        correlation_id: correlationId || null,
+        repair_time_minutes: null,
+        repair_cost: finalCost,
+        remarks: remarks,
+        completion_time: updates.completed_at || currentReq.completed_at || null
       }, client);
 
       await client.query('COMMIT');

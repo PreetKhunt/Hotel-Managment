@@ -9,6 +9,7 @@ import { validateRequest } from '../middleware/validationHandler';
 import {
   createMaintenanceRequestSchema,
   updateMaintenanceRequestSchema,
+  verifyMaintenanceRequestSchema,
   filterMaintenanceHistorySchema
 } from '../validations/maintenanceValidations';
 
@@ -50,6 +51,7 @@ router.get('/requests/:id', allowRoles(['Technician', 'Housekeeping']), maintCon
 // Any authenticated staff (including Housekeeping during cleaning inspection) can raise a repair ticket!
 router.post('/requests', allowRoles(['Technician', 'Housekeeping', 'Staff']), validateRequest(createMaintenanceRequestSchema), maintController.createRequest);
 router.patch('/requests/:id/status', allowRoles(['Technician']), validateRequest(updateMaintenanceRequestSchema), maintController.updateRequest);
+router.post(['/:id/verify', '/requests/:id/verify'], allowRoles(['Technician', 'Housekeeping']), validateRequest(verifyMaintenanceRequestSchema), maintController.verifyRequest);
 router.delete('/requests/:id', allowRoles([]), maintController.deleteRequest); // Admins & Reception only
 
 // Audit Logs (Full mutation, pricing, and timing history)

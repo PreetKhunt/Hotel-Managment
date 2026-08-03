@@ -3,9 +3,12 @@ import { TaskPriority } from './IHousekeepingRepository';
 
 export enum MaintenanceStatus {
   PENDING = 'Pending',
+  REPORTED = 'Reported',
   ASSIGNED = 'Assigned',
   IN_PROGRESS = 'In Progress',
+  ON_HOLD = 'On Hold',
   COMPLETED = 'Completed',
+  VERIFIED = 'Verified',
   CANCELLED = 'Cancelled'
 }
 

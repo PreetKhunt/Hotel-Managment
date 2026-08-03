@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS housekeeping_tasks (
   room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
   assigned_to UUID REFERENCES users(id) ON DELETE SET NULL NULL,
   assigned_by UUID REFERENCES users(id) ON DELETE SET NULL NULL,
-  status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Accepted', 'In Progress', 'Completed', 'Cancelled')),
+  status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Accepted', 'In Progress', 'Completed', 'Verified', 'Cancelled')),
   priority VARCHAR(50) DEFAULT 'Medium' CHECK (priority IN ('Low', 'Medium', 'High', 'Emergency')),
   remarks TEXT NULL,
   version INTEGER DEFAULT 1 NOT NULL,
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS maintenance_requests (
   issue_type VARCHAR(100) NOT NULL CHECK (issue_type IN ('Electrical', 'Plumbing', 'Furniture', 'Internet', 'AC', 'TV', 'Bathroom', 'Door Lock', 'Water', 'Other')),
   description TEXT NOT NULL,
   priority VARCHAR(50) DEFAULT 'Medium' CHECK (priority IN ('Low', 'Medium', 'High', 'Emergency')),
-  status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Assigned', 'In Progress', 'Completed', 'Cancelled')),
+  status VARCHAR(50) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Reported', 'Assigned', 'In Progress', 'On Hold', 'Completed', 'Verified', 'Cancelled')),
   estimated_cost NUMERIC(10, 2) DEFAULT 0.00,
   actual_cost NUMERIC(10, 2) DEFAULT 0.00,
   version INTEGER DEFAULT 1 NOT NULL,
@@ -223,6 +223,21 @@ export async function runDatabaseMigrations(pool: Pool): Promise<void> {
       logger.info('✅ [Database Audit]: Migration 012 applied successfully! Operational schema verified.');
     } else {
       logger.info('✅ [Database Audit]: Operational schema already present.');
+    }
+
+    // Ensure check constraints allow 'Verified', 'Reported', and 'On Hold' statuses idempotently without modifying columns
+    try {
+      await pool.query(`
+        ALTER TABLE public.housekeeping_tasks DROP CONSTRAINT IF EXISTS housekeeping_tasks_status_check;
+        ALTER TABLE public.housekeeping_tasks ADD CONSTRAINT housekeeping_tasks_status_check CHECK (status IN ('Pending', 'Accepted', 'In Progress', 'Completed', 'Verified', 'Cancelled'));
+      `);
+      await pool.query(`
+        ALTER TABLE public.maintenance_requests DROP CONSTRAINT IF EXISTS maintenance_requests_status_check;
+        ALTER TABLE public.maintenance_requests ADD CONSTRAINT maintenance_requests_status_check CHECK (status IN ('Pending', 'Reported', 'Assigned', 'In Progress', 'On Hold', 'Completed', 'Verified', 'Cancelled'));
+      `);
+      logger.info("✅ [Database Audit]: Ensured operational status check constraints support 'Verified', 'Reported', and 'On Hold' without schema disruption.");
+    } catch (chkErr: any) {
+      logger.debug(`[Database Audit]: Note on operational status check constraints modification: ${chkErr.message}`);
     }
   } catch (error: any) {
     logger.error(`❌ [Database Audit]: Migration check failed: ${error.message}`);

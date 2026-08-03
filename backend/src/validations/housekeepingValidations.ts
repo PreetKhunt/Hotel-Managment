@@ -18,12 +18,24 @@ export const updateHousekeepingTaskSchema = z.object({
       HousekeepingStatus.ACCEPTED,
       HousekeepingStatus.IN_PROGRESS,
       HousekeepingStatus.COMPLETED,
+      HousekeepingStatus.VERIFIED,
       HousekeepingStatus.CANCELLED,
     ]).optional(),
     priority: z.enum([TaskPriority.LOW, TaskPriority.MEDIUM, TaskPriority.HIGH, TaskPriority.EMERGENCY]).optional(),
     remarks: z.string().max(1000).optional(),
     version: z.number().int().positive().optional(),
   }),
+});
+
+export const verifyHousekeepingTaskSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid Task ID UUID'),
+  }),
+  body: z.object({
+    status: z.enum([HousekeepingStatus.VERIFIED]).optional(),
+    remarks: z.string().max(1000).optional(),
+    version: z.number().int().positive().optional(),
+  }).optional(),
 });
 
 export const filterHousekeepingHistorySchema = z.object({

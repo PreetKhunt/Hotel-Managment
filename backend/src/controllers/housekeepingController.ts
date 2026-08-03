@@ -89,6 +89,29 @@ export class HousekeepingController {
     }
   };
 
+  public verifyTask = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+      if (!user) throw new AppError('Authentication required', 401, ErrorCode.UNAUTHORIZED);
+
+      const { id } = req.params;
+      const verifiedTask = await this.housekeepingService.verifyTask(
+        id,
+        user.id,
+        user.roleName || null,
+        req.body || {}
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Housekeeping task verified successfully',
+        data: verifiedTask,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public deleteTask = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = req.user;
