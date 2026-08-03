@@ -8,6 +8,12 @@ import { AppError, ErrorCode } from '../utils/AppError';
 import { env } from '../config/env';
 
 export class AuthService {
+  // Architectural Single-Flight & Deduplication Registry for OAuth authorization codes
+  // Guarantees that exchangeCodeForSession(code) is executed EXACTLY ONCE per authorization code,
+  // preventing double-consumption errors when Netlify CDN or browsers make duplicate callback requests.
+  private static readonly codeExchangePromises = new Map<string, Promise<{ data: any; error: any }>>();
+  private static readonly completedExchanges = new Map<string, { timestamp: number; result: any }>();
+
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly userRepo: IUserRepository,
@@ -242,19 +248,46 @@ export class AuthService {
   }
 
   async exchangeCodeForSession(code: string, reqInfo: { ip: string, userAgent: string, requestId: string }, req: any, res: any) {
-    console.log('[OAuth] Exchanging authorization code');
+    console.log('[OAuth] Exchanging authorization code with single-flight deduplication');
+    
+    // 1. Check if this code was already successfully exchanged recently (within 60 seconds)
+    const completed = AuthService.completedExchanges.get(code);
+    if (completed && (Date.now() - completed.timestamp < 60000)) {
+      console.log(`[OAuth Deduplication] Authorization code ${code.substring(0, 10)}... was already successfully exchanged within the last 60s. Returning cached session without re-invoking Supabase.`);
+      return completed.result;
+    }
+
+    // 2. Check if an exchange is currently in-flight for this code (concurrent duplicate request from CDN/browser)
+    let exchangePromise = AuthService.codeExchangePromises.get(code);
+    if (!exchangePromise) {
+      console.log(`[OAuth Deduplication] First invocation for code ${code.substring(0, 10)}... Initiating exact single execution of exchangeCodeForSession.`);
+      exchangePromise = (async () => {
+        try {
+          console.log('[Forensics] Calling createSSRClient for exchangeCodeForSession');
+          const client = this.createSSRClient(req, res);
+          console.log('[Forensics] Before client.auth.exchangeCodeForSession(code)');
+          const result = await client.auth.exchangeCodeForSession(code);
+          console.log('[Forensics] After client.auth.exchangeCodeForSession(code). Data:', JSON.stringify(result.data), 'Error:', JSON.stringify(result.error));
+          return result;
+        } catch (err: any) {
+          console.error('[Forensics] FATAL EXCEPTION during createSSRClient() or exchangeCodeForSession():');
+          console.error(err.stack || err);
+          throw err;
+        } finally {
+          AuthService.codeExchangePromises.delete(code);
+        }
+      })();
+      AuthService.codeExchangePromises.set(code, exchangePromise);
+    } else {
+      console.log(`[OAuth Deduplication] Concurrent exchange already in-flight for code ${code.substring(0, 10)}... Waiting for initial execution result without calling Supabase again.`);
+    }
+
     let data, error;
     try {
-      console.log('[Forensics] Calling createSSRClient for exchangeCodeForSession');
-      const client = this.createSSRClient(req, res);
-      console.log('[Forensics] Before client.auth.exchangeCodeForSession(code)');
-      const result = await client.auth.exchangeCodeForSession(code);
-      console.log('[Forensics] After client.auth.exchangeCodeForSession(code). Data:', JSON.stringify(result.data), 'Error:', JSON.stringify(result.error));
-      data = result.data;
-      error = result.error;
+      const resData = await exchangePromise;
+      data = resData.data;
+      error = resData.error;
     } catch (err: any) {
-      console.error('[Forensics] FATAL EXCEPTION during createSSRClient() or exchangeCodeForSession():');
-      console.error(err.stack || err);
       throw err;
     }
 
@@ -346,7 +379,12 @@ export class AuthService {
       });
 
       console.log(`[AuthService] 4.9. Returning user and session data.`);
-      return { user: data.user, session: data.session };
+      const successfulResult = { user: data.user, session: data.session };
+      AuthService.completedExchanges.set(code, { timestamp: Date.now(), result: successfulResult });
+      AuthService.completedExchanges.forEach((val, key) => {
+        if (Date.now() - val.timestamp > 60000) AuthService.completedExchanges.delete(key);
+      });
+      return successfulResult;
     } catch (dbError: any) {
       console.error('[AuthService] CRITICAL ERROR during OAuth user sync:', dbError.message || dbError);
       if (dbError.stack) console.error('[AuthService] Stack trace:', dbError.stack);

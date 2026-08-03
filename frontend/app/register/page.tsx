@@ -43,6 +43,8 @@ function RegisterForm() {
   };
 
   const handleGoogleLogin = () => {
+    if (loading) return;
+    setLoading(true);
     const baseUrl = '/api/v1';
     
     // Ensure 'next' is an absolute URL to return to the correct Deploy Preview or localhost port
@@ -160,8 +162,9 @@ function RegisterForm() {
             
             <button 
               onClick={handleGoogleLogin}
+              disabled={loading}
               type="button"
-              className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 border transition-all"
+              className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 border transition-all disabled:opacity-50"
               style={{ borderColor: "rgba(255,255,255,0.1)", color: "white", background: "rgba(255,255,255,0.02)" }}
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
