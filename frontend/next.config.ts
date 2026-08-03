@@ -9,12 +9,17 @@ if (process.env.NODE_ENV === 'production' && (backendUrl.includes('localhost') |
 
 const nextConfig: NextConfig = {
   async rewrites() {
-    return [
-      {
-        source: '/api/v1/:path*',
-        destination: `${backendUrl}/:path*`,
-      },
-    ];
+    // In production on Netlify, let native edge [[redirects]] from netlify.toml handle /api/v1/* reverse proxying.
+    // Next.js serverless functions (rewrites) fail to preserve Set-Cookie headers on 302 HTTP redirects (such as Google OAuth endpoints).
+    if (process.env.NODE_ENV === 'development') {
+      return [
+        {
+          source: '/api/v1/:path*',
+          destination: `${backendUrl}/:path*`,
+        },
+      ];
+    }
+    return [];
   },
   images: {
     remotePatterns: [
