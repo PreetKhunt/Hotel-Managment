@@ -44,14 +44,26 @@ export class UserRepository implements IUserRepository {
 
   async create(user: User): Promise<User> {
     // Note: Most users are created by the Supabase auth trigger. 
-    // This method is for programmatic creation if needed.
+    // This method guarantees atomic idempotency via ON CONFLICT (id) DO UPDATE if a race condition with the DB trigger occurs.
     const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'User';
     const result = await this.pool.query(
       `INSERT INTO users (
         id, email, name, role_id, status, first_name, last_name, phone, avatar_url, date_of_birth, gender, address, city, state, country, postal_code
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-      ) RETURNING *`,
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        email = EXCLUDED.email,
+        name = COALESCE(NULLIF(EXCLUDED.name, ''), users.name),
+        role_id = COALESCE(users.role_id, EXCLUDED.role_id),
+        status = CASE WHEN users.deleted_at IS NOT NULL THEN EXCLUDED.status ELSE users.status END,
+        first_name = COALESCE(NULLIF(EXCLUDED.first_name, ''), users.first_name),
+        last_name = COALESCE(NULLIF(EXCLUDED.last_name, ''), users.last_name),
+        avatar_url = COALESCE(NULLIF(EXCLUDED.avatar_url, ''), users.avatar_url),
+        last_login_at = NOW(),
+        updated_at = NOW(),
+        deleted_at = NULL
+      RETURNING *`,
       [
         user.id, user.email, fullName, user.roleId, user.status, user.firstName, user.lastName, user.phone,
         user.avatarUrl, user.dateOfBirth, user.gender, user.address, user.city, user.state, user.country, user.postalCode

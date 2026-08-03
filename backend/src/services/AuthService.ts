@@ -285,12 +285,29 @@ export class AuthService {
         throw findErr;
       }
       
-      if (!user) {
-        console.log(`[AuthService] 4.4. User ${data.user.id} not found in public.users. Creating automatically from OAuth data...`);
-        const nameParts = (data.user.user_metadata?.full_name || '').split(' ');
-        const firstName = nameParts[0] || 'User';
-        const lastName = nameParts.slice(1).join(' ') || '';
+      const nameParts = (data.user.user_metadata?.full_name || '').split(' ');
+      const firstName = nameParts[0] || 'User';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      const avatarUrl = data.user.user_metadata?.avatar_url || undefined;
+
+      if (user) {
+        console.log(`[AuthService] 4.4. User ${data.user.id} exists in local database. Performing profile update only...`);
+        await this.validateUserStatus(data.user.id);
         
+        const updatePayload: Partial<User> = { lastLoginAt: new Date() };
+        if (!user.firstName && firstName !== 'User') updatePayload.firstName = firstName;
+        if (!user.lastName && lastName !== '') updatePayload.lastName = lastName;
+        if (!user.avatarUrl && avatarUrl) updatePayload.avatarUrl = avatarUrl;
+        
+        try {
+          await this.userRepo.update(data.user.id, updatePayload);
+          console.log(`[AuthService] 4.5. Existing user profile updated successfully.`);
+        } catch (updateErr: any) {
+          console.error('[AuthService] ERROR updating existing user profile:', updateErr.message || updateErr);
+          throw updateErr;
+        }
+      } else {
+        console.log(`[AuthService] 4.4. User ${data.user.id} not found locally. Performing idempotent INSERT using Supabase Auth UUID as Primary Key...`);
         console.log(`[AuthService] 4.5. Dynamically fetching Guest role ID using service-role client...`);
         const { data: roleData, error: roleError } = await this.supabase.from('roles').select('id').eq('name', 'Guest').single();
         if (roleError) {
@@ -298,7 +315,7 @@ export class AuthService {
         }
         const roleId = roleData?.id || null;
 
-        console.log(`[AuthService] 4.6. Inserting user into public.users...`);
+        console.log(`[AuthService] 4.6. Inserting new user record into public.users...`);
         try {
           user = await this.userRepo.create({
             id: data.user.id,
@@ -307,26 +324,15 @@ export class AuthService {
             status: UserStatus.ACTIVE,
             firstName,
             lastName,
+            avatarUrl: avatarUrl || null,
           } as User);
+          console.log(`[AuthService] 4.7. Successfully created user ${data.user.id} in public.users.`);
         } catch (createErr: any) {
           console.error('[AuthService] ERROR inserting user into public.users:');
           console.error(`Message: ${createErr.message}`);
           console.error(`Postgres Code: ${createErr.code || 'N/A'}`);
           console.error(`Stack: ${createErr.stack}`);
           throw createErr;
-        }
-        console.log(`[AuthService] 4.7. Successfully created user ${data.user.id} in public.users.`);
-      } else {
-        console.log(`[AuthService] 4.4. User ${data.user.id} found in public.users. Updating lastLoginAt...`);
-        await this.validateUserStatus(data.user.id);
-        try {
-          await this.userRepo.update(data.user.id, { lastLoginAt: new Date() });
-        } catch (updateErr: any) {
-          console.error('[AuthService] ERROR updating user lastLoginAt:');
-          console.error(`Message: ${updateErr.message}`);
-          console.error(`Postgres Code: ${updateErr.code || 'N/A'}`);
-          console.error(`Stack: ${updateErr.stack}`);
-          throw updateErr;
         }
       }
 

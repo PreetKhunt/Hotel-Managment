@@ -4,8 +4,6 @@ import { User, UserStatus } from '../domain/entities/User';
 import { AppError, ErrorCode } from '../utils/AppError';
 import { supabase } from '../config/supabase';
 
-const { v4: uuidv4 }: { v4: () => string } = require('uuid');
-
 export class UserService {
   constructor(
     private readonly userRepo: IUserRepository,
@@ -142,12 +140,10 @@ export class UserService {
       },
     });
 
-    let newUserId: string;
     if (authError || !authData.user) {
-      newUserId = uuidv4();
-    } else {
-      newUserId = authData.user.id;
+      throw new AppError(`Failed to create user in identity service: ${authError?.message || 'Unknown authentication error'}`, 400, ErrorCode.VALIDATION_ERROR);
     }
+    const newUserId = authData.user.id;
 
     await new Promise((res) => setTimeout(res, 200));
     let dbUser = await this.userRepo.findById(newUserId);
