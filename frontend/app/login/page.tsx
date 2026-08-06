@@ -43,13 +43,14 @@ function LoginForm() {
   const handleGoogleLogin = () => {
     if (loading) return;
     setLoading(true);
-    // Standard OAuth flow: Redirect directly to backend origin so PKCE verifier cookie stays bound to Render domain
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://hotel-management-backend-s0s0.onrender.com/api/v1';
+    // Standard OAuth flow: Redirect to backend which will redirect to Supabase/Google
+    const baseUrl = '/api/v1';
     
     // Ensure 'next' is an absolute URL to return to the correct Deploy Preview or localhost port
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const absoluteNext = next.startsWith('http') ? next : `${origin}${next}`;
     
+    console.log('[Auth Debug] Redirecting to Google OAuth:', `${baseUrl}/auth/google?next=${encodeURIComponent(absoluteNext)}`);
     window.location.href = `${baseUrl}/auth/google?next=${encodeURIComponent(absoluteNext)}`;
   };
 

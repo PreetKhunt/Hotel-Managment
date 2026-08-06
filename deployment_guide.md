@@ -20,7 +20,7 @@ Follow this step-by-step guide to deploy your completed Hotel Management System 
    RAZORPAY_KEY_ID=your_razorpay_key
    RAZORPAY_KEY_SECRET=your_razorpay_secret
    CORS_ORIGIN=https://hotel-managment-alpha.vercel.app
-   GOOGLE_CALLBACK_URL=https://hotel-management-backend-s0s0.onrender.com/api/v1/auth/google/callback
+   GOOGLE_CALLBACK_URL=https://hotel-managment-alpha.vercel.app/api/v1/auth/google/callback
    ```
 6. Render will automatically build and deploy the backend.
 7. Under the settings, note your assigned domain: `https://hotel-management-backend-s0s0.onrender.com`.
@@ -64,7 +64,7 @@ Your authentication system needs to know about your new Vercel URL to allow secu
 1. Go to your [Supabase Dashboard](https://supabase.com/dashboard).
 2. Navigate to **Authentication** > **URL Configuration**.
 3. Under **Site URL**, paste your Vercel URL (`https://hotel-managment-alpha.vercel.app`).
-4. Under **Redirect URLs**, click **Add URL** and add your backend Render callback URL: `https://hotel-management-backend-s0s0.onrender.com/api/v1/auth/google/callback`.
+4. Under **Redirect URLs**, click **Add URL** and add your Vercel frontend callback URL: `https://hotel-managment-alpha.vercel.app/api/v1/auth/google/callback`.
 5. Ensure your Google OAuth Client ID and Secret in Supabase are configured properly.
 
 ---

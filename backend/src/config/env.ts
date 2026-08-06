@@ -29,7 +29,7 @@ if (processEnv.NODE_ENV === 'production') {
     processEnv.CORS_ORIGIN = 'https://hotel-managment-alpha.vercel.app';
   }
   if (!processEnv.GOOGLE_CALLBACK_URL || processEnv.GOOGLE_CALLBACK_URL.includes('localhost') || processEnv.GOOGLE_CALLBACK_URL.includes('127.0.0.1')) {
-    processEnv.GOOGLE_CALLBACK_URL = 'https://hotel-management-backend-s0s0.onrender.com/api/v1/auth/google/callback';
+    processEnv.GOOGLE_CALLBACK_URL = 'https://hotel-managment-alpha.vercel.app/api/v1/auth/google/callback';
   }
 }
 

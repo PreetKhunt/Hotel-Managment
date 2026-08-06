@@ -15,7 +15,20 @@ export class AuthController {
         path: '/',
         maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
       };
+      console.log(`\n========== [COOKIE FORENSICS] ==========`);
+      console.log(`- Token exists?`, !!sessionToken);
+      console.log(`- Token length:`, sessionToken.length);
+      console.log(`- Cookie options:`, JSON.stringify(cookieOptions));
+      console.log(`- Response headers BEFORE res.cookie():`, res.getHeaders());
+      
       res.cookie('hh_session', sessionToken, cookieOptions);
+      
+      console.log(`- Response headers AFTER res.cookie():`, res.getHeaders());
+      console.log(`==========================================\n`);
+    } else {
+      console.log(`\n========== [COOKIE FORENSICS] ==========`);
+      console.log(`WARNING: setSessionCookie called but sessionToken is missing/undefined!`);
+      console.log(`==========================================\n`);
     }
   }
 
@@ -176,6 +189,9 @@ export class AuthController {
         maxAge: 10 * 60 * 1000, // 10 minutes
       });
       
+      console.log(`[OAuth] Generating Google OAuth URL...`);
+      console.log(`[OAuth] redirectTo value configured EXACTLY as: ${redirectUrl}`);
+
       const reqInfo = {
         ip: req.ip || req.connection.remoteAddress || 'unknown',
         userAgent: req.headers['user-agent'] || 'unknown',
@@ -183,6 +199,10 @@ export class AuthController {
       };
 
       const url = await this.authService.getOAuthUrl('google', redirectUrl, reqInfo, req, res);
+      
+      console.log(`[OAuth] Generated OAuth URL: ${url}`);
+      console.log(`[OAuth] PKCE cookie should now be set on the response (handled by @supabase/ssr setAll)`);
+      console.log(`[OAuth] Cookie sent to browser`);
       res.redirect(url);
     } catch (error) {
       next(error);
@@ -190,18 +210,33 @@ export class AuthController {
   };
 
   googleCallback = async (req: Request, res: Response, next: NextFunction) => {
+    console.log('\n================ OAUTH CALLBACK START ================');
+    console.log('[OAuth Callback] 1. Callback received. URL:', req.originalUrl);
     try {
       const code = req.query.code as string;
-      const nextUrl = req.cookies.oauth_next || '/';
       
+      console.log(`[OAuth Callback] Cookies received:`, JSON.stringify(req.cookies, null, 2));
+      const pkceCookieName = Object.keys(req.cookies).find(k => k.includes('sb-') && k.includes('-auth-token-code-verifier'));
+      if (pkceCookieName) {
+         console.log(`[OAuth Callback] PKCE cookie found: ${pkceCookieName}`);
+      } else {
+         console.log(`[OAuth Callback] WARNING: No PKCE cookie found in req.cookies!`);
+      }
+
+      // Read nextUrl from the secure cookie we set before redirecting
+      const nextUrl = req.cookies.oauth_next || '/';
       res.clearCookie('oauth_next', {
         httpOnly: true,
         secure: true,
         sameSite: 'lax',
         path: '/',
       });
+      
+      console.log(`[OAuth Callback] 2. Authorization code received: ${!!code ? 'YES (length: ' + code.length + ')' : 'NO'}`);
+      console.log(`[OAuth Callback] 3. Target next URL: ${nextUrl}`);
 
       if (!code) {
+        console.error('[OAuth Callback] ERROR: Missing authorization code');
         throw new AppError('Missing authorization code', 400, ErrorCode.VALIDATION_ERROR);
       }
 
@@ -211,15 +246,50 @@ export class AuthController {
         requestId: (req as any).id || 'unknown',
       };
 
-      const { session } = await this.authService.exchangeCodeForSession(code, reqInfo, req, res);
-
-      if (session) {
-        this.setSessionCookie(res, session.access_token);
+      console.log('[OAuth Callback] 4. Starting exchangeCodeForSession...');
+      
+      let sessionData;
+      try {
+        sessionData = await this.authService.exchangeCodeForSession(code, reqInfo, req, res);
+      } catch (exchangeError: any) {
+        console.error('[OAuth Callback] ERROR during exchangeCodeForSession:');
+        console.error(exchangeError.stack || exchangeError);
+        throw exchangeError; // Rethrow to outer catch
       }
 
-      const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
-      res.redirect(finalRedirectUrl);
-    } catch (error) {
+      const { session } = sessionData;
+      console.log(`[OAuth Callback] 5. exchangeCodeForSession finished successfully. Target nextUrl: ${nextUrl}`);
+      if (session) {
+          console.log('[OAuth Callback] 6. Valid session returned. Creating cookie...');
+          try {
+            this.setSessionCookie(res, session.access_token);
+            console.log(`[OAuth] JWT created`);
+            console.log(`[OAuth] Session created`);
+            console.log(`[OAuth] Redirecting to frontend`);
+            const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
+            res.redirect(finalRedirectUrl);
+            return; // Prevent duplicate redirect execution
+          } catch (cookieErr: any) {
+            console.error('[OAuth Callback] ERROR creating session cookie:', cookieErr.message);
+            console.error(cookieErr.stack);
+            throw cookieErr;
+          }
+        } else {
+          console.warn('[OAuth Callback] WARNING: No session returned from code exchange.');
+        }
+  
+        const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
+        console.log(`[OAuth Callback] 8. Redirecting to frontend (No Session): ${finalRedirectUrl}`);
+        console.log('================ OAUTH CALLBACK END ================\n');
+        res.redirect(finalRedirectUrl);
+    } catch (error: any) {
+      console.error('\n================ OAUTH CALLBACK FATAL ERROR ================');
+      console.error('Error Message:', error.message || error);
+      console.error('Stack Trace:');
+      console.error(error.stack);
+      console.error('============================================================\n');
+      
+      // Ensure the error reaches the Express global error handler
       next(error);
     }
   };
