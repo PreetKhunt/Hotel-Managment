@@ -23,18 +23,14 @@ export class AuthService {
   private createSSRClient(req?: any, res?: any) {
     const { createServerClient } = require('@supabase/ssr');
     
-    console.log('[Forensics] Before createSSRClient');
     // Official production @supabase/ssr implementation for Express
-    const client = createServerClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+    return createServerClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
         cookies: req && res ? {
           getAll() {
-            console.log('[Forensics] getAll() called. req.cookies:', JSON.stringify(req.cookies || {}));
             return Object.keys(req.cookies || {}).map((name) => ({ name, value: req.cookies[name] }));
           },
           setAll(cookiesToSet: any[]) {
-            console.log('[Forensics] setAll() called with cookies:', JSON.stringify(cookiesToSet));
             cookiesToSet.forEach(({ name, value, options }) => {
-              console.log(`[Forensics] Setting cookie: ${name} with options:`, JSON.stringify(options));
               res.cookie(name, value, options);
             });
           }
@@ -43,8 +39,6 @@ export class AuthService {
         setAll() {}
       }
     });
-    console.log('[Forensics] After createSSRClient');
-    return client;
   }
 
   async validateUserStatus(userId: string): Promise<void> {
@@ -263,16 +257,8 @@ export class AuthService {
       console.log(`[OAuth Deduplication] First invocation for code ${code.substring(0, 10)}... Initiating exact single execution of exchangeCodeForSession.`);
       exchangePromise = (async () => {
         try {
-          console.log('[Forensics] Calling createSSRClient for exchangeCodeForSession');
           const client = this.createSSRClient(req, res);
-          console.log('[Forensics] Before client.auth.exchangeCodeForSession(code)');
-          const result = await client.auth.exchangeCodeForSession(code);
-          console.log('[Forensics] After client.auth.exchangeCodeForSession(code). Data:', JSON.stringify(result.data), 'Error:', JSON.stringify(result.error));
-          return result;
-        } catch (err: any) {
-          console.error('[Forensics] FATAL EXCEPTION during createSSRClient() or exchangeCodeForSession():');
-          console.error(err.stack || err);
-          throw err;
+          return await client.auth.exchangeCodeForSession(code);
         } finally {
           AuthService.codeExchangePromises.delete(code);
         }
