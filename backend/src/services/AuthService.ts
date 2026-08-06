@@ -10,7 +10,7 @@ import { env } from '../config/env';
 export class AuthService {
   // Architectural Single-Flight & Deduplication Registry for OAuth authorization codes
   // Guarantees that exchangeCodeForSession(code) is executed EXACTLY ONCE per authorization code,
-  // preventing double-consumption errors when Netlify CDN or browsers make duplicate callback requests.
+  // preventing double-consumption errors when Vercel CDN or browsers make duplicate callback requests.
   private static readonly codeExchangePromises = new Map<string, Promise<{ data: any; error: any }>>();
   private static readonly completedExchanges = new Map<string, { timestamp: number; result: any }>();
 

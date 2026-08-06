@@ -16,7 +16,7 @@ import { globalLimiter } from './middleware/rateLimiter';
 
 const app: Express = express();
 
-// Trust reverse proxy for Render/Netlify (required for rate limiting)
+// Trust reverse proxy for Render/Vercel (required for rate limiting)
 app.set('trust proxy', 1);
 
 // Swagger Documentation Route
@@ -36,8 +36,7 @@ app.use(
         env.CORS_ORIGIN,
         'http://localhost:3000',
         'http://localhost:3001',
-        'https://hotel-managments.netlify.app',
-        'https://vermillion-pothos-b232ea.netlify.app',
+        'https://hotel-managment-alpha.vercel.app',
         'https://hotel-management-backend-s0s0.onrender.com'
       ];
       
@@ -46,8 +45,8 @@ app.use(
         return callback(null, true);
       }
       
-      // Allow Netlify Deploy Previews dynamically
-      if (origin.endsWith('--hotel-managments.netlify.app') || origin.endsWith('--vermillion-pothos-b232ea.netlify.app')) {
+      // Allow Vercel Deploy Previews dynamically
+      if (origin.endsWith('.vercel.app')) {
         return callback(null, true);
       }
       

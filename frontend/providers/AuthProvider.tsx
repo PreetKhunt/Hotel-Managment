@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { User, AuthContextType } from '@/types/auth';
@@ -11,11 +11,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
   
   // Strict initial states: loading=true, user=null, authenticated=false
   const [user, _setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    if (isLoggingOut && pathname === '/') {
+      setIsLoggingOut(false);
+    }
+  }, [pathname, isLoggingOut]);
 
   const setUser = (newUser: User | null) => {
     console.log(`\n========== [Auth Audit] setUser Triggered ==========`);
@@ -88,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log(`\n========== [Auth Audit] logout() invoked ==========`);
     console.trace(`[Auth Audit] logout() Stack Trace`);
     console.log(`====================================================\n`);
+    setIsLoggingOut(true);
     try {
       await api.post('/auth/logout');
       toast.success("Logged out successfully.");
@@ -122,6 +131,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       router.replace('/');
+      setTimeout(() => {
+        setIsLoggingOut(false);
+      }, 1500);
     }
   };
 
@@ -146,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   console.log(`[Auth Audit] AuthProvider render: loading=${isLoading}, isAuthenticated=${!!user}, user=`, user);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, isLoggingOut, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

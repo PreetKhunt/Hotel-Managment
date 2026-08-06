@@ -1,6 +1,6 @@
 # Production Deployment Guide
 
-Follow this step-by-step guide to deploy your completed Hotel Management System to production using Netlify (Frontend) and Render (Backend).
+Follow this step-by-step guide to deploy your completed Hotel Management System to production using Vercel (Frontend) and Render (Backend).
 
 ## Phase 1: Deploy Backend to Render
 
@@ -19,7 +19,8 @@ Follow this step-by-step guide to deploy your completed Hotel Management System 
    SUPABASE_JWT_SECRET=your_jwt_secret
    RAZORPAY_KEY_ID=your_razorpay_key
    RAZORPAY_KEY_SECRET=your_razorpay_secret
-   CORS_ORIGIN=https://vermillion-pothos-b232ea.netlify.app
+   CORS_ORIGIN=https://hotel-managment-alpha.vercel.app
+   GOOGLE_CALLBACK_URL=https://hotel-management-backend-s0s0.onrender.com/api/v1/auth/google/callback
    ```
 6. Render will automatically build and deploy the backend.
 7. Under the settings, note your assigned domain: `https://hotel-management-backend-s0s0.onrender.com`.
@@ -27,19 +28,19 @@ Follow this step-by-step guide to deploy your completed Hotel Management System 
 
 ---
 
-## Phase 2: Deploy Frontend to Netlify
+## Phase 2: Deploy Frontend to Vercel
 
-1. Go to [Netlify.com](https://www.netlify.com/) and log in with GitHub.
-2. Click **Add new site** > **Import an existing project** and pick `PreetKhunt/Hotel-Managment`.
-3. Netlify will detect `netlify.toml` automatically.
-4. Set the **Base directory** to `frontend` or rely on root `netlify.toml`.
+1. Go to [Vercel.com](https://vercel.com/) and log in with GitHub.
+2. Click **Add New** > **Project** and import `PreetKhunt/Hotel-Managment`.
+3. Vercel will detect `vercel.json` automatically.
+4. Set the **Root Directory** to `frontend` (or rely on root `vercel.json`).
 5. Under **Environment Variables**, add:
    ```env
    BACKEND_API_URL=https://hotel-management-backend-s0s0.onrender.com/api/v1
    NEXT_PUBLIC_API_URL=https://hotel-management-backend-s0s0.onrender.com/api/v1
    NEXT_PUBLIC_RAZORPAY_KEY_ID=your_razorpay_key
    ```
-6. Click **Deploy Site**. Netlify will build and assign you a production URL.
+6. Click **Deploy**. Vercel will build and assign you a production URL (`https://hotel-managment-alpha.vercel.app`).
 
 ---
 
@@ -50,7 +51,7 @@ Now that you have both URLs, verify that the backend knows where the frontend li
 1. Go back to your **Render** project dashboard.
 2. Under **Environment**, confirm or add:
    ```env
-   CORS_ORIGIN=https://vermillion-pothos-b232ea.netlify.app
+   CORS_ORIGIN=https://hotel-managment-alpha.vercel.app
    ```
 3. Render will automatically trigger a redeployment when environment variables change. Wait for it to complete.
 
@@ -58,12 +59,12 @@ Now that you have both URLs, verify that the backend knows where the frontend li
 
 ## Phase 4: Supabase Configuration
 
-Your authentication system needs to know about your new Netlify URL to allow secure logins.
+Your authentication system needs to know about your new Vercel URL to allow secure logins.
 
 1. Go to your [Supabase Dashboard](https://supabase.com/dashboard).
 2. Navigate to **Authentication** > **URL Configuration**.
-3. Under **Site URL**, paste your Netlify URL (`https://vermillion-pothos-b232ea.netlify.app`).
-4. Under **Redirect URLs**, click **Add URL** and add your Netlify callback URL: `https://vermillion-pothos-b232ea.netlify.app/api/v1/auth/google/callback`.
+3. Under **Site URL**, paste your Vercel URL (`https://hotel-managment-alpha.vercel.app`).
+4. Under **Redirect URLs**, click **Add URL** and add your backend Render callback URL: `https://hotel-management-backend-s0s0.onrender.com/api/v1/auth/google/callback`.
 5. Ensure your Google OAuth Client ID and Secret in Supabase are configured properly.
 
 ---
@@ -81,7 +82,7 @@ Your payment gateway needs to send webhooks to your new Render backend URL.
 
 ## Phase 6: Production Verification
 
-Once the above is done, visit your Vercel URL and verify the following modules:
+Once the above is done, visit your Vercel URL (`https://hotel-managment-alpha.vercel.app`) and verify the following modules:
 - [ ] Home Page & Room listings load correctly.
 - [ ] You can register and log in via Email or Google.
 - [ ] You can complete a room booking through Razorpay.

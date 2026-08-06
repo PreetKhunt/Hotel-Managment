@@ -6,12 +6,12 @@ import { useAuth } from '@/providers/AuthProvider';
 import { Loader2 } from 'lucide-react';
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isLoggingOut } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !isLoggingOut) {
       console.log("[AdminGuard] Checking authorization. User object:", user);
       
       if (!user) {
@@ -25,9 +25,9 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         setIsAuthorized(true);
       }
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, isLoggingOut, router]);
 
-  if (isLoading || !isAuthorized) {
+  if (isLoading || isLoggingOut || !isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
