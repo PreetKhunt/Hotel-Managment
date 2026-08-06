@@ -34,8 +34,18 @@ export class AuthService {
           setAll(cookiesToSet: any[]) {
             console.log('[Forensics] setAll() called with cookies:', JSON.stringify(cookiesToSet));
             cookiesToSet.forEach(({ name, value, options }) => {
-              console.log(`[Forensics] Setting cookie: ${name} with options:`, JSON.stringify(options));
-              res.cookie(name, value, options);
+              const cookieOptions = { ...options };
+              // Fix: @supabase/ssr passes maxAge in seconds (e.g. 600 for PKCE verifier),
+              // but Express res.cookie requires maxAge in milliseconds.
+              if (typeof cookieOptions.maxAge === 'number') {
+                cookieOptions.maxAge = cookieOptions.maxAge * 1000;
+              }
+              if (env.NODE_ENV === 'production') {
+                cookieOptions.secure = true;
+                cookieOptions.sameSite = cookieOptions.sameSite || 'lax';
+              }
+              console.log(`[Forensics] Setting cookie: ${name} with options:`, JSON.stringify(cookieOptions));
+              res.cookie(name, value, cookieOptions);
             });
           }
         } : {
