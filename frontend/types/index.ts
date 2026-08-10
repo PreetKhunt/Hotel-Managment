@@ -1,6 +1,6 @@
 // ─── Room Types ───────────────────────────────────────────────────────────────
 export type RoomType = "standard" | "deluxe" | "suite" | "presidential";
-export type RoomStatus = "available" | "occupied" | "maintenance" | "reserved";
+export type RoomStatus = "available" | "occupied" | "maintenance" | "reserved" | "clean" | "dirty" | "under cleaning";
 
 export interface RoomAmenity {
   icon: string;

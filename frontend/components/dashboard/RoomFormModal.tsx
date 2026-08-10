@@ -18,7 +18,7 @@ interface RoomFormModalProps {
 const roomSchema = z.object({
   name: z.string().min(2, 'Room name must be at least 2 characters'),
   type: z.enum(['standard', 'deluxe', 'suite', 'presidential'] as const),
-  status: z.enum(['available', 'occupied', 'maintenance', 'reserved'] as const),
+  status: z.enum(['available', 'occupied', 'maintenance', 'reserved', 'clean', 'dirty', 'under cleaning'] as const),
   pricePerNight: z.number().positive('Price must be greater than zero'),
   maxGuests: z.number().int().min(1, 'Capacity must be at least 1 guest'),
   size: z.number().positive('Room size (sq ft) must be greater than zero'),
@@ -102,7 +102,9 @@ const RoomFormModal: FC<RoomFormModalProps> = ({ room, isOpen, onClose, onSucces
         if (issue.path[0]) fieldErrors[issue.path[0].toString()] = issue.message;
       });
       setErrors(fieldErrors);
-      toast.error('Please fix validation errors in the form.');
+      
+      const firstError = Object.values(fieldErrors)[0];
+      toast.error(firstError || 'Please fix validation errors in the form.');
       return;
     }
 
@@ -293,6 +295,9 @@ const RoomFormModal: FC<RoomFormModalProps> = ({ room, isOpen, onClose, onSucces
                   <option value="occupied">Occupied (Guest Checked-In)</option>
                   <option value="maintenance">Under Maintenance</option>
                   <option value="reserved">Reserved / Pending Check-In</option>
+                  <option value="clean">Clean (Unverified)</option>
+                  <option value="dirty">Requires Cleaning (Dirty)</option>
+                  <option value="under cleaning">Currently Cleaning</option>
                 </select>
               </div>
             </div>
