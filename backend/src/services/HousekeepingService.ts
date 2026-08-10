@@ -31,6 +31,15 @@ export class HousekeepingService {
       }
       const roomNumber = roomCheck.rows[0].name || dto.room_id.substring(0, 8);
 
+      // 1.5 Prevent duplicate tasks
+      const activeTaskCheck = await client.query(
+        `SELECT id FROM housekeeping_tasks WHERE room_id = $1 AND status IN ('Pending', 'Accepted', 'In Progress', 'Completed') AND deleted_at IS NULL`,
+        [dto.room_id]
+      );
+      if (activeTaskCheck.rows.length > 0) {
+        throw new AppError('This room already has an active cleaning task.', 409, ErrorCode.CONFLICT);
+      }
+
       // 2. Create the task
       const task = await this.housekeepingRepo.createTask(dto, client);
 

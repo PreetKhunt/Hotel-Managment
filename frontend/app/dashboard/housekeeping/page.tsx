@@ -7,6 +7,7 @@ import { useRooms } from '@/hooks/useRooms';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { Brush, CheckCircle, Clock, AlertTriangle, Plus, X, Loader2, Sparkles, User, Filter } from 'lucide-react';
 import { HousekeepingStatus, TaskPriority, Room } from '@/types';
+import toast from 'react-hot-toast';
 
 export default function HousekeepingDashboard() {
   const [activeTab, setActiveTab] = useState<'tasks' | 'rooms' | 'history'>('tasks');
@@ -18,6 +19,7 @@ export default function HousekeepingDashboard() {
   const [priority, setPriority] = useState<TaskPriority>('Medium');
   const [assignedTo, setAssignedTo] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [quickCleanRoomId, setQuickCleanRoomId] = useState('');
 
   const { data: tasks = [], isLoading: tasksLoading } = useHousekeepingTasks();
   const { data: history = { data: [], total: 0 }, isLoading: historyLoading } = useHousekeepingHistory();
@@ -61,6 +63,35 @@ export default function HousekeepingDashboard() {
         setIsModalOpen(false);
         setSelectedRoomId('');
         setRemarks('');
+      },
+      onError: (error: any) => {
+        if (error.response?.status === 409) {
+          toast.error(error.response.data.message || 'This room already has an active cleaning task.');
+        } else {
+          toast.error('Failed to assign task');
+        }
+      }
+    });
+  };
+
+  const handleQuickClean = () => {
+    if (!quickCleanRoomId) return;
+    createMutation.mutate({
+      room_id: quickCleanRoomId,
+      assigned_to: null,
+      priority: 'Medium',
+      remarks: 'Full Room Cleaning (Quick Assign)',
+    }, {
+      onSuccess: () => {
+        setQuickCleanRoomId('');
+        toast.success('Room added to cleaning queue');
+      },
+      onError: (error: any) => {
+        if (error.response?.status === 409) {
+          toast.error(error.response.data.message || 'This room already has an active cleaning task.');
+        } else {
+          toast.error('Failed to add room to cleaning queue');
+        }
       }
     });
   };
@@ -111,6 +142,65 @@ export default function HousekeepingDashboard() {
           <Plus size={16} strokeWidth={2.5} /> Assign Cleaning Task
         </motion.button>
       </div>
+
+      {/* Full Room Cleaning Quick Action */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{
+          background: 'linear-gradient(145deg, #111827, #0A0F1E)',
+          border: '1px solid rgba(201,168,76,0.18)',
+          borderRadius: '12px',
+          padding: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.5rem',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+          flexWrap: 'wrap'
+        }}
+      >
+        <div style={{ flexShrink: 0 }}>
+          <h3 style={{ color: '#fff', fontSize: '1.1rem', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Brush size={18} color="#C9A84C" /> FULL ROOM CLEANING
+          </h3>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', margin: '0.2rem 0 0 0' }}>Add a room to the cleaning queue immediately.</p>
+        </div>
+        <div style={{ flexGrow: 1, display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <select
+            value={quickCleanRoomId}
+            onChange={(e) => setQuickCleanRoomId(e.target.value)}
+            style={{ flexGrow: 1, background: '#0F1528', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', padding: '0.6rem 1rem', fontSize: '0.85rem' }}
+          >
+            <option value="">-- Select Room --</option>
+            {rooms.map((r) => (
+              <option key={r.id} value={r.id}>{r.name} ({r.status})</option>
+            ))}
+          </select>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleQuickClean}
+            disabled={!quickCleanRoomId || createMutation.isPending}
+            style={{
+              background: quickCleanRoomId ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'rgba(255,255,255,0.1)',
+              color: quickCleanRoomId ? '#fff' : 'rgba(255,255,255,0.4)',
+              border: 'none',
+              padding: '0.6rem 1.25rem',
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              cursor: quickCleanRoomId ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: quickCleanRoomId ? '0 4px 15px rgba(59,130,246,0.3)' : 'none'
+            }}
+          >
+            {createMutation.isPending ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={16} strokeWidth={2.5} />}
+            Add to Cleaning
+          </motion.button>
+        </div>
+      </motion.div>
 
       {/* KPI Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
