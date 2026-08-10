@@ -15,7 +15,8 @@ export default function SpaDashboard() {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const endpoint = user?.role?.name === 'Admin' ? '/spa/all' : '/spa/my-bookings';
+  const isAdmin = user?.role?.name === 'Admin' || user?.role?.name === 'Super Admin';
+  const endpoint = isAdmin ? '/spa/all' : '/spa/my-bookings';
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ['spa', endpoint],
@@ -77,8 +78,8 @@ export default function SpaDashboard() {
   const filtered = bookings.filter((r: any) => {
     if (!search) return true;
     const s = search.toLowerCase();
-    const matchName = user?.role?.name === 'Admin' && r.users?.name?.toLowerCase().includes(s);
-    const matchEmail = user?.role?.name === 'Admin' && r.users?.email?.toLowerCase().includes(s);
+    const matchName = isAdmin && r.users?.name?.toLowerCase().includes(s);
+    const matchEmail = isAdmin && r.users?.email?.toLowerCase().includes(s);
     return matchName || matchEmail || r.date.includes(s) || r.treatment.toLowerCase().includes(s);
   });
 
@@ -90,7 +91,7 @@ export default function SpaDashboard() {
             Spa Bookings
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
-            {user?.role?.name === 'Admin' ? 'Manage all spa and wellness bookings.' : 'View your spa and wellness bookings.'}
+            {isAdmin ? 'Manage all spa and wellness bookings.' : 'View your spa and wellness bookings.'}
           </p>
         </div>
       </div>
@@ -112,7 +113,7 @@ export default function SpaDashboard() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={user?.role?.name === 'Admin' ? "Search by guest name, email, date or treatment..." : "Search by date or treatment..."}
+            placeholder={isAdmin ? "Search by guest name, email, date or treatment..." : "Search by date or treatment..."}
             style={{
               background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: '8px', color: '#ffffff', fontSize: '0.85rem', padding: '0.5rem 0.75rem 0.5rem 2.1rem',
@@ -127,7 +128,7 @@ export default function SpaDashboard() {
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '760px' }}>
             <thead>
               <tr style={{ background: 'rgba(255,255,255,0.03)', position: 'sticky', top: 0, zIndex: 1 }}>
-                {user?.role?.name === 'Admin' && <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Guest</th>}
+                {isAdmin && <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Guest</th>}
                 <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Treatment</th>
                 <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Date</th>
                 <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Time</th>
@@ -147,7 +148,7 @@ export default function SpaDashboard() {
               ) : (
                 filtered.map((r: any) => (
                   <tr key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    {user?.role?.name === 'Admin' && (
+                    {isAdmin && (
                       <td style={{ padding: '0.85rem 1rem', color: '#fff', fontSize: '0.85rem' }}>
                         <div>{r.users?.name || 'Unknown User'}</div>
                         <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>{r.users?.email}</div>
@@ -172,10 +173,10 @@ export default function SpaDashboard() {
                       </div>
                     </td>
                     <td style={{ padding: '0.85rem 1rem', color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', maxWidth: '250px' }}>
-                      <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginBottom: user?.role?.name === 'Admin' && (r.status === 'pending' || r.status === 'confirmed') ? '8px' : '0' }}>
+                      <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginBottom: isAdmin && (r.status === 'pending' || r.status === 'confirmed') ? '8px' : '0' }}>
                         {r.special_requests || '-'}
                       </div>
-                      {user?.role?.name === 'Admin' && (
+                      {isAdmin && (
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                           {r.status === 'pending' && (
                             <button
