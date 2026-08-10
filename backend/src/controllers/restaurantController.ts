@@ -55,3 +55,42 @@ export const getAllReservations = async (_req: Request, res: Response) => {
     data,
   });
 };
+
+export const cancelRestaurantReservation = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { data: existingReservation, error: fetchError } = await supabase
+    .from('restaurant_reservations')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !existingReservation) {
+    throw new AppError('Dining reservation not found', 404, ErrorCode.NOT_FOUND);
+  }
+
+  if (existingReservation.status === 'cancelled') {
+    throw new AppError('Dining reservation is already cancelled', 400, ErrorCode.VALIDATION_ERROR);
+  }
+
+  if (existingReservation.status === 'completed') {
+    throw new AppError('Completed dining reservations cannot be cancelled', 400, ErrorCode.VALIDATION_ERROR);
+  }
+
+  const { data, error } = await supabase
+    .from('restaurant_reservations')
+    .update({ status: 'cancelled' })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new AppError(error.message, 500, ErrorCode.INTERNAL_SERVER_ERROR);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Dining reservation cancelled successfully',
+    data,
+  });
+};

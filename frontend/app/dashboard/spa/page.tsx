@@ -1,15 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { useAuth } from '@/providers/AuthProvider';
+import { toast } from 'react-hot-toast';
 import { CalendarDays, Clock, Sparkles, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function SpaDashboard() {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const endpoint = user?.role?.name === 'Admin' ? '/spa/all' : '/spa/my-bookings';
 
@@ -21,6 +24,30 @@ export default function SpaDashboard() {
     },
     enabled: !!user
   });
+
+  const cancelMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.patch(`/spa/${id}/cancel`);
+      return res.data;
+    },
+    onMutate: (id) => setCancellingId(id),
+    onSuccess: () => {
+      toast.success('Spa booking cancelled successfully');
+      queryClient.invalidateQueries({ queryKey: ['spa', endpoint] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Failed to cancel booking');
+    },
+    onSettled: () => {
+      setCancellingId(null);
+    }
+  });
+
+  const handleCancel = (id: string) => {
+    if (window.confirm('Cancel this spa booking?\nThis action will mark the booking as cancelled.')) {
+      cancelMutation.mutate(id);
+    }
+  };
 
   const filtered = bookings.filter((r: any) => {
     if (!search) return true;
@@ -80,6 +107,8 @@ export default function SpaDashboard() {
                 <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Date</th>
                 <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Time</th>
                 <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Requests</th>
+                <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Status</th>
+                {user?.role?.name === 'Admin' && <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -123,6 +152,32 @@ export default function SpaDashboard() {
                         {r.special_requests || '-'}
                       </div>
                     </td>
+                    <td style={{ padding: '0.85rem 1rem', fontSize: '0.8rem' }}>
+                      <span style={{
+                        padding: '0.25rem 0.6rem', borderRadius: '20px', fontWeight: 500,
+                        backgroundColor: r.status === 'confirmed' ? 'rgba(34,197,94,0.1)' : r.status === 'cancelled' ? 'rgba(239,68,68,0.1)' : r.status === 'completed' ? 'rgba(59,130,246,0.1)' : 'rgba(255,166,0,0.1)',
+                        color: r.status === 'confirmed' ? '#4ade80' : r.status === 'cancelled' ? '#f87171' : r.status === 'completed' ? '#60a5fa' : '#fbbf24'
+                      }}>
+                        {r.status || 'confirmed'}
+                      </span>
+                    </td>
+                    {user?.role?.name === 'Admin' && (
+                      <td style={{ padding: '0.85rem 1rem' }}>
+                        {(r.status === 'confirmed' || r.status === 'pending' || !r.status) && (
+                          <button
+                            onClick={() => handleCancel(r.id)}
+                            disabled={cancellingId === r.id}
+                            style={{
+                              background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)',
+                              padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600,
+                              cursor: cancellingId === r.id ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: cancellingId === r.id ? 0.6 : 1
+                            }}
+                          >
+                            {cancellingId === r.id ? 'Cancelling...' : 'Cancel'}
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
