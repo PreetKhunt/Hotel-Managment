@@ -133,7 +133,6 @@ export default function SpaDashboard() {
                 <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Time</th>
                 <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Requests</th>
                 <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Status</th>
-                {user?.role?.name === 'Admin' && <th style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.73rem', fontWeight: 600, textTransform: 'uppercase', padding: '0.75rem 1rem', textAlign: 'left' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -172,10 +171,42 @@ export default function SpaDashboard() {
                         {r.time}
                       </div>
                     </td>
-                    <td style={{ padding: '0.85rem 1rem', color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', maxWidth: '200px' }}>
-                      <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '0.85rem 1rem', color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', maxWidth: '250px' }}>
+                      <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginBottom: user?.role?.name === 'Admin' && (r.status === 'pending' || r.status === 'confirmed') ? '8px' : '0' }}>
                         {r.special_requests || '-'}
                       </div>
+                      {user?.role?.name === 'Admin' && (
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                          {r.status === 'pending' && (
+                            <button
+                              onClick={() => handleConfirm(r.id)}
+                              disabled={confirmingId === r.id}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: '4px',
+                                background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)',
+                                padding: '0.3rem 0.6rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600,
+                                cursor: confirmingId === r.id ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: confirmingId === r.id ? 0.6 : 1
+                              }}
+                            >
+                              {confirmingId === r.id ? '⟳ Approving...' : '✓ Approve'}
+                            </button>
+                          )}
+                          {(r.status === 'confirmed' || r.status === 'pending' || !r.status) && (
+                            <button
+                              onClick={() => handleCancel(r.id)}
+                              disabled={cancellingId === r.id}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: '4px',
+                                background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)',
+                                padding: '0.3rem 0.6rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600,
+                                cursor: cancellingId === r.id ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: cancellingId === r.id ? 0.6 : 1
+                              }}
+                            >
+                              {cancellingId === r.id ? '⟳ Cancelling...' : '✕ Cancel'}
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: '0.85rem 1rem', fontSize: '0.8rem' }}>
                       <span style={{
@@ -186,38 +217,6 @@ export default function SpaDashboard() {
                         {(r.status || 'pending').toUpperCase()}
                       </span>
                     </td>
-                    {user?.role?.name === 'Admin' && (
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          {r.status === 'pending' && (
-                            <button
-                              onClick={() => handleConfirm(r.id)}
-                              disabled={confirmingId === r.id}
-                              style={{
-                                background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)',
-                                padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600,
-                                cursor: confirmingId === r.id ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: confirmingId === r.id ? 0.6 : 1
-                              }}
-                            >
-                              {confirmingId === r.id ? 'Confirming...' : 'Confirm'}
-                            </button>
-                          )}
-                          {(r.status === 'confirmed' || r.status === 'pending' || !r.status) && (
-                            <button
-                              onClick={() => handleCancel(r.id)}
-                              disabled={cancellingId === r.id}
-                              style={{
-                                background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)',
-                                padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600,
-                                cursor: cancellingId === r.id ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: cancellingId === r.id ? 0.6 : 1
-                              }}
-                            >
-                              {cancellingId === r.id ? 'Cancelling...' : 'Cancel'}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    )}
                   </tr>
                 ))
               )}
