@@ -240,13 +240,15 @@ export class HousekeepingRepository implements IHousekeepingRepository {
     const statsRes = await db.query(statsQuery);
     const row = statsRes.rows[0] || { total_tasks: '0', completed_today: '0', pending_tasks: '0', emergency_tasks: '0' };
 
+    // Real average turnaround time (only where we actually recorded > 0 minutes)
     const avgQuery = `
-      SELECT COALESCE(AVG(time_taken_minutes), 0) as avg_time
+      SELECT AVG(time_taken_minutes) as avg_time
       FROM cleaning_history
-      WHERE deleted_at IS NULL
+      WHERE deleted_at IS NULL AND time_taken_minutes > 0
     `;
     const avgRes = await db.query(avgQuery);
-    const avgTime = Math.round(parseFloat(avgRes.rows[0]?.avg_time || '0'));
+    const avgTimeVal = avgRes.rows[0]?.avg_time;
+    const avgTime = avgTimeVal ? Math.round(parseFloat(avgTimeVal)) : null;
 
     const total = parseInt(row.total_tasks, 10);
     const completedTotalQuery = `SELECT COUNT(*) as cnt FROM housekeeping_tasks WHERE status = 'Completed' AND deleted_at IS NULL`;
@@ -254,13 +256,46 @@ export class HousekeepingRepository implements IHousekeepingRepository {
     const totalComp = parseInt(compRes.rows[0]?.cnt || '0', 10);
     const completionRate = total > 0 ? Math.round((totalComp / total) * 100) : 100;
 
+    // Real-Time Room Status KPIs
+    // 1. Clean Rooms: Status is 'available' or 'clean', AND no active cleaning workflow.
+    const cleanQuery = `
+      SELECT COUNT(*) as clean_count FROM rooms r
+      WHERE LOWER(r.status) IN ('available', 'clean')
+        AND NOT EXISTS (
+          SELECT 1 FROM housekeeping_tasks ht 
+          WHERE ht.room_id = r.id AND ht.status IN ('Pending', 'Accepted', 'In Progress', 'Completed') AND ht.deleted_at IS NULL
+        )
+    `;
+    const cleanRes = await db.query(cleanQuery);
+    
+    // 2. Under Cleaning Rooms: Currently having an 'In Progress' or active cleaning workflow.
+    const underCleaningQuery = `
+      SELECT COUNT(DISTINCT room_id) as under_cleaning_count FROM housekeeping_tasks ht
+      WHERE ht.status = 'In Progress' AND ht.deleted_at IS NULL
+    `;
+    const underCleaningRes = await db.query(underCleaningQuery);
+
+    // 3. Dirty Rooms: Rooms that require cleaning (manually marked 'dirty' OR have an active/unverified cleaning task)
+    const dirtyQuery = `
+      SELECT COUNT(DISTINCT r.id) as dirty_count FROM rooms r
+      WHERE LOWER(r.status) IN ('dirty', 'checked-out') 
+         OR EXISTS (
+           SELECT 1 FROM housekeeping_tasks ht 
+           WHERE ht.room_id = r.id AND ht.status IN ('Pending', 'Accepted', 'In Progress', 'Completed') AND ht.deleted_at IS NULL
+         )
+    `;
+    const dirtyRes = await db.query(dirtyQuery);
+
     return {
       totalTasks: total,
       completedToday: parseInt(row.completed_today, 10),
       pendingTasks: parseInt(row.pending_tasks, 10),
       emergencyTasks: parseInt(row.emergency_tasks, 10),
       averageCleaningTimeMinutes: avgTime,
-      completionRate
+      completionRate,
+      cleanCount: parseInt(cleanRes.rows[0]?.clean_count || '0', 10),
+      underCleaningCount: parseInt(underCleaningRes.rows[0]?.under_cleaning_count || '0', 10),
+      dirtyCount: parseInt(dirtyRes.rows[0]?.dirty_count || '0', 10)
     };
   }
 

@@ -160,7 +160,12 @@ export class HousekeepingController {
       res.status(200).json({
         success: true,
         data: {
-          kpis,
+          kpis: {
+            ...kpis,
+            avgTurnaroundMinutes: kpis.averageCleaningTimeMinutes,
+            pendingTasksCount: kpis.pendingTasks,
+            highPriorityCount: kpis.emergencyTasks
+          },
           performance,
           trend,
         },

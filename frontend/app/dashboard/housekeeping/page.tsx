@@ -28,19 +28,20 @@ export default function HousekeepingDashboard() {
   const kpis = useMemo(() => {
     if (analytics?.kpis) {
       return [
-        { label: 'Clean Rooms', value: analytics.kpis.cleanCount || rooms.filter(r => (r.status as string)?.toLowerCase() === 'clean' || r.status === 'available').length, icon: CheckCircle, color: '#34d399' },
-        { label: 'Dirty Rooms', value: analytics.kpis.dirtyCount || rooms.filter(r => (r.status as string)?.toLowerCase() === 'dirty' || (r.status as string)?.toLowerCase() === 'checked-out').length, icon: AlertTriangle, color: '#f87171' },
-        { label: 'Under Cleaning', value: analytics.kpis.underCleaningCount || rooms.filter(r => (r.status as string)?.toLowerCase() === 'under cleaning').length, icon: Brush, color: '#3b82f6' },
-        { label: 'Avg Turnaround', value: `${analytics.kpis.avgTurnaroundMinutes || 24} min`, icon: Clock, color: '#C9A84C' },
+        { label: 'Clean Rooms', value: analytics.kpis.cleanCount, icon: CheckCircle, color: '#34d399' },
+        { label: 'Dirty Rooms', value: analytics.kpis.dirtyCount, icon: AlertTriangle, color: '#f87171' },
+        { label: 'Under Cleaning', value: analytics.kpis.underCleaningCount, icon: Brush, color: '#3b82f6' },
+        { label: 'Avg Turnaround', value: analytics.kpis.avgTurnaroundMinutes != null ? `${analytics.kpis.avgTurnaroundMinutes} min` : 'N/A', icon: Clock, color: '#C9A84C' },
       ];
     }
+    // Loading state or before analytics resolves
     return [
-      { label: 'Clean Rooms', value: rooms.filter(r => r.status === 'available' || (r.status as any) === 'clean').length, icon: CheckCircle, color: '#34d399' },
-      { label: 'Dirty / Turnover', value: tasks.filter(t => t.status === 'Pending').length, icon: AlertTriangle, color: '#f87171' },
-      { label: 'Under Cleaning', value: tasks.filter(t => t.status === 'In Progress').length, icon: Brush, color: '#3b82f6' },
-      { label: 'Avg Turnaround', value: '25 min', icon: Clock, color: '#C9A84C' },
+      { label: 'Clean Rooms', value: '...', icon: CheckCircle, color: '#34d399' },
+      { label: 'Dirty Rooms', value: '...', icon: AlertTriangle, color: '#f87171' },
+      { label: 'Under Cleaning', value: '...', icon: Brush, color: '#3b82f6' },
+      { label: 'Avg Turnaround', value: '...', icon: Clock, color: '#C9A84C' },
     ];
-  }, [analytics, rooms, tasks]);
+  }, [analytics]);
 
   const filteredTasks = useMemo(() => {
     if (statusFilter === 'all') return tasks;

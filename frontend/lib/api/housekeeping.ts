@@ -8,7 +8,7 @@ export interface HousekeepingAnalytics {
     underCleaningCount: number;
     pendingTasksCount: number;
     highPriorityCount: number;
-    avgTurnaroundMinutes: number;
+    avgTurnaroundMinutes: number | null;
   };
   performance: {
     staff_id: string;

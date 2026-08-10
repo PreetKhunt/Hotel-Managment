@@ -34,6 +34,9 @@ export class HousekeepingService {
       // 2. Create the task
       const task = await this.housekeepingRepo.createTask(dto, client);
 
+      // Update Room Status to 'dirty'
+      await client.query(`UPDATE rooms SET status = 'dirty' WHERE id = $1`, [dto.room_id]);
+
       // 3. Notify assigned staff or general housekeeping team
       const priorityNotif = dto.priority === TaskPriority.EMERGENCY ? NotificationPriority.CRITICAL : NotificationPriority.INFO;
       if (dto.assigned_to) {
@@ -117,11 +120,14 @@ export class HousekeepingService {
       // If completing task
       if (dto.status === HousekeepingStatus.COMPLETED) {
         updates.completed_at = new Date();
-        const start = currentTask.started_at ? new Date(currentTask.started_at).getTime() : Date.now() - (30 * 60 * 1000);
-        const diffMinutes = Math.max(1, Math.round((Date.now() - start) / (1000 * 60)));
+        let diffMinutes = 0;
+        if (currentTask.started_at) {
+          const start = new Date(currentTask.started_at).getTime();
+          diffMinutes = Math.max(1, Math.round((Date.now() - start) / (1000 * 60)));
+        }
 
-        // 1. Update Room Status to 'available' (Clean)
-        await client.query(`UPDATE rooms SET status = 'available' WHERE id = $1`, [currentTask.room_id]);
+        // 1. Update Room Status to 'dirty' (completed but unverified, remains unavailable/dirty)
+        await client.query(`UPDATE rooms SET status = 'dirty' WHERE id = $1`, [currentTask.room_id]);
 
         // 2. Create cleaning history entry
         await this.housekeepingRepo.createCleaningHistory({

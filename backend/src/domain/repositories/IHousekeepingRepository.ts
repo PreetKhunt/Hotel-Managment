@@ -86,8 +86,11 @@ export interface HousekeepingDashboardKPIs {
   completedToday: number;
   pendingTasks: number;
   emergencyTasks: number;
-  averageCleaningTimeMinutes: number;
+  averageCleaningTimeMinutes: number | null;
   completionRate: number;
+  cleanCount: number;
+  dirtyCount: number;
+  underCleaningCount: number;
 }
 
 export interface StaffPerformanceRanking {
