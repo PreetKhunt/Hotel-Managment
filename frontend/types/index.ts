@@ -24,6 +24,7 @@ export interface Room {
   rating: number;
   reviewCount: number;
   featured: boolean;
+  matchScore?: number;
 }
 
 // ─── Booking Types ────────────────────────────────────────────────────────────

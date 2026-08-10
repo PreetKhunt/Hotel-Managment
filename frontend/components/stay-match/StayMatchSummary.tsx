@@ -82,7 +82,7 @@ export default function StayMatchSummary({
             </span>
           </div>
           <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: TEXT_PRIMARY, fontFamily: 'var(--font-playfair), Georgia, serif' }}>
-            Tailored Recommendations for Your Journey
+            Best Matches For Your Stay
           </h3>
         </div>
 

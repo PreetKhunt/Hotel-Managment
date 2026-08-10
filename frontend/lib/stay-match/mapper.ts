@@ -17,7 +17,9 @@ export const DEFAULT_FILTER_STATE: FilterState = {
 export function mapPreferencesToFilters(prefs: StayMatchPreferences): FilterState {
   const next: FilterState = {
     ...DEFAULT_FILTER_STATE,
-    amenities: [...(prefs.amenities || [])],
+    // We intentionally do not populate `amenities` here so that `matchesStandardFilters` 
+    // does not perform a strict discard on rooms missing a single soft amenity. 
+    // Soft amenities will be evaluated in the scoring engine.
   };
 
   // 1. Map Budget Tiers

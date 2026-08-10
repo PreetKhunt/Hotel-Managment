@@ -86,31 +86,70 @@ function matchesEnvironmentAttribute(room: Room, env: string): boolean {
 export function matchRoomsWithPreferences(rooms: Room[], prefs: StayMatchPreferences): Room[] {
   const baseFilters = mapPreferencesToFilters(prefs);
 
-  return rooms.filter((room) => {
-    // Step 1: Must pass standard price, occupancy, category, and amenity criteria
+  const scoredRooms = rooms.map((room) => {
+    // Hard constraints: Reject rooms that don't pass standard occupancy/price/category checks
     if (!matchesStandardFilters(room, baseFilters, '')) {
-      return false;
+      return { ...room, matchScore: 0 };
     }
 
-    // Step 2: Bed Preference Check (if explicitly requested)
+    let score = 0;
+    
+    // 1. Amenities (40%)
+    if (prefs.amenities && prefs.amenities.length > 0) {
+      const matchedAmenities = prefs.amenities.filter((fa) =>
+        (room.amenities || []).some((ra) => ra.toLowerCase().includes(fa.toLowerCase()))
+      );
+      score += (matchedAmenities.length / prefs.amenities.length) * 40;
+    } else {
+      score += 40; // No preference, full points
+    }
+
+    // 2. Environment (20%)
+    if (prefs.environment && prefs.environment.length > 0) {
+      const matchedEnv = prefs.environment.filter((env) => matchesEnvironmentAttribute(room, env));
+      score += (matchedEnv.length / prefs.environment.length) * 20;
+    } else {
+      score += 20;
+    }
+
+    // 3. Bed Type (15%)
     if (prefs.bedType && prefs.bedType !== 'No Preference') {
       const roomBed = (room.bedType || '').toLowerCase();
       const desiredBed = prefs.bedType.toLowerCase();
       
-      // Allow flexible compatibility (e.g. King bed covers Double/Twin expectations in luxury suites)
       const isMatch = roomBed.includes(desiredBed) ||
         (desiredBed === 'double' && (roomBed.includes('king') || roomBed.includes('queen'))) ||
         (desiredBed === 'single' && room.maxGuests >= 1);
 
-      if (!isMatch) return false;
+      if (isMatch) score += 15;
+    } else {
+      score += 15;
     }
 
-    // Step 3: Environment Attributes Check (at least one environment attribute should align if selected)
-    if (prefs.environment && prefs.environment.length > 0) {
-      const matchesAtLeastOneEnv = prefs.environment.some((env) => matchesEnvironmentAttribute(room, env));
-      if (!matchesAtLeastOneEnv) return false;
+    // 4. Purpose (15%)
+    if (prefs.purpose) {
+      const roomType = room.type.toLowerCase();
+      if (prefs.purpose === 'Honeymoon' && ['suite', 'presidential'].includes(roomType)) score += 15;
+      else if (prefs.purpose === 'Business' && (room.amenities || []).join(' ').toLowerCase().includes('wifi')) score += 15;
+      else if (prefs.purpose === 'Family Vacation' && room.maxGuests >= 3) score += 15;
+      else score += 10; // Partial points for unspecific purposes
+    } else {
+      score += 15;
     }
 
-    return true;
+    // 5. Price Competitiveness (10%)
+    // Reward cheaper rooms within budget
+    if (baseFilters.maxPrice > 0) {
+      const priceRatio = 1 - (room.pricePerNight / baseFilters.maxPrice);
+      score += Math.max(0, priceRatio * 10);
+    } else {
+      score += 10;
+    }
+
+    return { ...room, matchScore: Math.round(score) };
   });
+
+  return scoredRooms
+    .filter(r => (r.matchScore ?? 0) > 0) // Filter out hard constraints and 0 scores
+    .sort((a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0));
 }

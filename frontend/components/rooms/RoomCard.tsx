@@ -176,11 +176,30 @@ export default function RoomCard({ room, index = 0, badges = [] }: RoomCardProps
           </div>
         </div>
 
-        {/* Rating */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <StarRatingInline rating={room.rating} />
-          <span style={{ color: TEXT, fontSize: '13px', fontWeight: 600 }}>{room.rating.toFixed(1)}</span>
-          <span style={{ color: SECONDARY, fontSize: '12px' }}>({room.reviewCount} reviews)</span>
+        {/* Rating & Match Score */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <StarRatingInline rating={room.rating} />
+            <span style={{ color: TEXT, fontSize: '13px', fontWeight: 600 }}>{room.rating.toFixed(1)}</span>
+            <span style={{ color: SECONDARY, fontSize: '12px' }}>({room.reviewCount} reviews)</span>
+          </div>
+          {room.matchScore !== undefined && room.matchScore > 0 && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.15) 0%, rgba(201,168,76,0.05) 100%)',
+              border: '1px solid rgba(201,168,76,0.3)',
+              color: GOLD,
+              padding: '4px 10px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <span>✨</span> {room.matchScore}% Match
+            </div>
+          )}
         </div>
 
         {/* Intelligent Stay Match Badges */}

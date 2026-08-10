@@ -11,7 +11,7 @@ export const reserveTable = async (req: Request, res: Response) => {
 
   const { data, error } = await supabase
     .from('restaurant_reservations')
-    .insert([{ user_id, date, time, guests, special_requests }])
+    .insert([{ user_id, date, time, guests, special_requests, status: 'pending' }])
     .select()
     .single();
 
@@ -91,6 +91,42 @@ export const cancelRestaurantReservation = async (req: Request, res: Response) =
   res.status(200).json({
     success: true,
     message: 'Dining reservation cancelled successfully',
+    data,
+  });
+};
+
+export const confirmRestaurantReservation = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { data: existingReservation, error: fetchError } = await supabase
+    .from('restaurant_reservations')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !existingReservation) {
+    throw new AppError('Dining reservation not found', 404, ErrorCode.NOT_FOUND);
+  }
+
+  if (existingReservation.status !== 'pending') {
+    throw new AppError('Only pending reservations can be confirmed', 400, ErrorCode.VALIDATION_ERROR);
+  }
+
+  const { data, error } = await supabase
+    .from('restaurant_reservations')
+    .update({ status: 'confirmed' })
+    .eq('id', id)
+    .eq('status', 'pending') // Safe atomic check
+    .select()
+    .single();
+
+  if (error) {
+    throw new AppError(error.message, 500, ErrorCode.INTERNAL_SERVER_ERROR);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Reservation confirmed successfully',
     data,
   });
 };

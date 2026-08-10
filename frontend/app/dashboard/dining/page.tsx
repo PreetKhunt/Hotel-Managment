@@ -12,6 +12,7 @@ export default function DiningDashboard() {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const endpoint = user?.role?.name === 'Admin' ? '/restaurant/all' : '/restaurant/my-reservations';
@@ -43,9 +44,33 @@ export default function DiningDashboard() {
     }
   });
 
+  const confirmMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.patch(`/restaurant/${id}/confirm`);
+      return res.data;
+    },
+    onMutate: (id) => setConfirmingId(id),
+    onSuccess: () => {
+      toast.success('Reservation confirmed successfully');
+      queryClient.invalidateQueries({ queryKey: ['dining', endpoint] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Failed to confirm reservation');
+    },
+    onSettled: () => {
+      setConfirmingId(null);
+    }
+  });
+
   const handleCancel = (id: string) => {
     if (window.confirm('Cancel this dining reservation?\nThis action will mark the reservation as cancelled.')) {
       cancelMutation.mutate(id);
+    }
+  };
+
+  const handleConfirm = (id: string) => {
+    if (window.confirm('Confirm this dining reservation?')) {
+      confirmMutation.mutate(id);
     }
   };
 
@@ -158,24 +183,39 @@ export default function DiningDashboard() {
                         backgroundColor: r.status === 'confirmed' ? 'rgba(34,197,94,0.1)' : r.status === 'cancelled' ? 'rgba(239,68,68,0.1)' : r.status === 'completed' ? 'rgba(59,130,246,0.1)' : 'rgba(255,166,0,0.1)',
                         color: r.status === 'confirmed' ? '#4ade80' : r.status === 'cancelled' ? '#f87171' : r.status === 'completed' ? '#60a5fa' : '#fbbf24'
                       }}>
-                        {r.status || 'confirmed'}
+                        {(r.status || 'pending').toUpperCase()}
                       </span>
                     </td>
                     {user?.role?.name === 'Admin' && (
                       <td style={{ padding: '0.85rem 1rem' }}>
-                        {(r.status === 'confirmed' || r.status === 'pending' || !r.status) && (
-                          <button
-                            onClick={() => handleCancel(r.id)}
-                            disabled={cancellingId === r.id}
-                            style={{
-                              background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)',
-                              padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600,
-                              cursor: cancellingId === r.id ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: cancellingId === r.id ? 0.6 : 1
-                            }}
-                          >
-                            {cancellingId === r.id ? 'Cancelling...' : 'Cancel'}
-                          </button>
-                        )}
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {r.status === 'pending' && (
+                            <button
+                              onClick={() => handleConfirm(r.id)}
+                              disabled={confirmingId === r.id}
+                              style={{
+                                background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)',
+                                padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600,
+                                cursor: confirmingId === r.id ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: confirmingId === r.id ? 0.6 : 1
+                              }}
+                            >
+                              {confirmingId === r.id ? 'Confirming...' : 'Confirm'}
+                            </button>
+                          )}
+                          {(r.status === 'confirmed' || r.status === 'pending' || !r.status) && (
+                            <button
+                              onClick={() => handleCancel(r.id)}
+                              disabled={cancellingId === r.id}
+                              style={{
+                                background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)',
+                                padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600,
+                                cursor: cancellingId === r.id ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: cancellingId === r.id ? 0.6 : 1
+                              }}
+                            >
+                              {cancellingId === r.id ? 'Cancelling...' : 'Cancel'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>

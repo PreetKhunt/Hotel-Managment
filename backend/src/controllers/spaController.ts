@@ -11,7 +11,7 @@ export const bookTreatment = async (req: Request, res: Response) => {
 
   const { data, error } = await supabase
     .from('spa_bookings')
-    .insert([{ user_id, treatment, date, time, special_requests }])
+    .insert([{ user_id, treatment, date, time, special_requests, status: 'pending' }])
     .select()
     .single();
 
@@ -91,6 +91,42 @@ export const cancelSpaBooking = async (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: 'Spa booking cancelled successfully',
+    data,
+  });
+};
+
+export const confirmSpaBooking = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { data: existingBooking, error: fetchError } = await supabase
+    .from('spa_bookings')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !existingBooking) {
+    throw new AppError('Spa booking not found', 404, ErrorCode.NOT_FOUND);
+  }
+
+  if (existingBooking.status !== 'pending') {
+    throw new AppError('Only pending spa bookings can be confirmed', 400, ErrorCode.VALIDATION_ERROR);
+  }
+
+  const { data, error } = await supabase
+    .from('spa_bookings')
+    .update({ status: 'confirmed' })
+    .eq('id', id)
+    .eq('status', 'pending')
+    .select()
+    .single();
+
+  if (error) {
+    throw new AppError(error.message, 500, ErrorCode.INTERNAL_SERVER_ERROR);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Spa booking confirmed successfully',
     data,
   });
 };

@@ -37,7 +37,7 @@ export default function StayMatchEmptyState({ onEdit, onReset }: StayMatchEmptyS
         fontWeight: 700,
         fontFamily: 'var(--font-playfair), Georgia, serif',
       }}>
-        No Exact Rooms Matched All Preferences
+        No rooms are currently available.
       </h3>
       <p style={{
         color: TEXT_SECONDARY,
@@ -46,7 +46,7 @@ export default function StayMatchEmptyState({ onEdit, onReset }: StayMatchEmptyS
         lineHeight: 1.6,
         maxWidth: '520px',
       }}>
-        We couldn&apos;t find an available suite that simultaneously meets every selected amenity, bed type, and budget tier. We recommend slightly relaxing your amenity filters or expanding your budget range.
+        We couldn&apos;t find any available rooms that meet your mandatory constraints (such as guest capacity or maximum budget). Please try adjusting your mandatory requirements.
       </p>
       <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
         <button
