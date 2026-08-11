@@ -117,8 +117,8 @@ export default function ExploreManaliPage() {
                 Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
               ) : !placesData?.data?.length ? (
                 <EmptyState icon={MapPin} message="No places found." />
-              ) : placesData.data.map((place) => (
-                <PlaceCard key={place.id} data={place} />
+              ) : placesData.data.map((place, index) => (
+                <PlaceCard key={place.id} data={place} priority={index < 4} />
               ))}
             </motion.div>
           )}
@@ -135,8 +135,8 @@ export default function ExploreManaliPage() {
                 Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
               ) : !activitiesData?.data?.length ? (
                 <EmptyState icon={Mountain} message="No activities found." />
-              ) : activitiesData.data.map((activity) => (
-                <ActivityCard key={activity.id} data={activity} />
+              ) : activitiesData.data.map((activity, index) => (
+                <ActivityCard key={activity.id} data={activity} priority={index < 4} />
               ))}
             </motion.div>
           )}
@@ -153,8 +153,8 @@ export default function ExploreManaliPage() {
                 Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
               ) : !foodData?.data?.length ? (
                 <EmptyState icon={Utensils} message="No food recommendations found." />
-              ) : foodData.data.map((food) => (
-                <FoodCard key={food.id} data={food} />
+              ) : foodData.data.map((food, index) => (
+                <FoodCard key={food.id} data={food} priority={index < 4} />
               ))}
             </motion.div>
           )}
@@ -312,7 +312,7 @@ function FallbackImage({ alt, icon: Icon }: { alt: string; icon: any }) {
 // CARD COMPONENTS
 // ----------------------------------------------------------------------
 
-function PlaceCard({ data }: { data: any }) {
+function PlaceCard({ data, priority = false }: { data: any, priority?: boolean }) {
   const [imgError, setImgError] = useState(false);
   return (
     <motion.div 
@@ -325,6 +325,7 @@ function PlaceCard({ data }: { data: any }) {
             src={data.image} 
             alt={data.name} 
             fill
+            priority={priority}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             onError={() => setImgError(true)}
@@ -376,7 +377,7 @@ function PlaceCard({ data }: { data: any }) {
   );
 }
 
-function ActivityCard({ data }: { data: any }) {
+function ActivityCard({ data, priority = false }: { data: any, priority?: boolean }) {
   const [imgError, setImgError] = useState(false);
   return (
     <motion.div 
@@ -389,6 +390,7 @@ function ActivityCard({ data }: { data: any }) {
             src={data.image} 
             alt={data.name} 
             fill
+            priority={priority}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             onError={() => setImgError(true)}
@@ -435,7 +437,7 @@ function ActivityCard({ data }: { data: any }) {
   );
 }
 
-function FoodCard({ data }: { data: any }) {
+function FoodCard({ data, priority = false }: { data: any, priority?: boolean }) {
   const [imgError, setImgError] = useState(false);
   return (
     <motion.div 
@@ -448,6 +450,7 @@ function FoodCard({ data }: { data: any }) {
             src={data.image} 
             alt={data.name} 
             fill
+            priority={priority}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             onError={() => setImgError(true)}
