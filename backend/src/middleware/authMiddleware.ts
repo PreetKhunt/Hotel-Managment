@@ -29,35 +29,37 @@ export const createAuthMiddleware = (
 ) => {
   return async (req: Request, _res: Response, next: NextFunction) => {
     const debugReqId = req.headers['x-debug-request-id'] || 'MISSING';
-    console.log(`\n========== [AuthMiddleware] START REQ: ${debugReqId} ==========`);
-    console.log(`[AuthMiddleware] req.originalUrl: ${req.originalUrl}`);
-    console.log(`[AuthMiddleware] req.method: ${req.method}`);
-    console.log(`[AuthMiddleware] req.headers.origin: ${req.headers.origin}`);
-    console.log(`[AuthMiddleware] req.headers.referer: ${req.headers.referer}`);
-    console.log(`[AuthMiddleware] req.headers.cookie:`, req.headers.cookie);
-    console.log(`[AuthMiddleware] Parsed req.cookies:`, JSON.stringify(req.cookies));
-    console.log(`[AuthMiddleware] hh_session exists in cookies? ${!!(req.cookies && req.cookies.hh_session)}`);
+    const isDebugAuth = process.env.NODE_ENV !== 'production' && process.env.DEBUG_AUTH === 'true';
+
+    if (isDebugAuth) {
+      console.log(`\n========== [AuthMiddleware] START REQ: ${debugReqId} ==========`);
+      console.log(`[AuthMiddleware] req.originalUrl: ${req.originalUrl}`);
+      console.log(`[AuthMiddleware] req.method: ${req.method}`);
+    }
+
+    const hasSession = !!(req.cookies && req.cookies.hh_session);
+    const hasAuthHeader = !!req.headers.authorization?.startsWith('Bearer ');
+    
+    console.log(`[AuthMiddleware] hh_session exists: ${hasSession}`);
+    if (isDebugAuth) {
+      console.log(`[AuthMiddleware] Bearer token exists: ${hasAuthHeader}`);
+    }
 
     try {
       // 1. Try to get token from Authorization header
-      let token = req.headers.authorization?.startsWith('Bearer ') 
-        ? req.headers.authorization.split(' ')[1] 
+      let token = hasAuthHeader 
+        ? req.headers.authorization!.split(' ')[1] 
         : undefined;
 
       // 2. If no header, extract token from hh_session cookie
-      if (!token && req.cookies && req.cookies.hh_session) {
+      if (!token && hasSession) {
         token = req.cookies.hh_session as string;
-        console.log(`[AuthMiddleware] Successfully extracted token from hh_session.`);
-      } else if (!token) {
-        console.log(`[AuthMiddleware] Failed to extract token from either header or hh_session cookie.`);
       }
 
       if (!token) {
         console.error(`[AuthMiddleware] REJECTED (401): Authentication token missing`);
         return next(new AppError('Authentication token missing', 401, ErrorCode.UNAUTHORIZED));
       }
-
-      console.log(`[AuthMiddleware] Token length: ${token.length}`);
 
       const { env } = require('../config/env');
       
@@ -68,22 +70,21 @@ export const createAuthMiddleware = (
          auth: { persistSession: false, autoRefreshToken: false }
       });
       
-      console.log(`[AuthMiddleware] Calling fallbackClient.auth.getUser(token)...`);
       const { data, error } = await fallbackClient.auth.getUser(token);
       
       if (error || !data.user) {
-         console.error(`[AuthMiddleware] JWT Verification Failed (401). Error:`, error);
+         console.error(`[AuthMiddleware] JWT Verification Failed (401).`);
+         if (isDebugAuth) console.error(`[AuthMiddleware] Verification Error Details:`, error);
          throw new AppError('Invalid or expired authentication token', 401, ErrorCode.UNAUTHORIZED);
       }
       
-      console.log(`[AuthMiddleware] JWT Verified successfully. Supabase User ID: ${data.user.id}`);
       authUser = data.user;
 
       // Fetch user details from public schema
       const dbUser = await userRepo.findById(authUser.id);
       
       if (!dbUser) {
-        console.error(`[AuthMiddleware] REJECTED (401): User profile not found in db for ID ${authUser.id}`);
+        console.error(`[AuthMiddleware] REJECTED (401): User profile not found in db`);
         throw new AppError('User profile not found', 401, ErrorCode.UNAUTHORIZED);
       }
 
@@ -104,8 +105,6 @@ export const createAuthMiddleware = (
         }
       }
 
-      console.log(`[AuthMiddleware] req.user assembled for ${dbUser.email}: roleName=${roleName}, permissions=${permissions}`);
-
       // Attach user to request
       req.user = {
         id: dbUser.id,
@@ -116,11 +115,18 @@ export const createAuthMiddleware = (
         permissions,
       };
 
-      console.log(`[AuthMiddleware] Authentication successful. req.user populated with ID: ${req.user.id}`);
-      console.log(`========== [AuthMiddleware] END REQ: ${debugReqId} ==========\n`);
+      console.log(`[AuthMiddleware] Authentication successful`);
+      console.log(`[AuthMiddleware] User ID: ${req.user.id.substring(0, 8)}...`);
+      console.log(`[AuthMiddleware] Role: ${roleName || 'None'}`);
+
+      if (isDebugAuth) {
+        console.log(`========== [AuthMiddleware] END REQ: ${debugReqId} ==========\n`);
+      }
       next();
     } catch (error) {
-      console.error(`========== [AuthMiddleware] END REQ: ${debugReqId} (WITH ERROR) ==========\n`);
+      if (isDebugAuth) {
+        console.error(`========== [AuthMiddleware] END REQ: ${debugReqId} (WITH ERROR) ==========\n`);
+      }
       next(error);
     }
   };

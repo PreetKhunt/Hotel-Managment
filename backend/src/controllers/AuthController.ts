@@ -15,16 +15,27 @@ export class AuthController {
         path: '/',
         maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
       };
-      console.log(`\n========== [COOKIE FORENSICS] ==========`);
-      console.log(`- Token exists?`, !!sessionToken);
-      console.log(`- Token length:`, sessionToken.length);
-      console.log(`- Cookie options:`, JSON.stringify(cookieOptions));
-      console.log(`- Response headers BEFORE res.cookie():`, res.getHeaders());
+      const isDebugAuth = process.env.NODE_ENV !== 'production' && process.env.DEBUG_AUTH === 'true';
+      if (isDebugAuth) {
+        console.log(`\n========== [COOKIE FORENSICS] ==========`);
+        console.log(`- Token exists?`, !!sessionToken);
+        console.log(`- Token length:`, sessionToken.length);
+        console.log(`- Cookie options:`, JSON.stringify(cookieOptions));
+        
+        // Exclude set-cookie headers to prevent token leak in logs
+        const headersBefore = { ...res.getHeaders() };
+        delete headersBefore['set-cookie'];
+        console.log(`- Response headers BEFORE res.cookie():`, headersBefore);
+      }
       
       res.cookie('hh_session', sessionToken, cookieOptions);
       
-      console.log(`- Response headers AFTER res.cookie():`, res.getHeaders());
-      console.log(`==========================================\n`);
+      if (isDebugAuth) {
+        const headersAfter = { ...res.getHeaders() };
+        delete headersAfter['set-cookie'];
+        console.log(`- Response headers AFTER res.cookie():`, headersAfter);
+        console.log(`==========================================\n`);
+      }
     } else {
       console.log(`\n========== [COOKIE FORENSICS] ==========`);
       console.log(`WARNING: setSessionCookie called but sessionToken is missing/undefined!`);
@@ -130,20 +141,22 @@ export class AuthController {
 
   logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.error("\n========== [FORENSIC] BACKEND LOGOUT TRIGGERED ==========");
-      console.log("[FORENSIC] Timestamp:", new Date().toISOString());
-      console.log("[FORENSIC] Request ID (Correlation):", (req as any).id || 'unknown');
-      console.log("[FORENSIC] Origin:", req.headers.origin);
-      console.log("[FORENSIC] Referer:", req.headers.referer);
-      console.log("[FORENSIC] User-Agent:", req.headers['user-agent']);
-      console.log("[FORENSIC] Frontend Debug ID (X-Debug-Logout-ID):", req.headers['x-debug-logout-id'] || 'MISSING');
-      console.log("[FORENSIC] Cookies (raw):", req.headers.cookie);
-      console.log("[FORENSIC] Cookies (parsed):", req.cookies);
-      console.log("[FORENSIC] Authorization Header:", req.headers.authorization ? 'Present' : 'Missing');
-      console.log("[FORENSIC] Request Body:", JSON.stringify(req.body));
-      console.log("[FORENSIC] IP Address:", req.ip || req.connection.remoteAddress || 'unknown');
-      console.log("[FORENSIC] Stack trace of execution at controller:", (new Error()).stack);
-      console.log("=========================================================\n");
+      const isDebugAuth = process.env.NODE_ENV !== 'production' && process.env.DEBUG_AUTH === 'true';
+      if (isDebugAuth) {
+        console.error("\n========== [FORENSIC] BACKEND LOGOUT TRIGGERED ==========");
+        console.log("[FORENSIC] Timestamp:", new Date().toISOString());
+        console.log("[FORENSIC] Request ID (Correlation):", (req as any).id || 'unknown');
+        console.log("[FORENSIC] Origin:", req.headers.origin);
+        console.log("[FORENSIC] Referer:", req.headers.referer);
+        console.log("[FORENSIC] User-Agent:", req.headers['user-agent']);
+        console.log("[FORENSIC] Frontend Debug ID (X-Debug-Logout-ID):", req.headers['x-debug-logout-id'] || 'MISSING');
+        console.log("[FORENSIC] Cookie keys:", Object.keys(req.cookies || {}));
+        console.log("[FORENSIC] Authorization Header:", req.headers.authorization ? 'Present' : 'Missing');
+        console.log("[FORENSIC] Request Body:", JSON.stringify(req.body));
+        console.log("[FORENSIC] IP Address:", req.ip || req.connection.remoteAddress || 'unknown');
+        console.log("[FORENSIC] Stack trace of execution at controller:", (new Error()).stack);
+        console.log("=========================================================\n");
+      }
 
       const reqInfo = {
         userId: (req as any).user?.id || null,
@@ -225,10 +238,13 @@ export class AuthController {
       console.log('[OAuth Callback] 1. Callback received. URL:', req.originalUrl);
       const code = req.query.code as string;
       
-      console.log(`[OAuth Callback] Cookies received:`, JSON.stringify(req.cookies, null, 2));
-      const pkceCookieName = Object.keys(req.cookies).find(k => k.includes('sb-') && k.includes('-auth-token-code-verifier'));
+      const isDebugAuth = process.env.NODE_ENV !== 'production' && process.env.DEBUG_AUTH === 'true';
+      if (isDebugAuth) {
+        console.log(`[OAuth Callback] Cookies keys received:`, Object.keys(req.cookies || {}));
+      }
+      const pkceCookieName = Object.keys(req.cookies || {}).find(k => k.includes('sb-') && k.includes('-auth-token-code-verifier'));
       if (pkceCookieName) {
-         console.log(`[OAuth Callback] PKCE cookie found: ${pkceCookieName}`);
+         if (isDebugAuth) console.log(`[OAuth Callback] PKCE cookie found: ${pkceCookieName}`);
       } else {
          console.log(`[OAuth Callback] WARNING: No PKCE cookie found in req.cookies!`);
       }

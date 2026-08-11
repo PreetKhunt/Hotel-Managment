@@ -28,21 +28,19 @@ export class AuthService {
     const client = createServerClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
         cookies: req && res ? {
           getAll() {
-            console.log('[Forensics] getAll() called. req.cookies:', JSON.stringify(req.cookies || {}));
+            const isDebugAuth = process.env.NODE_ENV !== 'production' && process.env.DEBUG_AUTH === 'true';
+            if (isDebugAuth) {
+              console.log('[Forensics] getAll() called. Cookie keys present:', Object.keys(req.cookies || {}));
+            }
             return Object.keys(req.cookies || {}).map((name) => ({ name, value: req.cookies[name] }));
           },
           setAll(cookiesToSet: any[]) {
-            console.log('[Forensics] setAll() called with cookies:', JSON.stringify(cookiesToSet));
+            const isDebugAuth = process.env.NODE_ENV !== 'production' && process.env.DEBUG_AUTH === 'true';
+            if (isDebugAuth) {
+              const safeCookies = cookiesToSet.map(c => ({ name: c.name, options: c.options }));
+              console.log('[Forensics] setAll() called with cookie names:', JSON.stringify(safeCookies));
+            }
             cookiesToSet.forEach(({ name, value, options }) => {
-              // OPTIMIZATION: Next.js 'rewrites' proxy drops headers when multiple Set-Cookie are sent.
-              // To prevent this, we IGNORE setting session chunks here. Our app only needs 'hh_session',
-              // which we set manually later. We also ignore deletion of the code-verifier (value === '')
-              // to keep exactly ONE Set-Cookie header per route!
-              if (!name.includes('code-verifier') || !value) {
-                console.log(`[Forensics] IGNORING cookie ${name} to avoid multiple Set-Cookie headers in Vercel.`);
-                return;
-              }
-
               const cookieOptions = { ...options };
               // Fix: @supabase/ssr passes maxAge in seconds (e.g. 600 for PKCE verifier),
               // but Express res.cookie requires maxAge in milliseconds.
@@ -53,7 +51,9 @@ export class AuthService {
                 cookieOptions.secure = true;
                 cookieOptions.sameSite = cookieOptions.sameSite || 'lax';
               }
-              console.log(`[Forensics] Setting cookie: ${name} with options:`, JSON.stringify(cookieOptions));
+              if (isDebugAuth) {
+                console.log(`[Forensics] Setting cookie: ${name} with options:`, JSON.stringify(cookieOptions));
+              }
               res.cookie(name, value, cookieOptions);
             });
           }
