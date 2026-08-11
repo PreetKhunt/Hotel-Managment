@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Playfair_Display, Inter, Geist } from "next/font/google";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -27,6 +27,10 @@ export const metadata: Metadata = {
 
 import { Providers } from "./providers";
 import BackToHomeButton from "@/components/shared/BackToHomeButton";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+
 
 export default function RootLayout({
   children,
@@ -34,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable} h-full`} data-scroll-behavior="smooth">
+    <html lang="en" className={cn("h-full", playfair.variable, inter.variable, "font-sans", geist.variable)} data-scroll-behavior="smooth">
       <body className="min-h-full antialiased" style={{ background: '#0A0F1E', color: '#F8FAFC' }}>
         <Providers>
           {children}

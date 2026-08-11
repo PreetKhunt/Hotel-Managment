@@ -33,6 +33,10 @@ import housekeepingRoutes from './housekeepingRoutes';
 import maintenanceRoutes from './maintenanceRoutes';
 import notificationRoutes from './notificationRoutes';
 
+import manaliRoutes from './manaliRoutes';
+import shoppingRoutes from './shoppingRoutes';
+import uploadRoutes from './uploadRoutes';
+
 // Mounted resource routers
 router.use('/auth', authRoutes);
 router.use('/hotels', hotelRoutes);
@@ -50,5 +54,9 @@ router.use('/super-admin', superAdminRoutes);
 router.use('/housekeeping', housekeepingRoutes);
 router.use('/maintenance', maintenanceRoutes);
 router.use('/notifications', notificationRoutes);
+
+router.use('/manali', manaliRoutes);
+router.use('/shopping', shoppingRoutes);
+router.use('/upload', uploadRoutes);
 
 export default router;

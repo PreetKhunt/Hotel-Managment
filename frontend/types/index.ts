@@ -196,3 +196,6 @@ export interface SystemNotification {
   created_at: string;
 }
 
+
+export * from './manali';
+export * from './shopping';

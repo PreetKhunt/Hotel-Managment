@@ -37,6 +37,7 @@
         "helmet": "^7.1.0",
         "jsonwebtoken": "^9.0.3",
         "morgan": "^1.10.0",
+        "multer": "^2.2.0",
         "node-cron": "^4.5.0",
         "pdfkit": "^0.19.1",
         "pg": "^8.22.0",
@@ -50,6 +51,7 @@
         "zod": "^3.22.4"
     },
     "devDependencies": {
+        "@types/multer": "^2.2.0",
         "@typescript-eslint/eslint-plugin": "^8.62.1",
         "@typescript-eslint/parser": "^8.62.1",
         "eslint": "^10.6.0",
