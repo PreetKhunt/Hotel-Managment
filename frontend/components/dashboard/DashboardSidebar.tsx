@@ -16,6 +16,8 @@ import {
   Dumbbell,
   Brush,
   Wrench,
+  Map,
+  ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -23,6 +25,8 @@ const adminNavItems = [
   { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
   { icon: BedDouble, label: 'Rooms', href: '/dashboard/rooms' },
   { icon: CalendarDays, label: 'Bookings', href: '/dashboard/bookings' },
+  { icon: Map, label: 'Explore Manali', href: '/dashboard/explore' },
+  { icon: ShoppingBag, label: 'Shopping & Brand Deals', href: '/dashboard/shopping' },
   { icon: Brush, label: 'Housekeeping', href: '/dashboard/housekeeping' },
   { icon: Wrench, label: 'Maintenance', href: '/dashboard/maintenance' },
   { icon: UtensilsCrossed, label: 'Dining', href: '/dashboard/dining' },
