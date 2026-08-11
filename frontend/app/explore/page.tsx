@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, Mountain, Utensils, CloudSun, Backpack, ShieldAlert, Bus,
@@ -320,10 +321,12 @@ function PlaceCard({ data }: { data: any }) {
     >
       <div className="relative h-56 overflow-hidden bg-slate-100">
         {data.image && !imgError ? (
-          <img 
+          <Image 
             src={data.image} 
             alt={data.name} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
             onError={() => setImgError(true)}
           />
         ) : (
@@ -382,10 +385,12 @@ function ActivityCard({ data }: { data: any }) {
     >
       <div className="relative h-56 overflow-hidden bg-slate-100">
         {data.image && !imgError ? (
-          <img 
+          <Image 
             src={data.image} 
             alt={data.name} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
             onError={() => setImgError(true)}
           />
         ) : (
@@ -439,10 +444,12 @@ function FoodCard({ data }: { data: any }) {
     >
       <div className="relative h-56 overflow-hidden bg-slate-100">
         {data.image && !imgError ? (
-          <img 
+          <Image 
             src={data.image} 
             alt={data.name} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
             onError={() => setImgError(true)}
           />
         ) : (
