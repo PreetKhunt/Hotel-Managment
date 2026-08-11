@@ -40,7 +40,7 @@ export default function ExploreManaliPage() {
   const { data: emergencyData, isLoading: loadingEmergency } = useEmergencyContacts();
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-surface pb-20">
       {/* Hero Section */}
       <div className="relative h-[400px] sm:h-[500px] w-full bg-slate-900 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1605649487212-4dcfd3957eb1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
@@ -69,19 +69,19 @@ export default function ExploreManaliPage() {
             transition={{ delay: 0.2 }}
             className="relative max-w-xl"
           >
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary h-5 w-5" />
             <Input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search places, activities, or food..." 
-              className="pl-12 h-14 bg-white/10 border-white/20 text-white placeholder:text-slate-400 text-lg rounded-2xl backdrop-blur-md focus:bg-white/20 transition-all"
+              className="pl-12 h-14 luxury-input text-lg rounded-2xl"
             />
           </motion.div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+      <div className="sticky top-0 z-40 bg-surface-card/90 backdrop-blur-xl border-b border-gold/10 shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex overflow-x-auto py-4 hide-scrollbar gap-2">
             {categories.map((cat) => (
@@ -90,8 +90,8 @@ export default function ExploreManaliPage() {
                 onClick={() => setActiveTab(cat.id)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all whitespace-nowrap ${
                   activeTab === cat.id 
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-gold text-surface shadow-md shadow-gold/20' 
+                    : 'bg-surface-elevated text-secondary hover:text-gold transition-colors'
                 }`}
               >
                 <cat.icon className="w-4 h-4" />
@@ -238,7 +238,7 @@ export default function ExploreManaliPage() {
               {loadingEmergency ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="bg-white rounded-2xl p-6 border border-slate-100">
+                    <div key={i} className="luxury-card rounded-2xl p-6">
                       <Skeleton className="h-6 w-1/2 mb-3" />
                       <Skeleton className="h-10 w-full" />
                     </div>
@@ -248,9 +248,9 @@ export default function ExploreManaliPage() {
                 <EmptyState icon={ShieldAlert} message="Emergency contacts coming soon." />
               ) : (
                 <div>
-                  <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 flex items-start gap-3">
+                  <div className="bg-red-500/100/100/100/10 border border-red-500/20 rounded-2xl p-4 mb-6 flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-red-700 text-sm font-medium">In a life-threatening emergency, always call 112 (National Emergency Number) first.</p>
+                    <p className="text-red-400 text-sm font-medium">In a life-threatening emergency, always call 112 (National Emergency Number) first.</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {(emergencyData as any[]).map((contact: any) => (
@@ -274,17 +274,17 @@ export default function ExploreManaliPage() {
 function EmptyState({ icon: Icon, message }: { icon: any; message: string }) {
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4">
+      <div className="w-20 h-20 bg-surface-elevated text-gold border border-gold/10 rounded-full flex items-center justify-center mb-4">
         <Icon className="w-10 h-10" />
       </div>
-      <p className="text-slate-500">{message}</p>
+      <p className="text-secondary">{message}</p>
     </div>
   );
 }
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col h-full">
+    <div className="luxury-card rounded-3xl flex flex-col h-full flex flex-col h-full">
       <Skeleton className="w-full h-48 rounded-none" />
       <div className="p-6 flex-1 flex flex-col gap-3">
         <Skeleton className="h-6 w-3/4" />
@@ -301,9 +301,9 @@ function SkeletonCard() {
 
 function FallbackImage({ alt, icon: Icon }: { alt: string; icon: any }) {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-slate-100">
+    <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-surface-elevated">
       <Icon className="w-12 h-12 mb-2" />
-      <span className="text-xs text-slate-400">{alt}</span>
+      <span className="text-xs text-secondary">{alt}</span>
     </div>
   );
 }
@@ -317,9 +317,9 @@ function PlaceCard({ data, priority = false }: { data: any, priority?: boolean }
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col group cursor-pointer"
+      className="luxury-card rounded-3xl flex flex-col group cursor-pointer flex flex-col group cursor-pointer"
     >
-      <div className="relative h-56 overflow-hidden bg-slate-100">
+      <div className="relative h-56 overflow-hidden bg-surface-elevated">
         {data.image && !imgError ? (
           <Image 
             src={data.image} 
@@ -333,41 +333,41 @@ function PlaceCard({ data, priority = false }: { data: any, priority?: boolean }
         ) : (
           <FallbackImage alt={data.name} icon={MapPin} />
         )}
-        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-rose-50 hover:text-rose-500 transition-colors">
+        <div className="absolute top-4 right-4 bg-surface-elevated/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-gold/10 hover:text-gold transition-colors">
           <Heart className="w-5 h-5" />
         </div>
         <div className="absolute top-4 left-4">
-          <Badge className="bg-slate-900/80 backdrop-blur-sm hover:bg-slate-900 border-none px-3 py-1 text-xs">
+          <Badge className="bg-surface/90 backdrop-blur-sm hover:bg-slate-900 border-none px-3 py-1 text-xs">
             {data.category}
           </Badge>
         </div>
       </div>
       
       <div className="p-6 flex flex-col flex-1">
-        <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-1">{data.name}</h3>
-        <p className="text-slate-600 text-sm mb-4 line-clamp-2">{data.description}</p>
+        <h3 className="text-xl font-bold text-primary mb-2 line-clamp-1">{data.name}</h3>
+        <p className="text-secondary text-sm mb-4 line-clamp-2">{data.description}</p>
         
-        <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+        <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-gold/10">
           {data.distance_from_hotel && (
-            <div className="flex items-center gap-2 text-slate-500 text-sm">
-              <MapPin className="w-4 h-4 text-blue-500" />
+            <div className="flex items-center gap-2 text-secondary text-sm">
+              <MapPin className="w-4 h-4 text-gold" />
               <span>{data.distance_from_hotel} km away</span>
             </div>
           )}
           {data.entry_fee > 0 ? (
-            <div className="flex items-center gap-2 text-slate-500 text-sm">
-              <DollarSign className="w-4 h-4 text-amber-500" />
+            <div className="flex items-center gap-2 text-secondary text-sm">
+              <DollarSign className="w-4 h-4 text-gold" />
               <span>₹{data.entry_fee} entry</span>
             </div>
           ) : data.is_free_entry ? (
-            <div className="flex items-center gap-2 text-slate-500 text-sm">
+            <div className="flex items-center gap-2 text-secondary text-sm">
               <CheckCircle2 className="w-4 h-4 text-green-500" />
               <span>Free Entry</span>
             </div>
           ) : null}
           {data.opening_time && (
-            <div className="flex items-center gap-2 text-slate-500 text-sm col-span-2">
-              <Clock className="w-4 h-4 text-amber-500" />
+            <div className="flex items-center gap-2 text-secondary text-sm col-span-2">
+              <Clock className="w-4 h-4 text-gold" />
               <span>{data.opening_time} – {data.closing_time}</span>
             </div>
           )}
@@ -382,9 +382,9 @@ function ActivityCard({ data, priority = false }: { data: any, priority?: boolea
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col group cursor-pointer"
+      className="luxury-card rounded-3xl flex flex-col group cursor-pointer flex flex-col group cursor-pointer"
     >
-      <div className="relative h-56 overflow-hidden bg-slate-100">
+      <div className="relative h-56 overflow-hidden bg-surface-elevated">
         {data.image && !imgError ? (
           <Image 
             src={data.image} 
@@ -398,36 +398,36 @@ function ActivityCard({ data, priority = false }: { data: any, priority?: boolea
         ) : (
           <FallbackImage alt={data.name} icon={Mountain} />
         )}
-        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-rose-50 hover:text-rose-500 transition-colors">
+        <div className="absolute top-4 right-4 bg-surface-elevated/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-gold/10 hover:text-gold transition-colors">
           <Heart className="w-5 h-5" />
         </div>
       </div>
       
       <div className="p-6 flex flex-col flex-1">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="text-xl font-bold text-slate-800 line-clamp-1">{data.name}</h3>
+          <h3 className="text-xl font-bold text-primary line-clamp-1">{data.name}</h3>
           {data.difficulty && (
             <Badge variant="outline" className={`
-              ${data.difficulty === 'Easy' ? 'border-green-200 text-green-700 bg-green-50' : ''}
-              ${data.difficulty === 'Moderate' ? 'border-amber-200 text-amber-700 bg-amber-50' : ''}
-              ${data.difficulty === 'Hard' ? 'border-red-200 text-red-700 bg-red-50' : ''}
+              ${data.difficulty === 'Easy' ? 'border-green-500/20 text-green-700 bg-green-500/100/10' : ''}
+              ${data.difficulty === 'Moderate' ? 'border-amber-500/20 text-amber-700 bg-amber-500/100/10' : ''}
+              ${data.difficulty === 'Hard' ? 'border-red-500/20 text-red-400 bg-red-500/100/100/100/10' : ''}
             `}>
               {data.difficulty}
             </Badge>
           )}
         </div>
-        <p className="text-slate-600 text-sm mb-4 line-clamp-2">{data.description}</p>
+        <p className="text-secondary text-sm mb-4 line-clamp-2">{data.description}</p>
         
-        <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+        <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-gold/10">
           {data.approximate_cost > 0 && (
-            <div className="flex items-center gap-2 text-slate-500 text-sm">
-              <DollarSign className="w-4 h-4 text-emerald-500" />
+            <div className="flex items-center gap-2 text-secondary text-sm">
+              <DollarSign className="w-4 h-4 text-gold" />
               <span>~₹{data.approximate_cost}</span>
             </div>
           )}
           {data.duration && (
-            <div className="flex items-center gap-2 text-slate-500 text-sm">
-              <Clock className="w-4 h-4 text-blue-500" />
+            <div className="flex items-center gap-2 text-secondary text-sm">
+              <Clock className="w-4 h-4 text-gold" />
               <span>{data.duration}</span>
             </div>
           )}
@@ -442,9 +442,9 @@ function FoodCard({ data, priority = false }: { data: any, priority?: boolean })
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col group cursor-pointer"
+      className="luxury-card rounded-3xl flex flex-col group cursor-pointer flex flex-col group cursor-pointer"
     >
-      <div className="relative h-56 overflow-hidden bg-slate-100">
+      <div className="relative h-56 overflow-hidden bg-surface-elevated">
         {data.image && !imgError ? (
           <Image 
             src={data.image} 
@@ -473,20 +473,20 @@ function FoodCard({ data, priority = false }: { data: any, priority?: boolean })
       </div>
       
       <div className="p-6 flex flex-col flex-1">
-        <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-1">{data.name}</h3>
-        <p className="text-slate-600 text-sm mb-4 line-clamp-2">{data.description}</p>
+        <h3 className="text-xl font-bold text-primary mb-2 line-clamp-1">{data.name}</h3>
+        <p className="text-secondary text-sm mb-4 line-clamp-2">{data.description}</p>
         
         {data.recommended_restaurant && (
-          <div className="mb-4 text-sm font-medium text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Best at</span>
+          <div className="mb-4 text-sm font-medium text-slate-700 bg-surface p-3 rounded-xl border border-gold/10">
+            <span className="text-secondary block text-xs uppercase tracking-wider mb-1">Best at</span>
             {data.recommended_restaurant}
           </div>
         )}
         
-        <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+        <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-gold/10">
           {data.approximate_cost > 0 && (
-            <div className="flex items-center gap-2 text-slate-500 text-sm">
-              <DollarSign className="w-4 h-4 text-emerald-500" />
+            <div className="flex items-center gap-2 text-secondary text-sm">
+              <DollarSign className="w-4 h-4 text-gold" />
               <span>~₹{data.approximate_cost}</span>
             </div>
           )}
@@ -508,19 +508,19 @@ const seasonIcons: Record<string, any> = {
 };
 
 const seasonColors: Record<string, string> = {
-  Summer: 'from-amber-400 to-orange-500',
-  Winter: 'from-blue-400 to-cyan-500',
-  Monsoon: 'from-teal-400 to-emerald-500',
+  Summer: 'from-gold to-[#A07A2E]',
+  Winter: 'from-[#1E293B] to-surface-elevated',
+  Monsoon: 'from-[#1A2235] to-surface-elevated',
 };
 
 function WeatherCard({ data }: { data: any }) {
   const Icon = seasonIcons[data.season] || CloudSun;
-  const gradient = seasonColors[data.season] || 'from-slate-400 to-slate-600';
+  const gradient = seasonColors[data.season] || 'from-[#1E2A3A] to-surface-card';
 
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100"
+      className="luxury-card rounded-3xl flex flex-col group cursor-pointer"
     >
       <div className={`bg-gradient-to-br ${gradient} p-6 flex items-center gap-4`}>
         <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
@@ -534,28 +534,28 @@ function WeatherCard({ data }: { data: any }) {
 
       <div className="p-6 space-y-4">
         <div>
-          <h4 className="font-semibold text-slate-800 mb-1">{data.title}</h4>
-          <p className="text-slate-600 text-sm leading-relaxed">{data.description}</p>
+          <h4 className="font-semibold text-primary mb-1">{data.title}</h4>
+          <p className="text-secondary text-sm leading-relaxed">{data.description}</p>
         </div>
 
         {data.expected_conditions && (
-          <div className="bg-blue-50 rounded-xl p-3">
-            <p className="text-xs uppercase text-blue-500 font-semibold tracking-wider mb-1">Expected Conditions</p>
-            <p className="text-blue-800 text-sm">{data.expected_conditions}</p>
+          <div className="bg-blue-500/100/10 rounded-xl p-3">
+            <p className="text-xs uppercase text-gold font-semibold tracking-wider mb-1">Expected Conditions</p>
+            <p className="text-blue-400 text-sm">{data.expected_conditions}</p>
           </div>
         )}
 
         {data.safety_tips && (
-          <div className="bg-amber-50 rounded-xl p-3">
-            <p className="text-xs uppercase text-amber-600 font-semibold tracking-wider mb-1">Safety Tips</p>
-            <p className="text-amber-800 text-sm">{data.safety_tips}</p>
+          <div className="bg-amber-500/100/10 rounded-xl p-3">
+            <p className="text-xs uppercase text-amber-400 font-semibold tracking-wider mb-1">Safety Tips</p>
+            <p className="text-amber-400 text-sm">{data.safety_tips}</p>
           </div>
         )}
 
         {data.recommended_items && (
-          <div className="bg-emerald-50 rounded-xl p-3">
-            <p className="text-xs uppercase text-emerald-600 font-semibold tracking-wider mb-1">What to Carry</p>
-            <p className="text-emerald-800 text-sm">{data.recommended_items}</p>
+          <div className="bg-emerald-500/100/10 rounded-xl p-3">
+            <p className="text-xs uppercase text-emerald-400 font-semibold tracking-wider mb-1">What to Carry</p>
+            <p className="text-emerald-400 text-sm">{data.recommended_items}</p>
           </div>
         )}
       </div>
@@ -565,20 +565,20 @@ function WeatherCard({ data }: { data: any }) {
 
 function PackingCard({ data }: { data: any }) {
   const Icon = seasonIcons[data.season] || Backpack;
-  const gradient = seasonColors[data.season] || 'from-slate-400 to-slate-600';
+  const gradient = seasonColors[data.season] || 'from-[#1E2A3A] to-surface-card';
 
   const sections = [
     { label: 'Clothing', value: data.clothing, color: 'bg-violet-50 text-violet-800' },
-    { label: 'Shoes', value: data.shoes, color: 'bg-blue-50 text-blue-800' },
-    { label: 'Accessories', value: data.accessories, color: 'bg-amber-50 text-amber-800' },
-    { label: 'Medicine', value: data.medicine, color: 'bg-red-50 text-red-800' },
-    { label: 'Travel Essentials', value: data.travel_essentials, color: 'bg-emerald-50 text-emerald-800' },
+    { label: 'Shoes', value: data.shoes, color: 'bg-blue-500/100/10 text-blue-400' },
+    { label: 'Accessories', value: data.accessories, color: 'bg-amber-500/100/10 text-amber-400' },
+    { label: 'Medicine', value: data.medicine, color: 'bg-red-500/100/100/100/10 text-red-800' },
+    { label: 'Travel Essentials', value: data.travel_essentials, color: 'bg-emerald-500/100/10 text-emerald-400' },
   ].filter(s => s.value);
 
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100"
+      className="luxury-card rounded-3xl flex flex-col group cursor-pointer"
     >
       <div className={`bg-gradient-to-br ${gradient} p-6 flex items-center gap-4`}>
         <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
@@ -598,8 +598,8 @@ function PackingCard({ data }: { data: any }) {
           </div>
         ))}
         {data.additional_tips && (
-          <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-            <p className="text-xs uppercase font-semibold tracking-wider mb-1 text-slate-500">Pro Tip</p>
+          <div className="bg-surface rounded-xl p-3 border border-gold/10">
+            <p className="text-xs uppercase font-semibold tracking-wider mb-1 text-secondary">Pro Tip</p>
             <p className="text-slate-700 text-sm">{data.additional_tips}</p>
           </div>
         )}
@@ -612,34 +612,34 @@ function TransportCard({ data }: { data: any }) {
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col"
+      className="luxury-card rounded-3xl flex flex-col group cursor-pointer flex flex-col"
     >
-      <div className="bg-gradient-to-br from-slate-700 to-slate-900 p-6 flex items-center gap-4">
+      <div className="bg-gradient-to-br from-surface-elevated to-surface p-6 flex items-center gap-4">
         <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center">
           <Bus className="w-8 h-8 text-white" />
         </div>
         <div>
-          <p className="text-slate-400 text-xs uppercase tracking-widest font-medium">{data.transport_type}</p>
+          <p className="text-secondary text-xs uppercase tracking-widest font-medium">{data.transport_type}</p>
           <h3 className="text-xl font-bold text-white line-clamp-1">{data.provider_name}</h3>
         </div>
       </div>
 
       <div className="p-6 space-y-3 flex-1">
         {data.description && (
-          <p className="text-slate-600 text-sm leading-relaxed">{data.description}</p>
+          <p className="text-secondary text-sm leading-relaxed">{data.description}</p>
         )}
 
         <div className="grid grid-cols-2 gap-3 pt-2">
           {data.estimated_cost > 0 && (
-            <div className="bg-emerald-50 rounded-xl p-3">
-              <p className="text-xs uppercase text-emerald-600 font-semibold mb-1">Est. Cost</p>
-              <p className="text-emerald-800 font-bold">₹{data.estimated_cost}</p>
+            <div className="bg-emerald-500/100/10 rounded-xl p-3">
+              <p className="text-xs uppercase text-emerald-400 font-semibold mb-1">Est. Cost</p>
+              <p className="text-emerald-400 font-bold">₹{data.estimated_cost}</p>
             </div>
           )}
           {data.opening_hours && (
-            <div className="bg-blue-50 rounded-xl p-3">
-              <p className="text-xs uppercase text-blue-600 font-semibold mb-1">Hours</p>
-              <p className="text-blue-800 text-sm font-medium">{data.opening_hours}</p>
+            <div className="bg-blue-500/100/10 rounded-xl p-3">
+              <p className="text-xs uppercase text-blue-400 font-semibold mb-1">Hours</p>
+              <p className="text-blue-400 text-sm font-medium">{data.opening_hours}</p>
             </div>
           )}
         </div>
@@ -647,16 +647,16 @@ function TransportCard({ data }: { data: any }) {
         {data.phone && (
           <a 
             href={`tel:${data.phone}`}
-            className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors text-sm font-medium mt-2"
+            className="flex items-center gap-2 text-secondary hover:text-blue-400 transition-colors text-sm font-medium mt-2"
           >
-            <Phone className="w-4 h-4 text-blue-500" />
+            <Phone className="w-4 h-4 text-gold" />
             {data.phone}
           </a>
         )}
 
         {data.distance_from_hotel && (
-          <div className="flex items-center gap-2 text-slate-500 text-sm">
-            <Navigation className="w-4 h-4 text-slate-400" />
+          <div className="flex items-center gap-2 text-secondary text-sm">
+            <Navigation className="w-4 h-4 text-secondary" />
             <span>{data.distance_from_hotel} km from hotel</span>
           </div>
         )}
@@ -680,21 +680,21 @@ function EmergencyCard({ data }: { data: any }) {
   return (
     <motion.div 
       whileHover={{ y: -3 }}
-      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100 flex"
+      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gold/10 flex"
     >
       <div className={`bg-gradient-to-br ${gradient} w-3 flex-shrink-0`} />
       <div className="p-5 flex-1">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">{data.category}</p>
-            <h3 className="text-lg font-bold text-slate-800">{data.service_name}</h3>
+            <p className="text-xs uppercase tracking-wider text-secondary font-semibold mb-1">{data.category}</p>
+            <h3 className="text-lg font-bold text-primary">{data.service_name}</h3>
             {data.description && (
-              <p className="text-slate-500 text-sm mt-1">{data.description}</p>
+              <p className="text-secondary text-sm mt-1">{data.description}</p>
             )}
           </div>
           <a 
             href={`tel:${data.phone_number}`}
-            className="flex-shrink-0 bg-red-50 hover:bg-red-100 text-red-600 font-bold px-4 py-2 rounded-xl text-sm transition-colors flex items-center gap-2"
+            className="flex-shrink-0 bg-red-500/100/100/100/10 hover:bg-red-500/100/100/20 text-red-600 font-bold px-4 py-2 rounded-xl text-sm transition-colors flex items-center gap-2"
           >
             <Phone className="w-4 h-4" />
             {data.phone_number}

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import api from '@/lib/api';
 
 interface ImageUploadProps {
   value: string;
@@ -23,32 +24,43 @@ export function ImageUpload({ value, onChange, folder = 'general', placeholder =
       return;
     }
 
+    // Enforce reasonable file size limit (5 MB) to prevent timeouts
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5 MB');
+      return;
+    }
+
     try {
       setIsUploading(true);
+
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', folder);
+      formData.append('bucket', 'hotel-gallery');
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/upload`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData,
-      });
+      // api.ts has baseURL='/api/v1', so this resolves to POST /api/v1/upload.
+      // Next.js rewrites /api/v1/* → Render backend /api/v1/*.
+      // withCredentials:true (set in api.ts) sends hh_session cookie automatically.
+      // Do NOT set Content-Type manually — Axios/browser sets the correct
+      // multipart/form-data boundary automatically when given a FormData body.
+      const response = await api.post('/upload', formData);
 
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || 'Upload failed');
+      const url = response.data?.data?.url;
+      if (!url) {
+        throw new Error('Upload succeeded but no URL was returned');
       }
 
-      onChange(result.data.url);
+      onChange(url);
       toast.success('Image uploaded successfully');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to upload image');
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to upload image';
+      toast.error(message);
     } finally {
       setIsUploading(false);
-      // Reset input
+      // Reset file input so the same file can be re-selected if needed
       e.target.value = '';
     }
   };
@@ -69,9 +81,9 @@ export function ImageUpload({ value, onChange, folder = 'general', placeholder =
           onChange={handleUpload}
           disabled={isUploading}
         />
-        <Button 
-          type="button" 
-          variant="secondary" 
+        <Button
+          type="button"
+          variant="secondary"
           disabled={isUploading}
           className="whitespace-nowrap flex items-center gap-2"
         >

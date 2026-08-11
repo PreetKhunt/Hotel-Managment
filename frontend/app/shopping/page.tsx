@@ -39,7 +39,7 @@ export default function ShoppingDealsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-surface pb-20">
       {/* Hero Section */}
       <div className="relative h-[350px] sm:h-[450px] w-full bg-slate-900 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-30 mix-blend-overlay"></div>
@@ -80,7 +80,7 @@ export default function ShoppingDealsPage() {
           {/* Sidebar / Filters */}
           <div className="lg:col-span-3 space-y-6">
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm sticky top-24">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
                 <Search className="w-5 h-5 text-slate-400" />
                 Find Brands
               </h3>
@@ -88,10 +88,10 @@ export default function ShoppingDealsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search shops or brands..." 
-                className="bg-slate-50 border-slate-200 h-12 rounded-xl mb-6"
+                className="bg-surface border-gold/10 h-12 rounded-xl mb-6"
               />
               
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-slate-400" />
                 Partner Shops
               </h3>
@@ -101,8 +101,8 @@ export default function ShoppingDealsPage() {
                   onClick={() => setSelectedShop(null)}
                   className={`text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     selectedShop === null 
-                      ? 'bg-violet-50 text-violet-700 border border-violet-100' 
-                      : 'text-slate-600 hover:bg-slate-50'
+                      ? 'bg-gold/10 text-gold border border-gold/20 border border-gold/20' 
+                      : 'text-secondary hover:bg-surface'
                   }`}
                 >
                   All Offers
@@ -116,8 +116,8 @@ export default function ShoppingDealsPage() {
                       onClick={() => setSelectedShop(shop.id)}
                       className={`text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex flex-col ${
                         selectedShop === shop.id 
-                          ? 'bg-violet-50 text-violet-700 border border-violet-100' 
-                          : 'text-slate-600 hover:bg-slate-50'
+                          ? 'bg-gold/10 text-gold border border-gold/20 border border-gold/20' 
+                          : 'text-secondary hover:bg-surface'
                       }`}
                     >
                       <span className="line-clamp-1">{shop.brand_name || shop.shop_name}</span>
@@ -133,13 +133,13 @@ export default function ShoppingDealsPage() {
           <div className="lg:col-span-9">
             <div className="mb-6 flex justify-between items-end">
               <div>
-                <h2 className="text-2xl font-bold text-slate-800">
+                <h2 className="text-2xl font-bold text-primary">
                   {selectedShop 
                     ? shopsData?.data.find(s => s.id === selectedShop)?.brand_name || shopsData?.data.find(s => s.id === selectedShop)?.shop_name 
                     : 'All Exclusive Offers'
                   }
                 </h2>
-                <p className="text-slate-500 mt-1">Claim coupons to show at the store</p>
+                <p className="text-secondary mt-1">Claim coupons to show at the store</p>
               </div>
             </div>
 
@@ -147,12 +147,17 @@ export default function ShoppingDealsPage() {
               {loadingOffers ? (
                 Array.from({ length: 6 }).map((_, i) => <OfferSkeletonCard key={i} />)
               ) : offersData?.data.length === 0 ? (
-                <div className="col-span-full py-20 text-center">
-                  <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Tag className="w-8 h-8" />
+                <div className="col-span-full py-20 flex flex-col items-center justify-center text-center">
+                  <div className="w-24 h-24 bg-gold/10 text-gold rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gold/20">
+                    <ShoppingBag className="w-10 h-10" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-700 mb-2">No offers available</h3>
-                  <p className="text-slate-500">There are currently no active offers for this selection.</p>
+                  <Badge className="bg-gold/20 text-gold border-none mb-4 px-4 py-1.5 font-semibold uppercase tracking-wider text-xs">
+                    Coming Soon
+                  </Badge>
+                  <h3 className="text-2xl font-bold text-primary mb-3">Brand Deals Coming Soon</h3>
+                  <p className="text-secondary max-w-md mx-auto leading-relaxed">
+                    We're partnering with the best local brands, cafés, boutiques, and adventure stores in Manali. Exclusive hotel guest offers will appear here soon.
+                  </p>
                 </div>
               ) : (
                 <AnimatePresence>
@@ -167,23 +172,23 @@ export default function ShoppingDealsPage() {
                     >
                       {/* Decorative elements */}
                       <div className="absolute top-0 right-0 w-32 h-32 bg-violet-100 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
-                      <div className="absolute top-4 right-4 text-violet-500 bg-white shadow-sm p-2 rounded-full">
+                      <div className="absolute top-4 right-4 text-gold bg-white shadow-sm p-2 rounded-full">
                         <Gift className="w-5 h-5" />
                       </div>
 
                       <div className="p-6 pb-0 pt-8 flex-1">
-                        <Badge className="bg-fuchsia-100 text-fuchsia-700 border-none mb-4 px-3 py-1 font-semibold uppercase tracking-wider text-[10px]">
+                        <Badge className="bg-gold/20 text-gold border-none mb-4 px-3 py-1 font-semibold uppercase tracking-wider text-[10px]">
                           {offer.offer_type}
                         </Badge>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2 leading-tight">
+                        <h3 className="text-xl font-bold text-primary mb-2 leading-tight">
                           {offer.title}
                         </h3>
-                        <p className="text-slate-600 text-sm mb-4 line-clamp-3 leading-relaxed">
+                        <p className="text-secondary text-sm mb-4 line-clamp-3 leading-relaxed">
                           {offer.description}
                         </p>
                         
-                        <div className="flex items-center gap-2 mt-4 text-sm font-medium text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                          <ShoppingBag className="w-4 h-4 text-violet-500" />
+                        <div className="flex items-center gap-2 mt-4 text-sm font-medium text-slate-700 bg-surface p-3 rounded-xl border border-slate-100">
+                          <ShoppingBag className="w-4 h-4 text-gold" />
                           <span className="line-clamp-1">{offer.shop_name || offer.brand_name}</span>
                         </div>
                       </div>
@@ -192,7 +197,7 @@ export default function ShoppingDealsPage() {
                         <Button 
                           onClick={() => handleClaimOffer(offer.id)}
                           disabled={generateCoupon.isPending}
-                          className="w-full bg-violet-600 hover:bg-violet-700 text-white rounded-xl h-12 shadow-lg shadow-violet-600/20 group-hover:shadow-violet-600/40 transition-all font-semibold flex items-center justify-center gap-2"
+                          className="w-full bg-gold hover:bg-[#b0923e] text-white rounded-xl h-12 shadow-lg shadow-violet-600/20 group-hover:shadow-violet-600/40 transition-all font-semibold flex items-center justify-center gap-2"
                         >
                           {generateCoupon.isPending ? 'Generating...' : (
                             <>

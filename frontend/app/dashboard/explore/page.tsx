@@ -43,24 +43,24 @@ export default function AdminExploreManaliPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <MapPin className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <MapPin className="w-6 h-6 text-gold" />
             Manage Explore Manali
           </h1>
-          <p className="text-slate-500">Add, edit, and manage places, activities, and local guides.</p>
+          <p className="text-slate-400">Add, edit, and manage places, activities, and local guides.</p>
         </div>
-        <Button onClick={() => setIsAdding(!isAdding)} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => setIsAdding(!isAdding)} className="bg-gold text-[#0A0F1E] hover:bg-[#b0923e]">
           <Plus className="w-4 h-4 mr-2" />
           Add New Place
         </Button>
       </div>
 
       {isAdding && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input placeholder="Name" value={newPlace.name} onChange={e => setNewPlace({...newPlace, name: e.target.value})} />
-          <Input placeholder="Category" value={newPlace.category} onChange={e => setNewPlace({...newPlace, category: e.target.value})} />
-          <Input placeholder="Description" value={newPlace.description} onChange={e => setNewPlace({...newPlace, description: e.target.value})} className="md:col-span-2" />
-          <Input type="number" placeholder="Distance (km)" value={newPlace.distance_from_hotel || ''} onChange={e => setNewPlace({...newPlace, distance_from_hotel: Number(e.target.value)})} />
+        <div className="bg-surface-card p-6 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input className="luxury-input" placeholder="Name" value={newPlace.name} onChange={e => setNewPlace({...newPlace, name: e.target.value})} />
+          <Input className="luxury-input" placeholder="Category" value={newPlace.category} onChange={e => setNewPlace({...newPlace, category: e.target.value})} />
+          <Input className="luxury-input md:col-span-2" placeholder="Description" value={newPlace.description} onChange={e => setNewPlace({...newPlace, description: e.target.value})} />
+          <Input className="luxury-input" type="number" placeholder="Distance (km)" value={newPlace.distance_from_hotel || ''} onChange={e => setNewPlace({...newPlace, distance_from_hotel: Number(e.target.value)})} />
           <ImageUpload 
             value={newPlace.image || ''} 
             onChange={url => setNewPlace({...newPlace, image: url})} 
@@ -76,9 +76,9 @@ export default function AdminExploreManaliPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-surface-card rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-600">
+          <thead className="bg-slate-50 text-slate-300">
             <tr>
               <th className="p-4 font-medium">Place Name</th>
               <th className="p-4 font-medium">Category</th>
@@ -86,26 +86,26 @@ export default function AdminExploreManaliPage() {
               <th className="p-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-[rgba(255,255,255,0.05)]">
             {isLoading ? (
               <tr><td colSpan={4} className="p-8 text-center text-slate-400"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></td></tr>
             ) : places?.data.map((place) => (
-              <tr key={place.id} className="hover:bg-slate-50 transition-colors">
-                <td className="p-4 font-medium text-slate-800">{place.name}</td>
-                <td className="p-4"><span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs">{place.category}</span></td>
-                <td className="p-4 text-slate-500">{place.distance_from_hotel} km</td>
+              <tr key={place.id} className="hover:bg-[rgba(201,168,76,0.04)] transition-colors">
+                <td className="p-4 font-medium text-white">{place.name}</td>
+                <td className="p-4"><span className="bg-[rgba(255,255,255,0.05)] text-slate-300 px-2 py-1 rounded text-xs">{place.category}</span></td>
+                <td className="p-4 text-slate-400">{place.distance_from_hotel} km</td>
                 <td className="p-4 text-right flex justify-end gap-2">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-gold">
                     <Edit2 className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(place.id)} className="h-8 w-8 text-slate-400 hover:text-red-600">
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(place.id)} className="h-8 w-8 text-slate-400 hover:text-red-400">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </td>
               </tr>
             ))}
             {places?.data.length === 0 && !isLoading && (
-              <tr><td colSpan={4} className="p-8 text-center text-slate-500">No places found. Add one to get started!</td></tr>
+              <tr><td colSpan={4} className="p-8 text-center text-slate-400">No places found. Add one to get started!</td></tr>
             )}
           </tbody>
         </table>
