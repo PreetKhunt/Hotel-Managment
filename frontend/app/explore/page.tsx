@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, Mountain, Utensils, CloudSun, Backpack, ShieldAlert, Bus,
-  Search, ArrowRight, Heart, Clock, DollarSign, Star
+  Search, Heart, Clock, DollarSign, Phone, Sun, Snowflake, CloudRain,
+  AlertTriangle, Navigation, CheckCircle2
 } from 'lucide-react';
 import { 
   usePlaces, useActivities, useFoods, useWeatherTips, 
@@ -32,8 +33,10 @@ export default function ExploreManaliPage() {
   const { data: placesData, isLoading: loadingPlaces } = usePlaces({ search: searchQuery });
   const { data: activitiesData, isLoading: loadingActivities } = useActivities({ search: searchQuery });
   const { data: foodData, isLoading: loadingFood } = useFoods({ search: searchQuery });
-  const { data: weatherData } = useWeatherTips();
-  const { data: packingData } = usePackingGuides();
+  const { data: weatherData, isLoading: loadingWeather } = useWeatherTips();
+  const { data: packingData, isLoading: loadingPacking } = usePackingGuides();
+  const { data: transportData, isLoading: loadingTransport } = useTransport();
+  const { data: emergencyData, isLoading: loadingEmergency } = useEmergencyContacts();
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -111,7 +114,9 @@ export default function ExploreManaliPage() {
             >
               {loadingPlaces ? (
                 Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-              ) : placesData?.data.map((place) => (
+              ) : !placesData?.data?.length ? (
+                <EmptyState icon={MapPin} message="No places found." />
+              ) : placesData.data.map((place) => (
                 <PlaceCard key={place.id} data={place} />
               ))}
             </motion.div>
@@ -127,7 +132,9 @@ export default function ExploreManaliPage() {
             >
               {loadingActivities ? (
                 Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-              ) : activitiesData?.data.map((activity) => (
+              ) : !activitiesData?.data?.length ? (
+                <EmptyState icon={Mountain} message="No activities found." />
+              ) : activitiesData.data.map((activity) => (
                 <ActivityCard key={activity.id} data={activity} />
               ))}
             </motion.div>
@@ -143,26 +150,114 @@ export default function ExploreManaliPage() {
             >
               {loadingFood ? (
                 Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-              ) : foodData?.data.map((food) => (
+              ) : !foodData?.data?.length ? (
+                <EmptyState icon={Utensils} message="No food recommendations found." />
+              ) : foodData.data.map((food) => (
                 <FoodCard key={food.id} data={food} />
               ))}
             </motion.div>
           )}
-          
-          {/* Implement other tabs similarly... */}
-          {(activeTab === 'weather' || activeTab === 'packing' || activeTab === 'transport' || activeTab === 'emergency') && (
+
+          {activeTab === 'weather' && (
             <motion.div
-              key="other"
+              key="weather"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="flex flex-col items-center justify-center py-20 text-center"
             >
-              <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-6">
-                <MapPin className="w-10 h-10" />
-              </div>
-              <h2 className="text-2xl font-semibold text-slate-800 mb-2">Detailed Information Coming Soon</h2>
-              <p className="text-slate-500 max-w-md">The destination guide for this section is being populated by our local experts.</p>
+              {loadingWeather ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
+                </div>
+              ) : !weatherData?.length ? (
+                <EmptyState icon={CloudSun} message="Weather information coming soon." />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {(weatherData as any[]).map((tip: any) => (
+                    <WeatherCard key={tip.id} data={tip} />
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'packing' && (
+            <motion.div
+              key="packing"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              {loadingPacking ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
+                </div>
+              ) : !packingData?.length ? (
+                <EmptyState icon={Backpack} message="Packing guide coming soon." />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {(packingData as any[]).map((guide: any) => (
+                    <PackingCard key={guide.id} data={guide} />
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'transport' && (
+            <motion.div
+              key="transport"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              {loadingTransport ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+                </div>
+              ) : !transportData?.length ? (
+                <EmptyState icon={Bus} message="Transport information coming soon." />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {(transportData as any[]).map((item: any) => (
+                    <TransportCard key={item.id} data={item} />
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'emergency' && (
+            <motion.div
+              key="emergency"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              {loadingEmergency ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-white rounded-2xl p-6 border border-slate-100">
+                      <Skeleton className="h-6 w-1/2 mb-3" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : !emergencyData?.length ? (
+                <EmptyState icon={ShieldAlert} message="Emergency contacts coming soon." />
+              ) : (
+                <div>
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-red-700 text-sm font-medium">In a life-threatening emergency, always call 112 (National Emergency Number) first.</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(emergencyData as any[]).map((contact: any) => (
+                      <EmergencyCard key={contact.id} data={contact} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -172,8 +267,19 @@ export default function ExploreManaliPage() {
 }
 
 // ----------------------------------------------------------------------
-// COMPONENTS
+// SHARED UTILS
 // ----------------------------------------------------------------------
+
+function EmptyState({ icon: Icon, message }: { icon: any; message: string }) {
+  return (
+    <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
+      <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4">
+        <Icon className="w-10 h-10" />
+      </div>
+      <p className="text-slate-500">{message}</p>
+    </div>
+  );
+}
 
 function SkeletonCard() {
   return (
@@ -192,19 +298,36 @@ function SkeletonCard() {
   );
 }
 
+function FallbackImage({ alt, icon: Icon }: { alt: string; icon: any }) {
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-slate-100">
+      <Icon className="w-12 h-12 mb-2" />
+      <span className="text-xs text-slate-400">{alt}</span>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------
+// CARD COMPONENTS
+// ----------------------------------------------------------------------
+
 function PlaceCard({ data }: { data: any }) {
+  const [imgError, setImgError] = useState(false);
   return (
     <motion.div 
       whileHover={{ y: -5 }}
       className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col group cursor-pointer"
     >
       <div className="relative h-56 overflow-hidden bg-slate-100">
-        {data.image ? (
-          <img src={data.image} alt={data.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        {data.image && !imgError ? (
+          <img 
+            src={data.image} 
+            alt={data.name} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={() => setImgError(true)}
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-300">
-            <MapPin className="w-12 h-12" />
-          </div>
+          <FallbackImage alt={data.name} icon={MapPin} />
         )}
         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-rose-50 hover:text-rose-500 transition-colors">
           <Heart className="w-5 h-5" />
@@ -227,10 +350,21 @@ function PlaceCard({ data }: { data: any }) {
               <span>{data.distance_from_hotel} km away</span>
             </div>
           )}
-          {data.opening_time && (
+          {data.entry_fee > 0 ? (
             <div className="flex items-center gap-2 text-slate-500 text-sm">
+              <DollarSign className="w-4 h-4 text-amber-500" />
+              <span>₹{data.entry_fee} entry</span>
+            </div>
+          ) : data.is_free_entry ? (
+            <div className="flex items-center gap-2 text-slate-500 text-sm">
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+              <span>Free Entry</span>
+            </div>
+          ) : null}
+          {data.opening_time && (
+            <div className="flex items-center gap-2 text-slate-500 text-sm col-span-2">
               <Clock className="w-4 h-4 text-amber-500" />
-              <span>{data.opening_time} - {data.closing_time}</span>
+              <span>{data.opening_time} – {data.closing_time}</span>
             </div>
           )}
         </div>
@@ -240,18 +374,22 @@ function PlaceCard({ data }: { data: any }) {
 }
 
 function ActivityCard({ data }: { data: any }) {
+  const [imgError, setImgError] = useState(false);
   return (
     <motion.div 
       whileHover={{ y: -5 }}
       className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col group cursor-pointer"
     >
       <div className="relative h-56 overflow-hidden bg-slate-100">
-        {data.image ? (
-          <img src={data.image} alt={data.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        {data.image && !imgError ? (
+          <img 
+            src={data.image} 
+            alt={data.name} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={() => setImgError(true)}
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-300">
-            <Mountain className="w-12 h-12" />
-          </div>
+          <FallbackImage alt={data.name} icon={Mountain} />
         )}
         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-rose-50 hover:text-rose-500 transition-colors">
           <Heart className="w-5 h-5" />
@@ -293,18 +431,22 @@ function ActivityCard({ data }: { data: any }) {
 }
 
 function FoodCard({ data }: { data: any }) {
+  const [imgError, setImgError] = useState(false);
   return (
     <motion.div 
       whileHover={{ y: -5 }}
       className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col group cursor-pointer"
     >
       <div className="relative h-56 overflow-hidden bg-slate-100">
-        {data.image ? (
-          <img src={data.image} alt={data.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        {data.image && !imgError ? (
+          <img 
+            src={data.image} 
+            alt={data.name} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={() => setImgError(true)}
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-300">
-            <Utensils className="w-12 h-12" />
-          </div>
+          <FallbackImage alt={data.name} icon={Utensils} />
         )}
         <div className="absolute top-4 left-4 flex gap-2">
           {data.veg_non_veg === 'Veg' && (
@@ -338,6 +480,215 @@ function FoodCard({ data }: { data: any }) {
               <span>~₹{data.approximate_cost}</span>
             </div>
           )}
+          {data.category && (
+            <Badge variant="outline" className="border-orange-200 text-orange-700 bg-orange-50 w-fit">
+              {data.category}
+            </Badge>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+const seasonIcons: Record<string, any> = {
+  Summer: Sun,
+  Winter: Snowflake,
+  Monsoon: CloudRain,
+};
+
+const seasonColors: Record<string, string> = {
+  Summer: 'from-amber-400 to-orange-500',
+  Winter: 'from-blue-400 to-cyan-500',
+  Monsoon: 'from-teal-400 to-emerald-500',
+};
+
+function WeatherCard({ data }: { data: any }) {
+  const Icon = seasonIcons[data.season] || CloudSun;
+  const gradient = seasonColors[data.season] || 'from-slate-400 to-slate-600';
+
+  return (
+    <motion.div 
+      whileHover={{ y: -5 }}
+      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100"
+    >
+      <div className={`bg-gradient-to-br ${gradient} p-6 flex items-center gap-4`}>
+        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+          <Icon className="w-8 h-8 text-white" />
+        </div>
+        <div>
+          <p className="text-white/80 text-sm uppercase tracking-widest font-medium">Season</p>
+          <h3 className="text-2xl font-bold text-white">{data.season}</h3>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-4">
+        <div>
+          <h4 className="font-semibold text-slate-800 mb-1">{data.title}</h4>
+          <p className="text-slate-600 text-sm leading-relaxed">{data.description}</p>
+        </div>
+
+        {data.expected_conditions && (
+          <div className="bg-blue-50 rounded-xl p-3">
+            <p className="text-xs uppercase text-blue-500 font-semibold tracking-wider mb-1">Expected Conditions</p>
+            <p className="text-blue-800 text-sm">{data.expected_conditions}</p>
+          </div>
+        )}
+
+        {data.safety_tips && (
+          <div className="bg-amber-50 rounded-xl p-3">
+            <p className="text-xs uppercase text-amber-600 font-semibold tracking-wider mb-1">Safety Tips</p>
+            <p className="text-amber-800 text-sm">{data.safety_tips}</p>
+          </div>
+        )}
+
+        {data.recommended_items && (
+          <div className="bg-emerald-50 rounded-xl p-3">
+            <p className="text-xs uppercase text-emerald-600 font-semibold tracking-wider mb-1">What to Carry</p>
+            <p className="text-emerald-800 text-sm">{data.recommended_items}</p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function PackingCard({ data }: { data: any }) {
+  const Icon = seasonIcons[data.season] || Backpack;
+  const gradient = seasonColors[data.season] || 'from-slate-400 to-slate-600';
+
+  const sections = [
+    { label: 'Clothing', value: data.clothing, color: 'bg-violet-50 text-violet-800' },
+    { label: 'Shoes', value: data.shoes, color: 'bg-blue-50 text-blue-800' },
+    { label: 'Accessories', value: data.accessories, color: 'bg-amber-50 text-amber-800' },
+    { label: 'Medicine', value: data.medicine, color: 'bg-red-50 text-red-800' },
+    { label: 'Travel Essentials', value: data.travel_essentials, color: 'bg-emerald-50 text-emerald-800' },
+  ].filter(s => s.value);
+
+  return (
+    <motion.div 
+      whileHover={{ y: -5 }}
+      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100"
+    >
+      <div className={`bg-gradient-to-br ${gradient} p-6 flex items-center gap-4`}>
+        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+          <Icon className="w-8 h-8 text-white" />
+        </div>
+        <div>
+          <p className="text-white/80 text-sm uppercase tracking-widest font-medium">Packing Guide</p>
+          <h3 className="text-2xl font-bold text-white">{data.season}</h3>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-3">
+        {sections.map(({ label, value, color }) => (
+          <div key={label} className={`${color} rounded-xl p-3`}>
+            <p className="text-xs uppercase font-semibold tracking-wider mb-1 opacity-70">{label}</p>
+            <p className="text-sm">{value}</p>
+          </div>
+        ))}
+        {data.additional_tips && (
+          <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+            <p className="text-xs uppercase font-semibold tracking-wider mb-1 text-slate-500">Pro Tip</p>
+            <p className="text-slate-700 text-sm">{data.additional_tips}</p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function TransportCard({ data }: { data: any }) {
+  return (
+    <motion.div 
+      whileHover={{ y: -5 }}
+      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col"
+    >
+      <div className="bg-gradient-to-br from-slate-700 to-slate-900 p-6 flex items-center gap-4">
+        <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center">
+          <Bus className="w-8 h-8 text-white" />
+        </div>
+        <div>
+          <p className="text-slate-400 text-xs uppercase tracking-widest font-medium">{data.transport_type}</p>
+          <h3 className="text-xl font-bold text-white line-clamp-1">{data.provider_name}</h3>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-3 flex-1">
+        {data.description && (
+          <p className="text-slate-600 text-sm leading-relaxed">{data.description}</p>
+        )}
+
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          {data.estimated_cost > 0 && (
+            <div className="bg-emerald-50 rounded-xl p-3">
+              <p className="text-xs uppercase text-emerald-600 font-semibold mb-1">Est. Cost</p>
+              <p className="text-emerald-800 font-bold">₹{data.estimated_cost}</p>
+            </div>
+          )}
+          {data.opening_hours && (
+            <div className="bg-blue-50 rounded-xl p-3">
+              <p className="text-xs uppercase text-blue-600 font-semibold mb-1">Hours</p>
+              <p className="text-blue-800 text-sm font-medium">{data.opening_hours}</p>
+            </div>
+          )}
+        </div>
+
+        {data.phone && (
+          <a 
+            href={`tel:${data.phone}`}
+            className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors text-sm font-medium mt-2"
+          >
+            <Phone className="w-4 h-4 text-blue-500" />
+            {data.phone}
+          </a>
+        )}
+
+        {data.distance_from_hotel && (
+          <div className="flex items-center gap-2 text-slate-500 text-sm">
+            <Navigation className="w-4 h-4 text-slate-400" />
+            <span>{data.distance_from_hotel} km from hotel</span>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+const emergencyCategoryColors: Record<string, string> = {
+  Security: 'from-blue-600 to-blue-800',
+  Medical: 'from-red-500 to-red-700',
+  Emergency: 'from-orange-500 to-red-600',
+  Internal: 'from-violet-600 to-violet-800',
+  Transport: 'from-slate-600 to-slate-800',
+  Information: 'from-emerald-600 to-teal-700',
+};
+
+function EmergencyCard({ data }: { data: any }) {
+  const gradient = emergencyCategoryColors[data.category] || 'from-slate-600 to-slate-800';
+
+  return (
+    <motion.div 
+      whileHover={{ y: -3 }}
+      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100 flex"
+    >
+      <div className={`bg-gradient-to-br ${gradient} w-3 flex-shrink-0`} />
+      <div className="p-5 flex-1">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">{data.category}</p>
+            <h3 className="text-lg font-bold text-slate-800">{data.service_name}</h3>
+            {data.description && (
+              <p className="text-slate-500 text-sm mt-1">{data.description}</p>
+            )}
+          </div>
+          <a 
+            href={`tel:${data.phone_number}`}
+            className="flex-shrink-0 bg-red-50 hover:bg-red-100 text-red-600 font-bold px-4 py-2 rounded-xl text-sm transition-colors flex items-center gap-2"
+          >
+            <Phone className="w-4 h-4" />
+            {data.phone_number}
+          </a>
         </div>
       </div>
     </motion.div>

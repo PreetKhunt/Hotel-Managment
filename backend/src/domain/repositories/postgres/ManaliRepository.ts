@@ -224,7 +224,7 @@ export class ManaliRepository implements IManaliRepository {
       query += ' AND season = $1';
       params.push(season);
     }
-    query += ' ORDER BY category ASC, item_name ASC';
+    query += ' ORDER BY season ASC';
     return this.query<ManaliPackingGuide>(query, params, client);
   }
 
