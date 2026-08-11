@@ -410,6 +410,7 @@ function ActivityCard({ data, priority = false }: { data: any, priority?: boolea
             <Badge variant="outline" className={`
               ${data.difficulty === 'Easy' ? 'border-green-500/20 text-green-400 bg-green-500/10' : ''}
               ${data.difficulty === 'Moderate' ? 'border-amber-500/20 text-amber-400 bg-amber-500/10' : ''}
+              ${data.difficulty === 'Moderate to Hard' ? 'border-orange-500/20 text-orange-400 bg-orange-500/10' : ''}
               ${data.difficulty === 'Hard' ? 'border-red-500/20 text-red-400 bg-red-500/10' : ''}
             `}>
               {data.difficulty}
