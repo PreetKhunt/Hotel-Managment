@@ -23,7 +23,6 @@ export class AuthService {
   private createSSRClient(req?: any, res?: any) {
     const { createServerClient } = require('@supabase/ssr');
     
-    console.log('[Forensics] Before createSSRClient');
     // Official production @supabase/ssr implementation for Express
     const client = createServerClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
         cookies: req && res ? {
@@ -62,7 +61,6 @@ export class AuthService {
         setAll() {}
       }
     });
-    console.log('[Forensics] After createSSRClient');
     return client;
   }
 
@@ -282,14 +280,24 @@ export class AuthService {
       console.log(`[OAuth Deduplication] First invocation for code ${code.substring(0, 10)}... Initiating exact single execution of exchangeCodeForSession.`);
       exchangePromise = (async () => {
         try {
-          console.log('[Forensics] Calling createSSRClient for exchangeCodeForSession');
           const client = this.createSSRClient(req, res);
-          console.log('[Forensics] Before client.auth.exchangeCodeForSession(code)');
           const result = await client.auth.exchangeCodeForSession(code);
-          console.log('[Forensics] After client.auth.exchangeCodeForSession(code). Data:', JSON.stringify(result.data), 'Error:', JSON.stringify(result.error));
+          
+          if (result.error) {
+            console.error('[OAuth] exchangeCodeForSession failed', {
+              message: result.error.message,
+              status: result.error.status,
+            });
+          } else {
+            console.log('[OAuth] exchangeCodeForSession successful', {
+              userId: result.data.user?.id,
+              provider: result.data.user?.app_metadata?.provider,
+              hasSession: Boolean(result.data.session)
+            });
+          }
           return result;
         } catch (err: any) {
-          console.error('[Forensics] FATAL EXCEPTION during createSSRClient() or exchangeCodeForSession():');
+          console.error('[OAuth] FATAL EXCEPTION during createSSRClient() or exchangeCodeForSession():');
           console.error(err.stack || err);
           throw err;
         } finally {
