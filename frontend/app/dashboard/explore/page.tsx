@@ -78,7 +78,7 @@ export default function AdminExploreManaliPage() {
 
       <div className="bg-surface-card rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-300">
+          <thead className="bg-surface-card text-slate-300">
             <tr>
               <th className="p-4 font-medium">Place Name</th>
               <th className="p-4 font-medium">Category</th>

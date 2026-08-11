@@ -69,7 +69,7 @@ export default function ExploreManaliPage() {
             transition={{ delay: 0.2 }}
             className="relative max-w-xl"
           >
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary h-5 w-5" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 h-5 w-5" />
             <Input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -91,7 +91,7 @@ export default function ExploreManaliPage() {
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all whitespace-nowrap ${
                   activeTab === cat.id 
                     ? 'bg-gold text-surface shadow-md shadow-gold/20' 
-                    : 'bg-surface-elevated text-secondary hover:text-gold transition-colors'
+                    : 'bg-surface-elevated text-slate-300 hover:text-gold transition-colors'
                 }`}
               >
                 <cat.icon className="w-4 h-4" />
@@ -248,7 +248,7 @@ export default function ExploreManaliPage() {
                 <EmptyState icon={ShieldAlert} message="Emergency contacts coming soon." />
               ) : (
                 <div>
-                  <div className="bg-red-500/100/100/100/10 border border-red-500/20 rounded-2xl p-4 mb-6 flex items-start gap-3">
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-6 flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                     <p className="text-red-400 text-sm font-medium">In a life-threatening emergency, always call 112 (National Emergency Number) first.</p>
                   </div>
@@ -277,7 +277,7 @@ function EmptyState({ icon: Icon, message }: { icon: any; message: string }) {
       <div className="w-20 h-20 bg-surface-elevated text-gold border border-gold/10 rounded-full flex items-center justify-center mb-4">
         <Icon className="w-10 h-10" />
       </div>
-      <p className="text-secondary">{message}</p>
+      <p className="text-slate-300">{message}</p>
     </div>
   );
 }
@@ -303,7 +303,7 @@ function FallbackImage({ alt, icon: Icon }: { alt: string; icon: any }) {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-surface-elevated">
       <Icon className="w-12 h-12 mb-2" />
-      <span className="text-xs text-secondary">{alt}</span>
+      <span className="text-xs text-slate-300">{alt}</span>
     </div>
   );
 }
@@ -344,29 +344,29 @@ function PlaceCard({ data, priority = false }: { data: any, priority?: boolean }
       </div>
       
       <div className="p-6 flex flex-col flex-1">
-        <h3 className="text-xl font-bold text-primary mb-2 line-clamp-1">{data.name}</h3>
-        <p className="text-secondary text-sm mb-4 line-clamp-2">{data.description}</p>
+        <h3 className="text-xl font-bold text-white mb-2 line-clamp-1">{data.name}</h3>
+        <p className="text-slate-300 text-sm mb-4 line-clamp-2">{data.description}</p>
         
         <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-gold/10">
           {data.distance_from_hotel && (
-            <div className="flex items-center gap-2 text-secondary text-sm">
+            <div className="flex items-center gap-2 text-slate-300 text-sm">
               <MapPin className="w-4 h-4 text-gold" />
               <span>{data.distance_from_hotel} km away</span>
             </div>
           )}
           {data.entry_fee > 0 ? (
-            <div className="flex items-center gap-2 text-secondary text-sm">
+            <div className="flex items-center gap-2 text-slate-300 text-sm">
               <DollarSign className="w-4 h-4 text-gold" />
               <span>₹{data.entry_fee} entry</span>
             </div>
           ) : data.is_free_entry ? (
-            <div className="flex items-center gap-2 text-secondary text-sm">
+            <div className="flex items-center gap-2 text-slate-300 text-sm">
               <CheckCircle2 className="w-4 h-4 text-green-500" />
               <span>Free Entry</span>
             </div>
           ) : null}
           {data.opening_time && (
-            <div className="flex items-center gap-2 text-secondary text-sm col-span-2">
+            <div className="flex items-center gap-2 text-slate-300 text-sm col-span-2">
               <Clock className="w-4 h-4 text-gold" />
               <span>{data.opening_time} – {data.closing_time}</span>
             </div>
@@ -405,28 +405,28 @@ function ActivityCard({ data, priority = false }: { data: any, priority?: boolea
       
       <div className="p-6 flex flex-col flex-1">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="text-xl font-bold text-primary line-clamp-1">{data.name}</h3>
+          <h3 className="text-xl font-bold text-white line-clamp-1">{data.name}</h3>
           {data.difficulty && (
             <Badge variant="outline" className={`
-              ${data.difficulty === 'Easy' ? 'border-green-500/20 text-green-700 bg-green-500/100/10' : ''}
-              ${data.difficulty === 'Moderate' ? 'border-amber-500/20 text-amber-700 bg-amber-500/100/10' : ''}
-              ${data.difficulty === 'Hard' ? 'border-red-500/20 text-red-400 bg-red-500/100/100/100/10' : ''}
+              ${data.difficulty === 'Easy' ? 'border-green-500/20 text-green-400 bg-green-500/10' : ''}
+              ${data.difficulty === 'Moderate' ? 'border-amber-500/20 text-amber-400 bg-amber-500/10' : ''}
+              ${data.difficulty === 'Hard' ? 'border-red-500/20 text-red-400 bg-red-500/10' : ''}
             `}>
               {data.difficulty}
             </Badge>
           )}
         </div>
-        <p className="text-secondary text-sm mb-4 line-clamp-2">{data.description}</p>
+        <p className="text-slate-300 text-sm mb-4 line-clamp-2">{data.description}</p>
         
         <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-gold/10">
           {data.approximate_cost > 0 && (
-            <div className="flex items-center gap-2 text-secondary text-sm">
+            <div className="flex items-center gap-2 text-slate-300 text-sm">
               <DollarSign className="w-4 h-4 text-gold" />
               <span>~₹{data.approximate_cost}</span>
             </div>
           )}
           {data.duration && (
-            <div className="flex items-center gap-2 text-secondary text-sm">
+            <div className="flex items-center gap-2 text-slate-300 text-sm">
               <Clock className="w-4 h-4 text-gold" />
               <span>{data.duration}</span>
             </div>
@@ -460,12 +460,12 @@ function FoodCard({ data, priority = false }: { data: any, priority?: boolean })
         )}
         <div className="absolute top-4 left-4 flex gap-2">
           {data.veg_non_veg === 'Veg' && (
-            <span className="w-6 h-6 bg-white rounded flex items-center justify-center border-2 border-green-600">
+            <span className="w-6 h-6 bg-surface-card rounded flex items-center justify-center border-2 border-green-600">
               <span className="w-3 h-3 bg-green-600 rounded-full"></span>
             </span>
           )}
           {data.veg_non_veg === 'Non-Veg' && (
-            <span className="w-6 h-6 bg-white rounded flex items-center justify-center border-2 border-red-600">
+            <span className="w-6 h-6 bg-surface-card rounded flex items-center justify-center border-2 border-red-600">
               <span className="w-3 h-3 bg-red-600 rounded-full"></span>
             </span>
           )}
@@ -473,8 +473,8 @@ function FoodCard({ data, priority = false }: { data: any, priority?: boolean })
       </div>
       
       <div className="p-6 flex flex-col flex-1">
-        <h3 className="text-xl font-bold text-primary mb-2 line-clamp-1">{data.name}</h3>
-        <p className="text-secondary text-sm mb-4 line-clamp-2">{data.description}</p>
+        <h3 className="text-xl font-bold text-white mb-2 line-clamp-1">{data.name}</h3>
+        <p className="text-slate-300 text-sm mb-4 line-clamp-2">{data.description}</p>
         
         {data.recommended_restaurant && (
           <div className="mb-4 text-sm font-medium text-slate-200 bg-surface p-3 rounded-xl border border-gold/10">
@@ -485,7 +485,7 @@ function FoodCard({ data, priority = false }: { data: any, priority?: boolean })
         
         <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-gold/10">
           {data.approximate_cost > 0 && (
-            <div className="flex items-center gap-2 text-secondary text-sm">
+            <div className="flex items-center gap-2 text-slate-300 text-sm">
               <DollarSign className="w-4 h-4 text-gold" />
               <span>~₹{data.approximate_cost}</span>
             </div>
@@ -523,7 +523,7 @@ function WeatherCard({ data }: { data: any }) {
       className="luxury-card rounded-3xl flex flex-col group cursor-pointer"
     >
       <div className={`bg-gradient-to-br ${gradient} p-6 flex items-center gap-4`}>
-        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+        <div className="w-14 h-14 bg-surface-card/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
           <Icon className="w-8 h-8 text-white" />
         </div>
         <div>
@@ -534,26 +534,26 @@ function WeatherCard({ data }: { data: any }) {
 
       <div className="p-6 space-y-4">
         <div>
-          <h4 className="font-semibold text-primary mb-1">{data.title}</h4>
-          <p className="text-secondary text-sm leading-relaxed">{data.description}</p>
+          <h4 className="font-semibold text-white mb-1">{data.title}</h4>
+          <p className="text-slate-300 text-sm leading-relaxed">{data.description}</p>
         </div>
 
         {data.expected_conditions && (
-          <div className="bg-blue-500/100/10 rounded-xl p-3">
+          <div className="bg-blue-500/10 rounded-xl p-3">
             <p className="text-xs uppercase text-gold font-semibold tracking-wider mb-1">Expected Conditions</p>
             <p className="text-blue-400 text-sm">{data.expected_conditions}</p>
           </div>
         )}
 
         {data.safety_tips && (
-          <div className="bg-amber-500/100/10 rounded-xl p-3">
+          <div className="bg-amber-500/10 rounded-xl p-3">
             <p className="text-xs uppercase text-amber-400 font-semibold tracking-wider mb-1">Safety Tips</p>
             <p className="text-amber-400 text-sm">{data.safety_tips}</p>
           </div>
         )}
 
         {data.recommended_items && (
-          <div className="bg-emerald-500/100/10 rounded-xl p-3">
+          <div className="bg-emerald-500/10 rounded-xl p-3">
             <p className="text-xs uppercase text-emerald-400 font-semibold tracking-wider mb-1">What to Carry</p>
             <p className="text-emerald-400 text-sm">{data.recommended_items}</p>
           </div>
@@ -581,7 +581,7 @@ function PackingCard({ data }: { data: any }) {
       className="luxury-card rounded-3xl flex flex-col group cursor-pointer"
     >
       <div className={`bg-gradient-to-br ${gradient} p-6 flex items-center gap-4`}>
-        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+        <div className="w-14 h-14 bg-surface-card/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
           <Icon className="w-8 h-8 text-white" />
         </div>
         <div>
@@ -615,29 +615,29 @@ function TransportCard({ data }: { data: any }) {
       className="luxury-card rounded-3xl flex flex-col group cursor-pointer flex flex-col"
     >
       <div className="bg-gradient-to-br from-surface-elevated to-surface p-6 flex items-center gap-4">
-        <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center">
+        <div className="w-14 h-14 bg-surface-card/10 rounded-2xl flex items-center justify-center">
           <Bus className="w-8 h-8 text-white" />
         </div>
         <div>
-          <p className="text-secondary text-xs uppercase tracking-widest font-medium">{data.transport_type}</p>
+          <p className="text-slate-300 text-xs uppercase tracking-widest font-medium">{data.transport_type}</p>
           <h3 className="text-xl font-bold text-white line-clamp-1">{data.provider_name}</h3>
         </div>
       </div>
 
       <div className="p-6 space-y-3 flex-1">
         {data.description && (
-          <p className="text-secondary text-sm leading-relaxed">{data.description}</p>
+          <p className="text-slate-300 text-sm leading-relaxed">{data.description}</p>
         )}
 
         <div className="grid grid-cols-2 gap-3 pt-2">
           {data.estimated_cost > 0 && (
-            <div className="bg-emerald-500/100/10 rounded-xl p-3">
+            <div className="bg-emerald-500/10 rounded-xl p-3">
               <p className="text-xs uppercase text-emerald-400 font-semibold mb-1">Est. Cost</p>
               <p className="text-emerald-400 font-bold">₹{data.estimated_cost}</p>
             </div>
           )}
           {data.opening_hours && (
-            <div className="bg-blue-500/100/10 rounded-xl p-3">
+            <div className="bg-blue-500/10 rounded-xl p-3">
               <p className="text-xs uppercase text-blue-400 font-semibold mb-1">Hours</p>
               <p className="text-blue-400 text-sm font-medium">{data.opening_hours}</p>
             </div>
@@ -647,7 +647,7 @@ function TransportCard({ data }: { data: any }) {
         {data.phone && (
           <a 
             href={`tel:${data.phone}`}
-            className="flex items-center gap-2 text-secondary hover:text-blue-400 transition-colors text-sm font-medium mt-2"
+            className="flex items-center gap-2 text-slate-300 hover:text-blue-400 transition-colors text-sm font-medium mt-2"
           >
             <Phone className="w-4 h-4 text-gold" />
             {data.phone}
@@ -655,8 +655,8 @@ function TransportCard({ data }: { data: any }) {
         )}
 
         {data.distance_from_hotel && (
-          <div className="flex items-center gap-2 text-secondary text-sm">
-            <Navigation className="w-4 h-4 text-secondary" />
+          <div className="flex items-center gap-2 text-slate-300 text-sm">
+            <Navigation className="w-4 h-4 text-slate-300" />
             <span>{data.distance_from_hotel} km from hotel</span>
           </div>
         )}
@@ -689,7 +689,7 @@ function EmergencyCard({ data }: { data: any }) {
             <p className="text-xs uppercase tracking-wider text-gold font-semibold mb-1">{data.category}</p>
             <h3 className="text-lg font-bold text-white">{data.service_name}</h3>
             {data.description && (
-              <p className="text-secondary text-sm mt-1">{data.description}</p>
+              <p className="text-slate-300 text-sm mt-1">{data.description}</p>
             )}
           </div>
           <a 

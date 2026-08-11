@@ -49,7 +49,7 @@ export default function ShoppingDealsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-1.5 rounded-full text-sm font-medium w-fit mb-6"
+            className="inline-flex items-center gap-2 bg-surface-card/10 backdrop-blur-md border border-white/20 text-white px-4 py-1.5 rounded-full text-sm font-medium w-fit mb-6"
           >
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
             <span>Verified Hotel Guest Exclusive</span>
@@ -101,7 +101,7 @@ export default function ShoppingDealsPage() {
                   className={`text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     selectedShop === null 
                       ? 'bg-gold/10 text-gold border border-gold/20 border border-gold/20' 
-                      : 'text-secondary hover:bg-surface'
+                      : 'text-slate-300 hover:bg-surface'
                   }`}
                 >
                   All Offers
@@ -116,7 +116,7 @@ export default function ShoppingDealsPage() {
                       className={`text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex flex-col ${
                         selectedShop === shop.id 
                           ? 'bg-gold/10 text-gold border border-gold/20 border border-gold/20' 
-                          : 'text-secondary hover:bg-surface'
+                          : 'text-slate-300 hover:bg-surface'
                       }`}
                     >
                       <span className="line-clamp-1">{shop.brand_name || shop.shop_name}</span>
@@ -138,7 +138,7 @@ export default function ShoppingDealsPage() {
                     : 'All Exclusive Offers'
                   }
                 </h2>
-                <p className="text-secondary mt-1">Claim coupons to show at the store</p>
+                <p className="text-slate-300 mt-1">Claim coupons to show at the store</p>
               </div>
             </div>
 
@@ -153,8 +153,8 @@ export default function ShoppingDealsPage() {
                   <Badge className="bg-gold/20 text-gold border-none mb-4 px-4 py-1.5 font-semibold uppercase tracking-wider text-xs">
                     Coming Soon
                   </Badge>
-                  <h3 className="text-2xl font-bold text-primary mb-3">Brand Deals Coming Soon</h3>
-                  <p className="text-secondary max-w-md mx-auto leading-relaxed">
+                  <h3 className="text-2xl font-bold text-white mb-3">Brand Deals Coming Soon</h3>
+                  <p className="text-slate-300 max-w-md mx-auto leading-relaxed">
                     We're partnering with the best local brands, cafés, boutiques, and adventure stores in Manali. Exclusive hotel guest offers will appear here soon.
                   </p>
                 </div>
@@ -167,11 +167,11 @@ export default function ShoppingDealsPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       whileHover={{ y: -5 }}
-                      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 flex flex-col relative group"
+                      className="bg-surface-card rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gold/20 flex flex-col relative group"
                     >
                       {/* Decorative elements */}
                       <div className="absolute top-0 right-0 w-32 h-32 bg-violet-100 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
-                      <div className="absolute top-4 right-4 text-gold bg-white shadow-sm p-2 rounded-full">
+                      <div className="absolute top-4 right-4 text-gold bg-surface-card shadow-sm p-2 rounded-full">
                         <Gift className="w-5 h-5" />
                       </div>
 
@@ -179,14 +179,14 @@ export default function ShoppingDealsPage() {
                         <Badge className="bg-gold/20 text-gold border-none mb-4 px-3 py-1 font-semibold uppercase tracking-wider text-[10px]">
                           {offer.offer_type}
                         </Badge>
-                        <h3 className="text-xl font-bold text-primary mb-2 leading-tight">
+                        <h3 className="text-xl font-bold text-white mb-2 leading-tight">
                           {offer.title}
                         </h3>
-                        <p className="text-secondary text-sm mb-4 line-clamp-3 leading-relaxed">
+                        <p className="text-slate-300 text-sm mb-4 line-clamp-3 leading-relaxed">
                           {offer.description}
                         </p>
                         
-                        <div className="flex items-center gap-2 mt-4 text-sm font-medium text-slate-700 bg-surface p-3 rounded-xl border border-slate-100">
+                        <div className="flex items-center gap-2 mt-4 text-sm font-medium text-slate-700 bg-surface p-3 rounded-xl border border-gold/20">
                           <ShoppingBag className="w-4 h-4 text-gold" />
                           <span className="line-clamp-1">{offer.shop_name || offer.brand_name}</span>
                         </div>

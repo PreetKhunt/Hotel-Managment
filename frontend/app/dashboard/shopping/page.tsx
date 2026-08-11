@@ -182,7 +182,7 @@ export default function AdminShoppingDealsPage() {
       {activeTab !== 'redeem' && (
         <div className="bg-surface-card rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-300">
+            <thead className="bg-surface-card text-slate-300">
               <tr>
                 {activeTab === 'shops' ? (
                   <>
