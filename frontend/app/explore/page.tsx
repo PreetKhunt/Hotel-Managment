@@ -333,11 +333,11 @@ function PlaceCard({ data, priority = false }: { data: any, priority?: boolean }
         ) : (
           <FallbackImage alt={data.name} icon={MapPin} />
         )}
-        <div className="absolute top-4 right-4 bg-surface-elevated/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-gold/10 hover:text-gold transition-colors">
+        <div className="absolute top-4 right-4 bg-surface-elevated/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-gold/10 text-slate-300 hover:text-gold transition-colors">
           <Heart className="w-5 h-5" />
         </div>
         <div className="absolute top-4 left-4">
-          <Badge className="bg-surface/90 backdrop-blur-sm hover:bg-slate-900 border-none px-3 py-1 text-xs">
+          <Badge className="bg-surface/90 text-slate-200 backdrop-blur-sm border border-gold/20 px-3 py-1 text-xs">
             {data.category}
           </Badge>
         </div>
@@ -398,7 +398,7 @@ function ActivityCard({ data, priority = false }: { data: any, priority?: boolea
         ) : (
           <FallbackImage alt={data.name} icon={Mountain} />
         )}
-        <div className="absolute top-4 right-4 bg-surface-elevated/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-gold/10 hover:text-gold transition-colors">
+        <div className="absolute top-4 right-4 bg-surface-elevated/90 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-gold/10 text-slate-300 hover:text-gold transition-colors">
           <Heart className="w-5 h-5" />
         </div>
       </div>
@@ -477,8 +477,8 @@ function FoodCard({ data, priority = false }: { data: any, priority?: boolean })
         <p className="text-secondary text-sm mb-4 line-clamp-2">{data.description}</p>
         
         {data.recommended_restaurant && (
-          <div className="mb-4 text-sm font-medium text-slate-700 bg-surface p-3 rounded-xl border border-gold/10">
-            <span className="text-secondary block text-xs uppercase tracking-wider mb-1">Best at</span>
+          <div className="mb-4 text-sm font-medium text-slate-200 bg-surface p-3 rounded-xl border border-gold/10">
+            <span className="text-gold block text-xs uppercase tracking-wider mb-1">Best at</span>
             {data.recommended_restaurant}
           </div>
         )}
@@ -491,7 +491,7 @@ function FoodCard({ data, priority = false }: { data: any, priority?: boolean })
             </div>
           )}
           {data.category && (
-            <Badge variant="outline" className="border-orange-200 text-orange-700 bg-orange-50 w-fit">
+            <Badge variant="outline" className="border-gold/30 text-gold bg-gold/10 w-fit">
               {data.category}
             </Badge>
           )}
@@ -568,11 +568,11 @@ function PackingCard({ data }: { data: any }) {
   const gradient = seasonColors[data.season] || 'from-[#1E2A3A] to-surface-card';
 
   const sections = [
-    { label: 'Clothing', value: data.clothing, color: 'bg-violet-50 text-violet-800' },
-    { label: 'Shoes', value: data.shoes, color: 'bg-blue-500/100/10 text-blue-400' },
-    { label: 'Accessories', value: data.accessories, color: 'bg-amber-500/100/10 text-amber-400' },
-    { label: 'Medicine', value: data.medicine, color: 'bg-red-500/100/100/100/10 text-red-800' },
-    { label: 'Travel Essentials', value: data.travel_essentials, color: 'bg-emerald-500/100/10 text-emerald-400' },
+    { label: 'Clothing', value: data.clothing, color: 'bg-violet-500/10 text-violet-300' },
+    { label: 'Shoes', value: data.shoes, color: 'bg-blue-500/10 text-blue-300' },
+    { label: 'Accessories', value: data.accessories, color: 'bg-amber-500/10 text-amber-300' },
+    { label: 'Medicine', value: data.medicine, color: 'bg-red-500/10 text-red-300' },
+    { label: 'Travel Essentials', value: data.travel_essentials, color: 'bg-emerald-500/10 text-emerald-300' },
   ].filter(s => s.value);
 
   return (
@@ -599,8 +599,8 @@ function PackingCard({ data }: { data: any }) {
         ))}
         {data.additional_tips && (
           <div className="bg-surface rounded-xl p-3 border border-gold/10">
-            <p className="text-xs uppercase font-semibold tracking-wider mb-1 text-secondary">Pro Tip</p>
-            <p className="text-slate-700 text-sm">{data.additional_tips}</p>
+            <p className="text-xs uppercase font-semibold tracking-wider mb-1 text-gold">Pro Tip</p>
+            <p className="text-slate-200 text-sm">{data.additional_tips}</p>
           </div>
         )}
       </div>
@@ -680,21 +680,21 @@ function EmergencyCard({ data }: { data: any }) {
   return (
     <motion.div 
       whileHover={{ y: -3 }}
-      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gold/10 flex"
+      className="luxury-card rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 flex"
     >
       <div className={`bg-gradient-to-br ${gradient} w-3 flex-shrink-0`} />
       <div className="p-5 flex-1">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-wider text-secondary font-semibold mb-1">{data.category}</p>
-            <h3 className="text-lg font-bold text-primary">{data.service_name}</h3>
+            <p className="text-xs uppercase tracking-wider text-gold font-semibold mb-1">{data.category}</p>
+            <h3 className="text-lg font-bold text-white">{data.service_name}</h3>
             {data.description && (
               <p className="text-secondary text-sm mt-1">{data.description}</p>
             )}
           </div>
           <a 
             href={`tel:${data.phone_number}`}
-            className="flex-shrink-0 bg-red-500/100/100/100/10 hover:bg-red-500/100/100/20 text-red-600 font-bold px-4 py-2 rounded-xl text-sm transition-colors flex items-center gap-2"
+            className="flex-shrink-0 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold px-4 py-2 rounded-xl text-sm transition-colors flex items-center gap-2 border border-red-500/20"
           >
             <Phone className="w-4 h-4" />
             {data.phone_number}

@@ -84,6 +84,13 @@ export default function DashboardPage() {
     );
   }
 
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const displayName =
+    user?.first_name ||
+    user?.email?.split('@')[0] ||
+    'Guest';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Welcome */}
@@ -93,8 +100,8 @@ export default function DashboardPage() {
         transition={{ duration: 0.5 }}
       >
         <h2 style={{ color: '#ffffff', fontWeight: 700, fontSize: '1.3rem', margin: 0 }}>
-          Good morning,{' '}
-          <span style={{ color: '#C9A84C' }}>{user?.first_name || 'Guest'}</span> 👋
+          {timeGreeting},{' '}
+          <span style={{ color: '#C9A84C' }}>{displayName}</span> 👋
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.88rem', marginTop: '0.25rem' }}>
           {user?.role?.name === 'Admin' ? "Here's what's happening at Hospitality Hub today." : "Welcome back to your dashboard."}

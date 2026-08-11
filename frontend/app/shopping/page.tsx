@@ -44,7 +44,6 @@ export default function ShoppingDealsPage() {
       <div className="relative h-[350px] sm:h-[450px] w-full bg-slate-900 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-30 mix-blend-overlay"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-violet-900/40 to-fuchsia-900/40 mix-blend-multiply"></div>
         
         <div className="relative h-full container mx-auto px-4 flex flex-col justify-center">
           <motion.div
@@ -79,20 +78,20 @@ export default function ShoppingDealsPage() {
           
           {/* Sidebar / Filters */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm sticky top-24">
-              <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
-                <Search className="w-5 h-5 text-slate-400" />
+          <div className="luxury-card p-6 rounded-3xl sticky top-24">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Search className="w-5 h-5 text-gold" />
                 Find Brands
               </h3>
               <Input 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search shops or brands..." 
-                className="bg-surface border-gold/10 h-12 rounded-xl mb-6"
+                className="luxury-input h-12 rounded-xl mb-6"
               />
               
-              <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-slate-400" />
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-gold" />
                 Partner Shops
               </h3>
               
@@ -133,7 +132,7 @@ export default function ShoppingDealsPage() {
           <div className="lg:col-span-9">
             <div className="mb-6 flex justify-between items-end">
               <div>
-                <h2 className="text-2xl font-bold text-primary">
+                <h2 className="text-2xl font-bold text-white">
                   {selectedShop 
                     ? shopsData?.data.find(s => s.id === selectedShop)?.brand_name || shopsData?.data.find(s => s.id === selectedShop)?.shop_name 
                     : 'All Exclusive Offers'
@@ -226,7 +225,7 @@ export default function ShoppingDealsPage() {
 
 function OfferSkeletonCard() {
   return (
-    <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col h-[400px]">
+    <div className="luxury-card rounded-3xl overflow-hidden flex flex-col h-[400px]">
       <div className="p-6 flex-1 flex flex-col gap-4 pt-8">
         <Skeleton className="h-6 w-20 rounded-full" />
         <Skeleton className="h-7 w-full" />
