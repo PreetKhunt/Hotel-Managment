@@ -34,6 +34,15 @@ export class AuthService {
           setAll(cookiesToSet: any[]) {
             console.log('[Forensics] setAll() called with cookies:', JSON.stringify(cookiesToSet));
             cookiesToSet.forEach(({ name, value, options }) => {
+              // OPTIMIZATION: Next.js 'rewrites' proxy drops headers when multiple Set-Cookie are sent.
+              // To prevent this, we IGNORE setting session chunks here. Our app only needs 'hh_session',
+              // which we set manually later. We also ignore deletion of the code-verifier (value === '')
+              // to keep exactly ONE Set-Cookie header per route!
+              if (!name.includes('code-verifier') || !value) {
+                console.log(`[Forensics] IGNORING cookie ${name} to avoid multiple Set-Cookie headers in Vercel.`);
+                return;
+              }
+
               const cookieOptions = { ...options };
               // Fix: @supabase/ssr passes maxAge in seconds (e.g. 600 for PKCE verifier),
               // but Express res.cookie requires maxAge in milliseconds.

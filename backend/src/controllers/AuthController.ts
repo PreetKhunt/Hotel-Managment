@@ -175,19 +175,10 @@ export class AuthController {
     try {
       const nextParam = req.query.next as string || '/';
       
-      // Fix: The redirectUrl MUST EXACTLY match the Supabase whitelist.
-      // Do NOT append query parameters like ?next=... here, otherwise Supabase silently rejects it
-      // and redirects to the Site URL (Vercel) instead of Render!
-      const redirectUrl = env.GOOGLE_CALLBACK_URL;
-      
-      // Store 'next' in a secure cookie to read it during the callback
-      res.cookie('oauth_next', nextParam, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 10 * 60 * 1000, // 10 minutes
-      });
+      // Fix: Append the next URL as a query parameter instead of setting a second cookie.
+      // This prevents the Next.js proxy from dropping the critical PKCE code_verifier cookie 
+      // due to multiple Set-Cookie headers.
+      const redirectUrl = `${env.GOOGLE_CALLBACK_URL}?next=${encodeURIComponent(nextParam)}`;
       
       console.log(`[OAuth] Generating Google OAuth URL...`);
       console.log(`[OAuth] redirectTo value configured EXACTLY as: ${redirectUrl}`);
@@ -223,14 +214,8 @@ export class AuthController {
          console.log(`[OAuth Callback] WARNING: No PKCE cookie found in req.cookies!`);
       }
 
-      // Read nextUrl from the secure cookie we set before redirecting
-      const nextUrl = req.cookies.oauth_next || '/';
-      res.clearCookie('oauth_next', {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        path: '/',
-      });
+      // Read nextUrl from the query parameter we injected during googleOAuth
+      const nextUrl = req.query.next as string || '/';
       
       console.log(`[OAuth Callback] 2. Authorization code received: ${!!code ? 'YES (length: ' + code.length + ')' : 'NO'}`);
       console.log(`[OAuth Callback] 3. Target next URL: ${nextUrl}`);
