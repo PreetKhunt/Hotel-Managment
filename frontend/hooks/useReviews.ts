@@ -1,17 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { Testimonial } from '@/types';
-
-const API_BASE_URL = '/api/v1';
+import api from '@/lib/api';
 
 export function useReviews() {
   return useQuery({
     queryKey: ['reviews'],
     queryFn: async (): Promise<Testimonial[]> => {
-      const response = await fetch(`${API_BASE_URL}/reviews`);
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
+      const response = await api.get('/reviews');
+      const data = response.data;
       if (!data.success) {
         throw new Error(data.message || 'Failed to fetch reviews');
       }

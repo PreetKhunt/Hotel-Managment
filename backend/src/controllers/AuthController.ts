@@ -8,10 +8,11 @@ export class AuthController {
 
   private setSessionCookie(res: Response, sessionToken?: string) {
     if (sessionToken) {
+      const isProduction = process.env.NODE_ENV === 'production';
       const cookieOptions = {
         httpOnly: true,
-        secure: true, // true for production
-        sameSite: 'lax' as const,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' as const : 'lax' as const,
         path: '/',
         maxAge: authConfig.session.timeoutMinutes * 60 * 1000,
       };
@@ -44,10 +45,11 @@ export class AuthController {
   }
 
   private clearSessionCookie(res: Response) {
+    const isProduction = process.env.NODE_ENV === 'production';
     res.clearCookie('hh_session', {
       httpOnly: true,
-      secure: true,
-      sameSite: 'lax' as const,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' as const : 'lax' as const,
       path: '/',
     });
   }
@@ -186,22 +188,22 @@ export class AuthController {
 
   googleOAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // CRITICAL: Prevent Vercel Edge caching from stripping Set-Cookie headers on this 302 redirect
+      // Prevent all caching so Set-Cookie headers are always fresh
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
 
+      const isProduction = process.env.NODE_ENV === 'production';
       const nextParam = req.query.next as string || '/';
       
-      // Fix: The redirectUrl MUST EXACTLY match the Supabase whitelist.
-      // Do NOT append query parameters like ?next=... here, otherwise Supabase silently rejects it
-      // and redirects to the Site URL (Vercel) instead of Render!
+      // The redirectUrl MUST EXACTLY match the Supabase allowlist (no query params).
       const redirectUrl = env.GOOGLE_CALLBACK_URL;
       
-      // Store 'next' in a secure cookie to read it during the callback
+      // Store 'next' destination in a cookie so the callback can redirect back correctly.
       res.cookie('oauth_next', nextParam, {
         httpOnly: true,
-        secure: true,
+        secure: isProduction,
         sameSite: 'lax',
         path: '/',
         maxAge: 10 * 60 * 1000, // 10 minutes
@@ -209,6 +211,8 @@ export class AuthController {
       
       console.log(`[OAuth] Generating Google OAuth URL...`);
       console.log(`[OAuth] redirectTo value configured EXACTLY as: ${redirectUrl}`);
+      console.log(`[OAuth] Callback hostname: ${new URL(redirectUrl).hostname}`);
+      console.log(`[OAuth] Request origin: ${req.headers.origin || 'none (direct navigation)'}`);
 
       const reqInfo = {
         ip: req.ip || req.connection.remoteAddress || 'unknown',
@@ -218,10 +222,50 @@ export class AuthController {
 
       const url = await this.authService.getOAuthUrl('google', redirectUrl, reqInfo, req, res);
       
-      console.log(`[OAuth] Generated OAuth URL: ${url}`);
-      console.log(`[OAuth] PKCE cookie should now be set on the response (handled by @supabase/ssr setAll)`);
-      console.log(`[OAuth] Cookie sent to browser`);
-      res.redirect(url);
+      // Verify which cookie names are now in the response headers (never log values).
+      const setCookieHeader = res.getHeader('set-cookie');
+      const setCookieArr: string[] = Array.isArray(setCookieHeader)
+        ? (setCookieHeader as string[])
+        : typeof setCookieHeader === 'string' ? [setCookieHeader] : [];
+      const cookieNamesSent = setCookieArr.map(c => c.split('=')[0]).join(', ');
+      const pkceInResponse = setCookieArr.some(c => c.includes('code-verifier'));
+      console.log(`[OAuth] Cookie names being set in response: ${cookieNamesSent || 'NONE'}`);
+      console.log(`[OAuth] PKCE code-verifier cookie present in response: ${pkceInResponse}`);
+
+      // CRITICAL FIX: Use a 200 HTML response instead of HTTP 302.
+      //
+      // On Render (and some other PaaS platforms), the reverse proxy in front of the
+      // service strips Set-Cookie headers from 302 redirect responses before they
+      // reach the browser. This silently drops BOTH the PKCE verifier cookie and the
+      // oauth_next cookie, causing "PKCE code verifier not found" at callback time.
+      //
+      // A 200 response is NEVER modified by proxies — cookies are guaranteed to reach
+      // the browser and be stored before the JavaScript redirect fires.
+      const safeUrl = JSON.stringify(url);
+      const safeUrlAttr = url.replace(/"/g, '&quot;');
+      console.log(`[OAuth] Sending 200 HTML redirect (proxy-safe) to Supabase OAuth URL`);
+      res.status(200).type('html').send(
+        `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0;url=${safeUrlAttr}">
+  <title>Signing in&hellip;</title>
+  <style>
+    body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;
+         min-height:100vh;margin:0;background:#0A0F1E;color:#e2e8f0;flex-direction:column;gap:1rem}
+    p{font-size:1rem;opacity:.7}
+  </style>
+</head>
+<body>
+  <p>Redirecting to Google&hellip;</p>
+  <script>
+    try { window.location.replace(${safeUrl}); }
+    catch(e) { window.location.href = ${safeUrl}; }
+  </script>
+</body>
+</html>`
+      );
     } catch (error) {
       next(error);
     }
@@ -238,15 +282,16 @@ export class AuthController {
       console.log('[OAuth Callback] 1. Callback received. URL:', req.originalUrl);
       const code = req.query.code as string;
       
-      const isDebugAuth = process.env.NODE_ENV !== 'production' && process.env.DEBUG_AUTH === 'true';
-      if (isDebugAuth) {
-        console.log(`[OAuth Callback] Cookies keys received:`, Object.keys(req.cookies || {}));
-      }
-      const pkceCookieName = Object.keys(req.cookies || {}).find(k => k.includes('sb-') && k.includes('-auth-token-code-verifier'));
+      // Always log PKCE cookie status in production to diagnose auth issues
+      const allCookieKeys = Object.keys(req.cookies || {});
+      const pkceCookieName = allCookieKeys.find(k => k.includes('sb-') && k.includes('-auth-token-code-verifier'));
+      console.log(`[OAuth Callback] Callback hostname: ${req.hostname}`);
+      console.log(`[OAuth Callback] Request origin: ${req.headers.origin || 'none (redirect navigation)'}`);
+      console.log(`[OAuth Callback] Cookie keys received: [${allCookieKeys.join(', ')}]`);
       if (pkceCookieName) {
-         if (isDebugAuth) console.log(`[OAuth Callback] PKCE cookie found: ${pkceCookieName}`);
+        console.log(`[OAuth Callback] PKCE cookie found: ${pkceCookieName}`);
       } else {
-         console.log(`[OAuth Callback] WARNING: No PKCE cookie found in req.cookies!`);
+        console.log(`[OAuth Callback] WARNING: No PKCE cookie found in req.cookies!`);
       }
 
       // Read nextUrl from the secure cookie we set before redirecting
@@ -292,22 +337,47 @@ export class AuthController {
             console.log(`[OAuth] JWT created`);
             console.log(`[OAuth] Session created`);
             console.log(`[OAuth] Redirecting to frontend`);
-            const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
-            res.redirect(finalRedirectUrl);
-            return; // Prevent duplicate redirect execution
-          } catch (cookieErr: any) {
-            console.error('[OAuth Callback] ERROR creating session cookie:', cookieErr.message);
-            console.error(cookieErr.stack);
-            throw cookieErr;
+          
+          let validatedNextUrl = nextUrl;
+          if (nextUrl.startsWith('http')) {
+            try {
+              const parsedUrl = new URL(nextUrl);
+              if (parsedUrl.origin !== env.CORS_ORIGIN) {
+                console.warn(`[OAuth Callback] WARNING: Untrusted nextUrl origin: ${parsedUrl.origin}. Falling back to /`);
+                validatedNextUrl = '/';
+              }
+            } catch (e) {
+              validatedNextUrl = '/';
+            }
           }
-        } else {
-          console.warn('[OAuth Callback] WARNING: No session returned from code exchange.');
+          
+          const finalRedirectUrl = validatedNextUrl.startsWith('http') ? validatedNextUrl : `${env.CORS_ORIGIN}${validatedNextUrl.startsWith('/') ? validatedNextUrl : '/' + validatedNextUrl}`;
+          res.redirect(finalRedirectUrl);
+          return; // Prevent duplicate redirect execution
+        } catch (cookieErr: any) {
+          console.error('[OAuth Callback] ERROR creating session cookie:', cookieErr.message);
+          console.error(cookieErr.stack);
+          throw cookieErr;
         }
-  
-        const finalRedirectUrl = nextUrl.startsWith('http') ? nextUrl : `${env.CORS_ORIGIN}${nextUrl}`;
-        console.log(`[OAuth Callback] 8. Redirecting to frontend (No Session): ${finalRedirectUrl}`);
-        console.log('================ OAUTH CALLBACK END ================\n');
-        res.redirect(finalRedirectUrl);
+      } else {
+        console.warn('[OAuth Callback] WARNING: No session returned from code exchange.');
+      }
+
+      let validatedNextUrl = nextUrl;
+      if (nextUrl.startsWith('http')) {
+        try {
+          const parsedUrl = new URL(nextUrl);
+          if (parsedUrl.origin !== env.CORS_ORIGIN) {
+            validatedNextUrl = '/';
+          }
+        } catch (e) {
+          validatedNextUrl = '/';
+        }
+      }
+      const finalRedirectUrl = validatedNextUrl.startsWith('http') ? validatedNextUrl : `${env.CORS_ORIGIN}${validatedNextUrl.startsWith('/') ? validatedNextUrl : '/' + validatedNextUrl}`;
+      console.log(`[OAuth Callback] 8. Redirecting to frontend (No Session): ${finalRedirectUrl}`);
+      console.log('================ OAUTH CALLBACK END ================\n');
+      res.redirect(finalRedirectUrl);
     } catch (error: any) {
       console.error('\n================ OAUTH CALLBACK FATAL ERROR ================');
       console.error('Error Message:', error.message || error);

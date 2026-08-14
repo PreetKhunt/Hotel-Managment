@@ -45,7 +45,7 @@ function RegisterForm() {
   const handleGoogleLogin = () => {
     if (loading) return;
     setLoading(true);
-    const baseUrl = '/api/v1';
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api/v1';
     
     // Ensure 'next' is an absolute URL to return to the correct Deploy Preview or localhost port
     const origin = typeof window !== 'undefined' ? window.location.origin : '';

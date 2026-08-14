@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { Eye, Edit2, Search } from 'lucide-react';
 
+import api from '@/lib/api';
+
 interface Booking {
   id: string;
   guestName: string;
@@ -19,11 +21,10 @@ export default function RecentBookingsTable() {
   const [bookings, setBookings] = useState<Booking[]>([]);
 
   useEffect(() => {
-    fetch('/api/v1/bookings')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setBookings(json.data);
+    api.get('/bookings')
+      .then((res) => {
+        if (res.data.success && res.data.data) {
+          setBookings(res.data.data);
         }
       })
       .catch((err) => console.error('Failed to fetch bookings:', err));
