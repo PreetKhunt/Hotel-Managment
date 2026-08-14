@@ -50,8 +50,14 @@ function LoginForm() {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const absoluteNext = next.startsWith('http') ? next : `${origin}${next}`;
     
-    console.log('[Auth Debug] Redirecting to Google OAuth:', `${baseUrl}/auth/google?next=${encodeURIComponent(absoluteNext)}`);
-    window.location.href = `${baseUrl}/auth/google?next=${encodeURIComponent(absoluteNext)}`;
+    // Always use the relative Vercel path for the OAuth initiation!
+    // If we use the Render URL directly, browsers like Safari/Brave will block the PKCE cookies
+    // as "cross-site tracking" because the domain changes from Vercel -> Render -> Google.
+    // By using the Vercel proxy, the cookies are set on the first-party .vercel.app domain.
+    const oauthUrl = `/api/v1/auth/google?next=${encodeURIComponent(absoluteNext)}`;
+    
+    console.log('[Auth Debug] Redirecting to Google OAuth:', oauthUrl);
+    window.location.href = oauthUrl;
   };
 
   return (
