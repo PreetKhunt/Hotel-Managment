@@ -204,7 +204,7 @@ export class AuthController {
       res.cookie('oauth_next', nextParam, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'lax',
+        sameSite: isProduction ? 'none' : 'lax',
         path: '/',
         maxAge: 10 * 60 * 1000, // 10 minutes
       });

@@ -48,7 +48,7 @@ export class AuthService {
               }
               if (env.NODE_ENV === 'production') {
                 cookieOptions.secure = true;
-                cookieOptions.sameSite = cookieOptions.sameSite || 'lax';
+                cookieOptions.sameSite = 'none'; // Force none for cross-site OAuth flow
               }
               if (isDebugAuth) {
                 console.log(`[Forensics] Setting cookie: ${name} with options:`, JSON.stringify(cookieOptions));
