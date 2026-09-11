@@ -408,8 +408,22 @@ export default function RoomsPage() {
         {/* ── Two-column layout ── */}
         <div style={{ display: 'flex', gap: '28px', alignItems: 'flex-start' }}>
           {/* Sidebar — desktop only */}
-          <div style={{ width: '288px', flexShrink: 0, position: 'sticky', top: '24px' }}
-            className="sidebar-desktop">
+          <div
+            style={{
+              width: '288px',
+              flexShrink: 0,
+              position: 'sticky',
+              top: '24px',
+              maxHeight: 'calc(100vh - 80px)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              borderRadius: '16px',
+              // Thin gold-tinted scrollbar
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(201,168,76,0.35) transparent',
+            } as React.CSSProperties}
+            className="sidebar-desktop"
+          >
             <FilterSidebar filters={filters} onChange={setFilters} />
           </div>
 
@@ -471,6 +485,17 @@ export default function RoomsPage() {
         .sidebar-desktop { display: block; }
         .lg-hide { display: none; }
         select option { background: #1A2235; color: #F8FAFC; }
+
+        /* Thin gold-tinted scrollbar for the filter sidebar (WebKit browsers) */
+        .sidebar-desktop::-webkit-scrollbar { width: 4px; }
+        .sidebar-desktop::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-desktop::-webkit-scrollbar-thumb {
+          background: rgba(201,168,76,0.35);
+          border-radius: 4px;
+        }
+        .sidebar-desktop::-webkit-scrollbar-thumb:hover {
+          background: rgba(201,168,76,0.6);
+        }
 
         @media (max-width: 1024px) {
           .sidebar-desktop { display: none !important; }
