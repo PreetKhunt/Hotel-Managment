@@ -40,18 +40,22 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #C9A84C, #A07A2E)" }}>
-              <Crown className="w-5 h-5 text-white" />
+          <Link href="/" className="flex items-center gap-3 sm:gap-4 group shrink-0">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105"
+              style={{ background: "linear-gradient(135deg, #C9A84C, #A07A2E)", boxShadow: "0 4px 15px rgba(201,168,76,0.2)" }}>
+              <svg viewBox="0 0 32 32" className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                {/* Left Pillar */}
+                <path d="M8 6V26" />
+                {/* Right Pillar */}
+                <path d="M24 6V26" />
+                {/* Mountain Crossbar */}
+                <path d="M8 18L13 11L16 15L20 9L24 14" />
+              </svg>
             </div>
-            <div>
-              <p className="font-display font-bold text-white text-lg leading-tight">
-                Hospitality Hub
-              </p>
-              <p className="text-xs leading-tight" style={{ color: "#C9A84C", letterSpacing: "0.15em" }}>
-                LUXURY HOTEL
-              </p>
+            <div className="flex flex-col justify-center max-w-[160px] sm:max-w-[240px] lg:max-w-[320px]">
+              <h1 className="font-display font-bold text-white text-[11px] sm:text-[13px] lg:text-[14px] leading-snug">
+                Hospitality Hub: <span className="font-normal text-[9px] sm:text-[11px] lg:text-[12px] text-slate-300 mt-0.5 block">A Hotel Booking and Management System for Manali</span>
+              </h1>
             </div>
           </Link>
 
