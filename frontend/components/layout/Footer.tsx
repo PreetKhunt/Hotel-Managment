@@ -24,7 +24,96 @@ const footerLinks = {
   ],
 };
 
+// Configure social URLs here. Use '#' if an account doesn't exist yet.
+// Replace with actual URLs when available.
+const SOCIAL_URLS = {
+  whatsapp: "https://wa.me/919974295118", // using the phone number from the footer
+  youtube: "#", // Replace with real YouTube channel URL
+  instagram: "#", // Replace with real Instagram URL
+  facebook: "#", // Replace with real Facebook URL
+  twitter: "#", // Replace with real X/Twitter URL
+};
+
+const Instagram = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+  </svg>
+);
+
+const Facebook = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+  </svg>
+);
+
+const Twitter = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/>
+  </svg>
+);
+
 export default function Footer() {
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (navigator.share) {
+      navigator.share({
+        title: "Hospitality Hub",
+        text: "Check out Hospitality Hub - A Hotel Booking and Management System for Manali",
+        url: window.location.origin,
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(window.location.origin);
+      alert("Link copied to clipboard!");
+    }
+  };
+
+  const socialButtons = [
+    { 
+      Icon: Share2, 
+      label: "Share Hospitality Hub", 
+      onClick: handleShare, 
+      href: "#",
+      external: false
+    },
+    { 
+      Icon: MessageCircle, 
+      label: "Contact us on WhatsApp", 
+      href: SOCIAL_URLS.whatsapp, 
+      external: true 
+    },
+    { 
+      Icon: Globe, 
+      label: "Visit Hospitality Hub Homepage", 
+      href: "/",
+      external: false
+    },
+    { 
+      Icon: Play, 
+      label: "Watch our Video", 
+      href: SOCIAL_URLS.youtube, 
+      external: true 
+    },
+    { 
+      Icon: Instagram, 
+      label: "Instagram", 
+      href: SOCIAL_URLS.instagram, 
+      external: true 
+    },
+    { 
+      Icon: Facebook, 
+      label: "Facebook", 
+      href: SOCIAL_URLS.facebook, 
+      external: true 
+    },
+    { 
+      Icon: Twitter, 
+      label: "X / Twitter", 
+      href: SOCIAL_URLS.twitter, 
+      external: true 
+    },
+  ];
   return (
     <footer style={{ background: "#060B16", borderTop: "1px solid rgba(201,168,76,0.15)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -68,26 +157,34 @@ export default function Footer() {
                 </div>
               </div>
             </div>
-            {/* Social */}
-            <div className="flex items-center gap-3 mt-8">
-              {[Share2, MessageCircle, Globe, Play].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="/"
-                  className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300"
-                  style={{ background: "rgba(201,168,76,0.1)", color: "#C9A84C" }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "rgba(201,168,76,0.25)";
-                    (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "rgba(201,168,76,0.1)";
-                    (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-                  }}
-                >
-                  <Icon className="w-4 h-4" />
-                </a>
-              ))}
+            {/* Social & Contact */}
+            <div className="flex flex-wrap items-center gap-3 mt-8">
+              {socialButtons.map((btn, i) => {
+                const Icon = btn.Icon;
+                return (
+                  <a
+                    key={i}
+                    href={btn.href}
+                    onClick={btn.onClick}
+                    title={btn.label}
+                    aria-label={btn.label}
+                    target={btn.external ? "_blank" : undefined}
+                    rel={btn.external ? "noopener noreferrer" : undefined}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#C9A84C] focus:ring-offset-2 focus:ring-offset-[#060B16]"
+                    style={{ background: "rgba(201,168,76,0.1)", color: "#C9A84C" }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "rgba(201,168,76,0.25)";
+                      (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "rgba(201,168,76,0.1)";
+                      (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                    }}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                );
+              })}
             </div>
           </div>
 
