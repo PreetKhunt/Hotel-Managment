@@ -24,7 +24,9 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "vuqsfbhhgjpztoqmpmle.supabase.co",
+        // Wildcard matches any Supabase project (*.supabase.co) so this doesn't
+        // break if the Supabase project is paused, migrated, or replaced.
+        hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
       {
