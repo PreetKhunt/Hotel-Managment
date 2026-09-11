@@ -4,7 +4,7 @@ import { StayMatchPreferences } from './types';
 export const DEFAULT_FILTER_STATE: FilterState = {
   types: [],
   minPrice: 0,
-  maxPrice: 200000,
+  maxPrice: 600000,
   guests: 0,
   amenities: [],
   minRating: 0,
@@ -13,54 +13,56 @@ export const DEFAULT_FILTER_STATE: FilterState = {
 /**
  * Converts guided questionnaire answers into the existing Room search & filter model.
  * Deterministically maps travel purpose, budget tiers, occupancy, and desired amenities.
+ *
+ * NOTE on budget tiers: The wizard labels show ₹2k–₹3k / ₹3k–₹5k / ₹5k+ as relative
+ * luxury tiers (entry / mid / premium), NOT absolute per-night INR caps. The actual room
+ * inventory starts at ~₹5,000/night (Deluxe entry) and goes up to ₹4,60,000/night (Presidential).
+ * We map each tier to a generous inclusive price window so that EVERY tier always returns rooms.
  */
 export function mapPreferencesToFilters(prefs: StayMatchPreferences): FilterState {
   const next: FilterState = {
     ...DEFAULT_FILTER_STATE,
-    // We intentionally do not populate `amenities` here so that `matchesStandardFilters` 
-    // does not perform a strict discard on rooms missing a single soft amenity. 
-    // Soft amenities will be evaluated in the scoring engine.
+    // Amenities are intentionally left empty here so `matchesStandardFilters` does NOT
+    // perform a strict hard-reject on rooms missing a single soft amenity.
+    // Soft amenities are evaluated as scoring bonuses in the scoring engine.
   };
 
-  // 1. Map Budget Tiers
+  // 1. Map Budget Tiers → inclusive price windows that always capture rooms from inventory.
+  //    Entry tier  (₹2k–₹3k label) → Standard & Deluxe rooms (₹10k–₹17k range)
+  //    Mid tier    (₹3k–₹5k label) → Deluxe, Premium, Executive, entry Suite (up to ₹30k)
+  //    Premium tier (₹5k+ label)   → all rooms including Suites & Presidential (no cap)
   if (prefs.budget === '2000-3000') {
     next.minPrice = 0;
-    next.maxPrice = 3500;
+    next.maxPrice = 17000; // Standard + entry Deluxe
   } else if (prefs.budget === '3000-5000') {
-    next.minPrice = 2500;
-    next.maxPrice = 6000;
+    next.minPrice = 0;
+    next.maxPrice = 30000; // Deluxe, Premium, Executive, lower Suites
   } else if (prefs.budget === '5000+') {
-    next.minPrice = 4000;
-    next.maxPrice = 200000;
+    next.minPrice = 0;
+    next.maxPrice = 600000; // No cap — all rooms eligible
   }
+  // If budget is unset, DEFAULT_FILTER_STATE wide range applies (0–600000)
 
-  // 2. Map Guest Count
+  // 2. Map Guest Count → minimum room capacity required.
+  //    GuestCount 4 means "4+" in the wizard; room.maxGuests >= 4 passes correctly.
   if (prefs.guests) {
     next.guests = prefs.guests;
   }
 
-  // 3. Map Purpose to recommended core filters & room types
-  if (prefs.purpose === 'Business') {
-    // Ensure fast WiFi or work desk vibe is favored in amenity filter if explicitly desired
-    // We add core WiFi if not already present
-    if (!next.amenities.some(a => a.toLowerCase().includes('wifi'))) {
-      next.amenities.push('WiFi');
-    }
-  } else if (prefs.purpose === 'Family Vacation') {
-    if (next.guests === 0) next.guests = 3; // ensure minimum family capacity if unspecified
+  // 3. Purpose → soft guidance only; hard type/amenity filters removed to prevent zero results.
+  //    Business: WiFi preference is handled as a scoring bonus in the scoring engine.
+  //    Family Vacation: bump minimum guests to 3 if user forgot to specify.
+  //    Honeymoon: slightly raise the minimum rating bar for romantic stays.
+  if (prefs.purpose === 'Family Vacation') {
+    if (next.guests === 0) next.guests = 3;
   } else if (prefs.purpose === 'Honeymoon') {
-    // Favor suites & luxury accommodations
-    next.minRating = 4;
-  } else if (prefs.purpose === 'Leisure' || prefs.purpose === 'Solo' || prefs.purpose === 'Friends') {
-    // Standard preference propagation
+    next.minRating = 4.5;
   }
 
-  // 4. Map Environment to room types or ratings when appropriate
-  if (prefs.environment && prefs.environment.includes('Luxury')) {
-    if (!next.types.includes('suite') && !next.types.includes('presidential') && !next.types.includes('deluxe')) {
-      next.types.push('deluxe', 'suite', 'presidential');
-    }
-  }
+  // 4. Luxury environment preference → scoring bonus only (NOT a hard type restriction).
+  //    Previously this added types: ['deluxe', 'suite', 'presidential'] as a hard filter,
+  //    which rejected perfectly good rooms (Premium/Executive) and caused empty results.
+  //    Luxury scoring is handled inside matchRoomsWithPreferences instead.
 
   return next;
 }
