@@ -61,6 +61,18 @@ export class UserService {
       throw new AppError('Cannot deactivate or suspend your own administrative account.', 400, ErrorCode.VALIDATION_ERROR);
     }
 
+    const currentTarget = await this.userRepo.findById(targetUserId);
+    const currentRole = currentTarget?.roleId ? await this.roleRepo.findById(currentTarget.roleId) : null;
+
+    // Security check: Only Super Admins can alter a Super Admin status
+    if (currentRole?.name === 'Super Admin') {
+      const actor = await this.userRepo.findById(adminId);
+      const actorRole = actor?.roleId ? await this.roleRepo.findById(actor.roleId) : null;
+      if (actorRole?.name !== 'Super Admin') {
+        throw new AppError('Insufficient permissions. Only Super Admins can alter a Super Admin account status.', 403, ErrorCode.FORBIDDEN);
+      }
+    }
+
     if (newStatus !== UserStatus.ACTIVE) {
       const isLastAdmin = await this.checkIsLastActiveAdmin(targetUserId);
       if (isLastAdmin) {
@@ -76,12 +88,30 @@ export class UserService {
       throw new AppError('Cannot modify your own administrator role.', 400, ErrorCode.VALIDATION_ERROR);
     }
 
+    const actor = await this.userRepo.findById(adminId);
+    const actorRole = actor?.roleId ? await this.roleRepo.findById(actor.roleId) : null;
+    const isActorSuperAdmin = actorRole?.name === 'Super Admin';
+
+    const newRole = await this.roleRepo.findById(newRoleId);
+    if (!newRole) {
+      throw new AppError('Specified role does not exist.', 404, ErrorCode.NOT_FOUND);
+    }
+
+    // Security check: Only an existing Super Admin can promote someone to Super Admin
+    if (newRole.name === 'Super Admin' && !isActorSuperAdmin) {
+      throw new AppError('Insufficient permissions. Only Super Admins can assign the Super Admin role.', 403, ErrorCode.FORBIDDEN);
+    }
+
     const currentTarget = await this.userRepo.findById(targetUserId);
     const currentRole = currentTarget?.roleId ? await this.roleRepo.findById(currentTarget.roleId) : null;
 
+    // Security check: Only an existing Super Admin can modify/demote a Super Admin
+    if (currentRole?.name === 'Super Admin' && !isActorSuperAdmin) {
+      throw new AppError('Insufficient permissions. Only Super Admins can modify a Super Admin user.', 403, ErrorCode.FORBIDDEN);
+    }
+
     if (currentRole?.name === 'Admin') {
-      const newRole = await this.roleRepo.findById(newRoleId);
-      if (!newRole || newRole.name !== 'Admin') {
+      if (newRole.name !== 'Admin' && newRole.name !== 'Super Admin') {
         const isLastAdmin = await this.checkIsLastActiveAdmin(targetUserId);
         if (isLastAdmin) {
           throw new AppError('Cannot demote the last active Admin account.', 400, ErrorCode.VALIDATION_ERROR);
@@ -95,6 +125,18 @@ export class UserService {
   async softDeleteUser(adminId: string, targetUserId: string): Promise<void> {
     if (adminId === targetUserId) {
       throw new AppError('Cannot delete your own administrative account.', 400, ErrorCode.VALIDATION_ERROR);
+    }
+
+    const currentTarget = await this.userRepo.findById(targetUserId);
+    const currentRole = currentTarget?.roleId ? await this.roleRepo.findById(currentTarget.roleId) : null;
+
+    // Security check: Only Super Admins can delete a Super Admin
+    if (currentRole?.name === 'Super Admin') {
+      const actor = await this.userRepo.findById(adminId);
+      const actorRole = actor?.roleId ? await this.roleRepo.findById(actor.roleId) : null;
+      if (actorRole?.name !== 'Super Admin') {
+        throw new AppError('Insufficient permissions. Only Super Admins can delete a Super Admin account.', 403, ErrorCode.FORBIDDEN);
+      }
     }
 
     const isLastAdmin = await this.checkIsLastActiveAdmin(targetUserId);
@@ -128,6 +170,10 @@ export class UserService {
     }
     if (!role) {
       role = await this.roleRepo.findByName('Staff');
+    }
+
+    if (role && role.name === 'Super Admin') {
+      throw new AppError('Super Admin accounts cannot be created via standard user registration. They must be provisioned via Super Admin administration.', 403, ErrorCode.FORBIDDEN);
     }
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({

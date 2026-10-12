@@ -16,8 +16,8 @@ import { globalLimiter } from './middleware/rateLimiter';
 
 const app: Express = express();
 
-// Trust reverse proxy for Render/Vercel (required for rate limiting)
-app.set('trust proxy', 1);
+// Trust reverse proxy layers (Render edge + Vercel proxy) for accurate client IP rate limiting
+app.set('trust proxy', true);
 
 // Swagger Documentation Route
 app.use('/api-docs', swaggerUi.serve as any, swaggerUi.setup(swaggerSpec) as any);

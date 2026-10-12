@@ -6,6 +6,7 @@ import { UserRepository } from '../domain/repositories/postgres/UserRepository';
 import { AuthAuditLogRepository } from '../domain/repositories/postgres/AuthAuditLogRepository';
 import { pgPool as pool } from '../config/database';
 import { supabase } from '../config/supabase';
+import { oauthLimiter } from '../middleware/rateLimiter';
 
 const userRepo = new UserRepository(pool);
 const authAuditLogRepo = new AuthAuditLogRepository(pool);
@@ -89,7 +90,7 @@ router.post('/logout', authController.logout);
  *       302:
  *         description: Redirects to Google
  */
-router.get('/google', authController.googleOAuth);
+router.get('/google', oauthLimiter, authController.googleOAuth);
 
 /**
  * @swagger
@@ -101,6 +102,6 @@ router.get('/google', authController.googleOAuth);
  *       302:
  *         description: Redirects to frontend
  */
-router.get('/google/callback', authController.googleCallback);
+router.get('/google/callback', oauthLimiter, authController.googleCallback);
 
 export default router;

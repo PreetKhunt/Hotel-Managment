@@ -161,8 +161,8 @@ export const requireSuperAdmin = () => {
         throw new AppError('Authentication required', 401, ErrorCode.UNAUTHORIZED);
       }
 
-      // Explicitly check for SUPER_ADMIN permission, not role name.
-      if (req.user.permissions.includes('SUPER_ADMIN')) {
+      // Explicitly check for SUPER_ADMIN permission or Super Admin role name
+      if (req.user.permissions.includes('SUPER_ADMIN') || req.user.roleName === 'Super Admin') {
         return next();
       }
 
