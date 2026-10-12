@@ -86,10 +86,13 @@ export class HotelSettingsRepository implements IHotelSettingsRepository {
       feature_flags: 'feature_flags'
     };
 
+    const assignedColumns = new Set<string>(); // guard against duplicate column assignments
+
     for (const [key, value] of Object.entries(data)) {
-      if (dbMapping[key] !== undefined && value !== undefined) {
-        updates.push(`"${dbMapping[key]}" = $${idx}`);
-        // If JSON object, pg handles it appropriately or we need to stringify, pg client handles objects for jsonb
+      const dbCol = dbMapping[key];
+      if (dbCol !== undefined && value !== undefined && !assignedColumns.has(dbCol)) {
+        assignedColumns.add(dbCol);
+        updates.push(`"${dbCol}" = $${idx}`);
         values.push(value);
         idx++;
       }
