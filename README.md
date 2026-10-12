@@ -745,5 +745,5 @@ The following features are planned or partially scaffolded but not yet fully imp
 ---
 
 <div align="center">
-  <sub>Built with ❤️ for Manali hospitality</sub>
+  <sub>Made with ❤️ by Preet </sub>
 </div>
