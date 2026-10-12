@@ -14,6 +14,7 @@ const roleColors: Record<string, { bg: string; color: string }> = {
   Admin: { bg: 'rgba(20,184,166,0.18)', color: '#2dd4bf' },
   Staff: { bg: 'rgba(245,158,11,0.18)', color: '#f59e0b' },
   Guest: { bg: 'rgba(148,163,184,0.14)', color: '#94a3b8' },
+  'Super Admin': { bg: 'rgba(201,168,76,0.18)', color: '#C9A84C' },
 };
 
 function getInitials(name: string) {

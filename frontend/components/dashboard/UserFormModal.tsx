@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/providers/AuthProvider';
 
 interface UserFormModalProps {
   user: any | null;
@@ -19,13 +20,20 @@ const userSchema = z.object({
   last_name: z.string().min(1, 'Last name is required'),
   email: z.string().email('Please provide a valid email address'),
   phone: z.string().optional(),
-  roleName: z.enum(['Manager', 'Receptionist', 'Admin', 'Staff', 'Guest']),
+  roleName: z.enum(['Manager', 'Receptionist', 'Admin', 'Staff', 'Guest', 'Super Admin']),
   status: z.enum(['active', 'inactive', 'suspended']),
   password: z.string().optional(),
 });
 
 const UserFormModal: FC<UserFormModalProps> = ({ user, isOpen, onClose }) => {
   const isEditing = !!user;
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.role?.name === 'Super Admin';
+  // If the target user being edited is currently a Super Admin, a non-super-admin
+  // actor must not be able to change their role (backend enforces this too).
+  const isTargetSuperAdmin = isEditing && user?.role?.name === 'Super Admin';
+  const roleDropdownDisabled = isTargetSuperAdmin && !isSuperAdmin;
+
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -35,7 +43,7 @@ const UserFormModal: FC<UserFormModalProps> = ({ user, isOpen, onClose }) => {
     last_name: '',
     email: '',
     phone: '',
-    roleName: 'Staff' as 'Manager' | 'Receptionist' | 'Admin' | 'Staff' | 'Guest',
+    roleName: 'Staff' as 'Manager' | 'Receptionist' | 'Admin' | 'Staff' | 'Guest' | 'Super Admin',
     status: 'active' as 'active' | 'inactive' | 'suspended',
     password: '',
   });
@@ -304,14 +312,28 @@ const UserFormModal: FC<UserFormModalProps> = ({ user, isOpen, onClose }) => {
                   <select
                     value={formData.roleName}
                     onChange={(e) => handleChange('roleName', e.target.value)}
-                    style={inputStyle(false)}
+                    disabled={roleDropdownDisabled}
+                    style={{
+                      ...inputStyle(false),
+                      ...(roleDropdownDisabled
+                        ? { opacity: 0.55, cursor: 'not-allowed', background: 'rgba(255,255,255,0.03)' }
+                        : {}),
+                    }}
                   >
                     <option value="Manager">Manager</option>
                     <option value="Receptionist">Receptionist</option>
                     <option value="Admin">Admin</option>
                     <option value="Staff">Staff</option>
                     <option value="Guest">Guest</option>
+                    {isSuperAdmin && (
+                      <option value="Super Admin">Super Admin</option>
+                    )}
                   </select>
+                  {roleDropdownDisabled && (
+                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.73rem', display: 'block', marginTop: '0.25rem' }}>
+                      Only Super Admins can change a Super Admin&apos;s role.
+                    </span>
+                  )}
                 </div>
                 <div>
                   <label style={labelStyle}>Account Status</label>
